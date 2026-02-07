@@ -1,45 +1,27 @@
 const tg = window.Telegram.WebApp;
-const CARD_WIDTH = 130; // Ширина карточки (должна совпадать с CSS .roulette-card min-width)
+const CARD_WIDTH = 130; 
 
-// Состояние
-let user = {
-    balance: 0,
-    inventory: [],
-    uid: 100,
-    history: []
-};
-let cases = [];
-let selectedCase = null;
+// ВСТАВЬ СЮДА СВОЮ ССЫЛКУ ИЗ GOOGLE DEPLOY
+const API_URL = "https://script.google.com/macros/s/AKfycbwYU8UjWwpEFeqAkBLBeh4YYdQD1LAY2GvCLMwJRdd3ziyHJ611JrG_r1xs6nWJCEXJ/exec";
+
+let user = { balance: 0, inventory: [], uid: 0 };
+let paymentCheckInterval = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Инициализация Telegram
     tg.expand();
-    tg.setHeaderColor('#090909');
-    tg.setBackgroundColor('#090909');
-    
     loadUser();
     initCases();
     updateUI();
 });
 
-// --- User Data ---
 function loadUser() {
     const saved = localStorage.getItem('br_user_data');
     if(saved) {
         user = JSON.parse(saved);
     } else {
-        // Первый вход
         user.balance = 0;
         user.uid = Math.floor(100000 + Math.random() * 900000); 
         saveUser();
-    }
-    
-    // UI Профиля
-    const tgUser = tg.initDataUnsafe.user;
-    if(tgUser) {
-        document.getElementById('header-name').innerText = tgUser.first_name;
-        document.getElementById('profile-id').innerText = tgUser.id;
-        if(tgUser.photo_url) document.getElementById('header-avatar').src = tgUser.photo_url;
     }
 }
 
@@ -51,86 +33,55 @@ function saveUser() {
 function updateUI() {
     document.getElementById('user-balance').innerText = user.balance.toLocaleString();
     document.getElementById('header-uid').innerText = user.uid;
-    document.getElementById('profile-bal').innerText = user.balance.toLocaleString() + ' ₽';
-    document.getElementById('profile-uid').innerText = '#' + user.uid;
-    
-    // Инвентарь
-    const grid = document.getElementById('inventory-grid');
-    if(user.inventory.length === 0) {
-        grid.innerHTML = '<div style="grid-column: span 2; color:#555; text-align:center; padding:20px;">Пусто...</div>';
-    } else {
-        grid.innerHTML = user.inventory.map(i => `
-            <div class="case-card" style="padding:10px">
-                <img src="${i.img}" class="case-img" style="height:50px">
-                <div style="font-size:12px; font-weight:bold">${i.name}</div>
-                <div style="font-size:10px; color:#888">${i.price} ₽</div>
-            </div>
-        `).join('');
-    }
 }
 
-// URL твоего развернутого Google Script
-const API_URL = "https://script.google.com/macros/s/AKfycbxchWD4KsXBbWrw-lMhxHUHOL6ZaI9Jf1AVeUNTQC7w5A1NgXKauLoNnF48S35noAfn/exec";
-
-// --- Payment Logic (FIXED) ---
-
-// Функция инициализации оплаты (ее не было в оригинале)
+// РЕАЛЬНОЕ ПОПОЛНЕНИЕ
 function initYooPayment(amount) {
-    // Генерируем уникальную метку заказа
     const label = `order_${user.uid}_${Date.now()}`;
     
-    // Заполняем скрытую форму
-    document.getElementById('yoo-sum').value = amount;
-    document.getElementById('yoo-label').value = label;
+    const params = new URLSearchParams({
+        receiver: '4100117889685528',
+        'quickpay-form': 'shop',
+        targets: `Donate UID: ${user.uid}`,
+        paymentType: 'AC',
+        sum: amount,
+        label: label
+    });
+
+    const paymentUrl = `https://yoomoney.ru/quickpay/confirm?${params.toString()}`;
     
-    // Сообщаем пользователю (опционально)
-    tg.HapticFeedback.impactOccurred('light');
+    tg.openLink(paymentUrl); // Открываем оплату
     
-    // Отправляем форму (откроется окно оплаты)
-    document.getElementById('yoo-form').submit();
+    // Запускаем АВТОМАТИЧЕСКУЮ проверку без кнопок
+    startAutoChecking(label, amount);
 }
 
-function checkPaymentStatus(orderId) {
-    // Показываем лоадер
-    tg.MainButton.showProgress();
-    
-    fetch(`${API_URL}?label=${orderId}`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === "success") {
-                tg.showAlert("Оплата получена! Баланс пополнен.");
-                // Тут логика начисления баланса
-                const amount = parseInt(document.getElementById('yoo-sum').value);
-                user.balance += amount;
-                saveUser();
-                tg.MainButton.hideProgress();
-            } else {
-                tg.showAlert("Платеж еще не обработан. Попробуйте через минуту.");
-                tg.MainButton.hideProgress();
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            tg.showAlert("Ошибка соединения. Проверьте интернет или скрипт.");
-            tg.MainButton.hideProgress();
-        });
+function startAutoChecking(label, amount) {
+    const statusMsg = document.getElementById('payment-msg');
+    if(statusMsg) statusMsg.innerText = "Ожидание оплаты (проверка каждые 5 сек)...";
+
+    if (paymentCheckInterval) clearInterval(paymentCheckInterval);
+
+    paymentCheckInterval = setInterval(() => {
+        fetch(`${API_URL}?label=${label}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "success") {
+                    clearInterval(paymentCheckInterval);
+                    user.balance += amount;
+                    saveUser();
+                    tg.showAlert(`💳 Баланс пополнен на ${amount} ₽!`);
+                    if(statusMsg) statusMsg.innerText = "Оплата принята!";
+                }
+            })
+            .catch(err => console.log("Проверка еще не прошла..."));
+    }, 5000); // Интервал 5 секунд
 }
 
-// Функция кнопки "Я оплатил"
-function checkFakePayment() {
-    const currentLabel = document.getElementById('yoo-label').value;
-    
-    if(!currentLabel) {
-        return tg.showAlert("Сначала выберите сумму и создайте счет");
-    }
-    
-    checkPaymentStatus(currentLabel);
-}
-
-// --- Cases & Roulette ---
+// --- КЕЙСЫ (ЦЕНА 15 РУБЛЕЙ) ---
 function initCases() {
     cases = [
-        { id: 1, name: "Бомж Старт", price: 100, img: "https://cdn-icons-png.flaticon.com/512/1995/1995493.png" },
+        { id: 1, name: "Бомж Старт", price: 15, img: "https://cdn-icons-png.flaticon.com/512/1995/1995493.png" },
         { id: 2, name: "Автокейс", price: 500, img: "https://cdn-icons-png.flaticon.com/512/3062/3062634.png" },
         { id: 3, name: "Black Russia", price: 1500, img: "https://cdn-icons-png.flaticon.com/512/3202/3202926.png" },
         { id: 4, name: "Олигарх", price: 5000, img: "https://cdn-icons-png.flaticon.com/512/2488/2488749.png" }

@@ -1,10 +1,10 @@
 const tg = window.Telegram.WebApp;
 const CARD_WIDTH = 130; 
 
-// Если у вас нет своего Google Script, оставьте это поле, но авто-проверка оплаты работать не будет
-const API_URL = "https://script.google.com/macros/s/AKfycbwYU8UjWwpEFeqAkBLBeh4YYdQD1LAY2GvCLMwJRdd3ziyHJ611JrG_r1xs6nWJCEXJ/exec";
+// Твоя ссылка на Google Apps Script
+const API_URL = "https://script.google.com/macros/s/AKfycbym7BZkWwdqkB8_yE6ynKaeYKtd8X833chIM6smbbUAs_85epS5W6bz2uBi0pcQBRqF/exec";
 
-// Инициализация переменной user
+// Инициализация
 let user = { 
     balance: 0, 
     inventory: [], 
@@ -18,121 +18,128 @@ let cases = [];
 let selectedCase = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-    tg.expand(); // Разворачиваем на весь экран
-    
-    // Сначала загружаем данные
+    tg.expand();
     loadUser();
-    
-    // Потом инициализируем интерфейс
     initCases();
     updateUI();
     renderInventory();
 });
 
-// --- ГЛАВНАЯ ФУНКЦИЯ ЗАГРУЗКИ ПОЛЬЗОВАТЕЛЯ ---
 function loadUser() {
-    // 1. Сначала пытаемся достать сохраненные данные (баланс, инвентарь)
     const saved = localStorage.getItem('br_user_data');
     if (saved) {
         try {
             const parsed = JSON.parse(saved);
-            // Берем баланс и инвентарь из памяти
             user.balance = parsed.balance || 0;
             user.inventory = parsed.inventory || [];
-        } catch (e) {
-            console.error("Ошибка чтения сохранения", e);
-        }
+        } catch (e) { console.error(e); }
     }
 
-    // 2. ВСЕГДА обновляем данные о личности из Telegram (если доступны)
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
         const u = tg.initDataUnsafe.user;
         user.uid = u.id;
-        user.name = u.first_name + (u.last_name ? " " + u.last_name : "");
-        user.avatar = u.photo_url; // Может быть undefined
-        user.username = u.username;
+        user.name = u.first_name;
+        user.avatar = u.photo_url; 
     } else {
-        // Если открыто в браузере (не в ТГ) и нет UID
         if (!user.uid || user.uid === 0) {
             user.uid = Math.floor(100000 + Math.random() * 900000);
             user.name = "Test User";
         }
     }
-
-    // Сохраняем актуальные данные (например, обновилась аватарка)
     saveUser();
 }
 
-// --- ФУНКЦИЯ СОХРАНЕНИЯ (ЕЕ НЕ БЫЛО В ВАШЕМ КОДЕ) ---
 function saveUser() {
     localStorage.setItem('br_user_data', JSON.stringify(user));
 }
 
 function updateUI() {
-    // Баланс
     const balEl = document.getElementById('user-balance');
-    if(balEl) balEl.innerText = user.balance.toLocaleString();
+    if(balEl) balEl.innerText = Math.floor(user.balance).toLocaleString(); // Округляем для красоты
     
-    // Шапка: Имя
     const nameEl = document.getElementById('header-name');
     if(nameEl) nameEl.innerText = user.name;
 
-    // Шапка: UID
     const uidEl = document.getElementById('header-uid');
     if(uidEl) uidEl.innerText = user.uid;
     
-    // Шапка: Аватар
     const avaEl = document.getElementById('header-avatar');
-    if (avaEl) {
-        if (user.avatar) {
-            avaEl.src = user.avatar;
-        } else {
-            // Заглушка
-            avaEl.src = "https://cdn-icons-png.flaticon.com/512/149/149071.png"; 
-        }
-    }
+    if (avaEl && user.avatar) avaEl.src = user.avatar;
 
     // Модалка профиля
-    const pId = document.getElementById('profile-id');
-    const pUid = document.getElementById('profile-uid');
     const pBal = document.getElementById('profile-bal');
-    
-    if(pId) pId.innerText = user.name;
-    if(pUid) pUid.innerText = user.uid;
     if(pBal) pBal.innerText = user.balance + " ₽";
 }
 
-// --- ОПЛАТА ---
+// --- ИСПРАВЛЕННАЯ ОПЛАТА ---
 function initYooPayment(amount) {
+    // 1. Создаем уникальную метку: UID + Время
     const label = `order_${user.uid}_${Date.now()}`;
     
+    // 2. Параметры для ссылки
     const params = new URLSearchParams({
-        receiver: '4100117889685528', // ВАШ КОШЕЛЕК
+        receiver: '4100117889685528', // Твой кошелек
         'quickpay-form': 'shop',
-        targets: `Donate UID: ${user.uid}`,
-        paymentType: 'AC', // Bank card
+        targets: `Пополнение баланса (UID: ${user.uid})`,
+        paymentType: 'AC', // Банковская карта
         sum: amount,
-        label: label
+        label: label // ОЧЕНЬ ВАЖНО: передаем метку, чтобы потом по ней найти платеж
     });
 
     const paymentUrl = `https://yoomoney.ru/quickpay/confirm?${params.toString()}`;
     
-    // Открываем ссылку средствами Телеграм
+    // 3. Открываем ссылку
     tg.openLink(paymentUrl);
     
+    // 4. Обновляем интерфейс
     const statusMsg = document.getElementById('payment-msg');
-    if(statusMsg) statusMsg.innerText = "Ожидание оплаты... Нажмите кнопку ниже для теста.";
+    if(statusMsg) {
+        statusMsg.innerText = "Ожидание подтверждения банка...";
+        statusMsg.style.color = "var(--gold)";
+    }
+
+    // 5. Запускаем проверку (Polling)
+    if (paymentCheckInterval) clearInterval(paymentCheckInterval);
+    
+    let checksCount = 0;
+    paymentCheckInterval = setInterval(async () => {
+        checksCount++;
+        // Перестаем проверять через 10 минут (120 проверок по 5 сек)
+        if (checksCount > 120) {
+            clearInterval(paymentCheckInterval);
+            if(statusMsg) statusMsg.innerText = "Время ожидания истекло.";
+            return;
+        }
+
+        try {
+            // Запрос к Google Script: "Пришли ли деньги с меткой label?"
+            const response = await fetch(`${API_URL}?label=${label}`);
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                // УРА! Деньги пришли
+                clearInterval(paymentCheckInterval);
+                
+                // Начисляем реальную сумму из ответа (data.amount) или запрошенную
+                const addedAmount = parseFloat(data.amount) || amount;
+                user.balance += addedAmount;
+                saveUser();
+                updateUI();
+                
+                tg.showAlert(`Успешно! Баланс пополнен на ${addedAmount} ₽`);
+                if(statusMsg) {
+                    statusMsg.innerText = "Оплата прошла успешно!";
+                    statusMsg.style.color = "#4CAF50";
+                }
+            }
+        } catch (e) {
+            console.error("Ошибка проверки:", e);
+        }
+    }, 5000); // Проверяем каждые 5 секунд
 }
 
-// Тестовая функция для "накрутки" баланса (для проверки)
-function checkFakePayment() {
-    user.balance += 1000;
-    saveUser();
-    updateUI();
-    tg.showAlert("Демо-режим: Баланс пополнен на 1000р!");
-}
+// --- ОСТАЛЬНОЙ КОД БЕЗ ИЗМЕНЕНИЙ (КЕЙСЫ, РУЛЕТКА) ---
 
-// --- КЕЙСЫ ---
 function initCases() {
     cases = [
         { id: 1, name: "Бомж Старт", price: 15, img: "https://cdn-icons-png.flaticon.com/512/1995/1995493.png" },
@@ -158,23 +165,17 @@ function openPreview(id) {
     document.getElementById('preview-img').src = selectedCase.img;
     document.getElementById('preview-title').innerText = selectedCase.name;
     document.getElementById('preview-price').innerText = selectedCase.price + ' ₽';
-    
     document.getElementById('btn-start-open').onclick = startRoulette;
     document.getElementById('modal-preview').style.display = 'flex';
 }
 
-// --- РУЛЕТКА ---
 function startRoulette() {
     if(user.balance < selectedCase.price) {
         return tg.showAlert("Недостаточно средств на балансе!");
     }
-    
-    // Списание
     user.balance -= selectedCase.price;
     saveUser();
-    updateUI(); // Обновляем баланс визуально сразу
-    
-    // UI переключение
+    updateUI();
     closeModal('modal-preview');
     const modal = document.getElementById('modal-roulette');
     modal.style.display = 'flex';
@@ -183,15 +184,12 @@ function startRoulette() {
     track.style.transition = 'none';
     track.style.transform = 'translateX(0px)';
     
-    // Генерация предметов
     const items = [];
     for(let i=0; i<100; i++) items.push(getRandomItem());
     
-    // Определяем выигрыш (на 75 позиции - фиксируем логику)
     const winIndex = 75;
     const winItem = items[winIndex];
     
-    // Рендер
     track.innerHTML = items.map(item => `
         <div class="roulette-card ${item.rarity}">
             <img src="${item.img}">
@@ -199,19 +197,10 @@ function startRoulette() {
         </div>
     `).join('');
     
-    // Старт анимации
     setTimeout(() => {
-        // Вычисляем центр экрана
         const screenCenter = window.innerWidth / 2;
-        // Центр карточки
         const cardCenter = CARD_WIDTH / 2;
-        
-        // Считаем позицию. 
-        // Нам нужно, чтобы (winIndex * CARD_WIDTH) оказался по центру экрана.
-        // Формула: (ПозицияЭлемента) - (ПоловинаЭкрана) + (ПоловинаКарточки)
         const targetPos = (winIndex * CARD_WIDTH) - screenCenter + cardCenter;
-        
-        // Добавляем небольшой рандомный сдвиг внутри карточки (+- 20px), чтобы не всегда ровно по центру
         const randomOffset = Math.floor(Math.random() * 40) - 20;
 
         track.style.transition = 'transform 6s cubic-bezier(0.15, 0.85, 0.25, 1)';
@@ -219,7 +208,6 @@ function startRoulette() {
         
         document.getElementById('roulette-status').innerText = "КРУТИМ...";
         
-        // Вибрация
         let ticks = 0;
         const interval = setInterval(() => {
             ticks++;
@@ -227,16 +215,13 @@ function startRoulette() {
             tg.HapticFeedback.impactOccurred('light');
         }, 150 + (ticks * 5)); 
         
-        // Финиш
         setTimeout(() => {
             showWin(winItem);
         }, 6500);
-        
     }, 100);
 }
 
 function getRandomItem() {
-    // Список предметов. Можно сделать разным для разных кейсов
     const items = [
         { name: "BMW M5 F90", price: 5000, img: "https://cdn-icons-png.flaticon.com/512/3202/3202926.png", rarity: "rarity-legendary" },
         { name: "Lada Priora", price: 200, img: "https://cdn-icons-png.flaticon.com/512/1995/1995493.png", rarity: "rarity-common" },
@@ -248,7 +233,6 @@ function getRandomItem() {
     return items[Math.floor(Math.random() * items.length)];
 }
 
-let currentWin = null;
 function showWin(item) {
     currentWin = item;
     document.getElementById('modal-roulette').style.display = 'none';
@@ -277,11 +261,8 @@ function finishWin(keep) {
 function renderInventory() {
     const grid = document.getElementById('inventory-grid');
     const emptyMsg = document.getElementById('empty-inventory');
-    
     if (!grid) return;
-    
     grid.innerHTML = '';
-    
     if (user.inventory.length === 0) {
         if(emptyMsg) emptyMsg.style.display = 'block';
     } else {
@@ -298,14 +279,10 @@ function renderInventory() {
     }
 }
 
-// --- УТИЛИТЫ ---
 function switchTab(id) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.getElementById('tab-'+id).classList.add('active');
-    
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    
-    // Простая логика подсветки
     if(id==='cases') document.querySelectorAll('.nav-btn')[0].classList.add('active');
     if(id==='shop') document.querySelectorAll('.nav-btn')[1].classList.add('active');
     if(id==='inventory') document.querySelectorAll('.nav-btn')[2].classList.add('active');
@@ -316,6 +293,6 @@ function closeModal(id) {
 }
 
 function openProfileModal() {
-    updateUI(); // Обновляем данные перед открытием
+    updateUI(); 
     document.getElementById('modal-profile').style.display = 'flex';
 }

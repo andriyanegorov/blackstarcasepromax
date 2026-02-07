@@ -43,7 +43,7 @@ function loadUser() {
     } else {
         if (!user.uid || user.uid === 0) {
             user.uid = Math.floor(100000 + Math.random() * 900000);
-            user.name = "Test User";
+            user.name = "Гость";
         }
     }
     saveUser();
@@ -295,4 +295,5 @@ function closeModal(id) {
 function openProfileModal() {
     updateUI(); 
     document.getElementById('modal-profile').style.display = 'flex';
+
 }

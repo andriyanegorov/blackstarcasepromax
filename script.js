@@ -142,7 +142,7 @@ function initYooPayment(amount) {
 
 function initCases() {
     cases = [
-        { id: 1, name: "Бомж Старт", price: 15, img: "https://cdn-icons-png.flaticon.com/512/1995/1995493.png" },
+        { id: 1, name: "Бомжик", price: 15, img: "https://cdn-icons-png.flaticon.com/512/1995/1995493.png" },
         { id: 2, name: "Автокейс", price: 500, img: "https://cdn-icons-png.flaticon.com/512/3062/3062634.png" },
         { id: 3, name: "Black Russia", price: 1500, img: "https://cdn-icons-png.flaticon.com/512/3202/3202926.png" },
         { id: 4, name: "Олигарх", price: 5000, img: "https://cdn-icons-png.flaticon.com/512/2488/2488749.png" }
@@ -297,3 +297,4 @@ function openProfileModal() {
     document.getElementById('modal-profile').style.display = 'flex';
 
 }
+

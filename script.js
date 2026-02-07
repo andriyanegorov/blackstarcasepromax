@@ -1,118 +1,146 @@
 const tg = window.Telegram.WebApp;
-
-// 1. Инициализация и Проверка входа
-document.addEventListener('DOMContentLoaded', () => {
-    // Проверка платформы. В реальности проверяют tg.initData
-    // Если initData пустая, значит открыто не в ТГ
-    if (!tg.initDataUnsafe || Object.keys(tg.initDataUnsafe).length === 0) {
-        // Раскомментируйте строчку ниже, чтобы включить строгую проверку!
-        // document.getElementById('pc-blocker').style.display = 'flex';
-        // document.getElementById('app').style.display = 'none';
-        
-        // Для теста в браузере (чтобы вы могли проверить код) оставим доступ:
-        console.warn("Запущено не в Telegram. Включен режим отладки.");
-        document.getElementById('pc-blocker').style.display = 'none';
-        document.getElementById('app').style.display = 'block';
-        initUser({ first_name: "TestUser", id: 12345 }); // Фейк юзер
-    } else {
-        // Мы в Телеграм
-        document.getElementById('pc-blocker').style.display = 'none';
-        document.getElementById('app').style.display = 'block';
-        tg.expand(); // Развернуть на весь экран
-        // Установка цветов темы ТГ
-        document.body.style.backgroundColor = tg.themeParams.bg_color || '#121212';
-        initUser(tg.initDataUnsafe.user);
-    }
-    
-    loadCases();
-    updateUI();
-});
-
-// Данные пользователя
 let user = {
     balance: 0,
     inventory: [],
     history: [],
+    uid: null,
     stats: { opened: 0 }
 };
 
-// 2. Загрузка данных (Имитация БД через LocalStorage)
-function initUser(tgUser) {
-    const savedData = localStorage.getItem(`br_user_${tgUser.id}`);
-    
-    if (savedData) {
-        user = JSON.parse(savedData);
+// Константы
+const DB_PREFIX = 'br_user_';
+const CASES_KEY = 'br_cases_data';
+const GLOBAL_UID_KEY = 'br_global_uid_counter';
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Проверка платформы (упрощенная)
+    if (!tg.initDataUnsafe || Object.keys(tg.initDataUnsafe).length === 0) {
+        // Тест в браузере
+        document.body.style.overflow = 'auto'; // разрешить скролл для теста
+        initUser({ id: 999999, first_name: "TestBrowser" });
     } else {
-        // Новый пользователь
-        user.balance = 5000; // Бонус при регистрации
+        tg.expand();
+        tg.setHeaderColor('#0f0f0f'); // цвет хедера ТГ
+        tg.setBackgroundColor('#0f0f0f');
+        initUser(tg.initDataUnsafe.user);
+    }
+
+    loadCases();
+    updateUI();
+});
+
+// --- ЛОГИКА ПОЛЬЗОВАТЕЛЯ ---
+
+function initUser(tgUser) {
+    window.currentTgId = tgUser.id;
+    const saved = localStorage.getItem(DB_PREFIX + tgUser.id);
+    
+    if (saved) {
+        user = JSON.parse(saved);
+        // Миграция для старых пользователей без UID
+        if (!user.uid) assignUid();
+    } else {
+        // Новый юзер
+        user.balance = 0; // Бонус
+        assignUid();
         saveUser();
     }
     
-    // UI
-    document.getElementById('user-name').innerText = tgUser.first_name || 'Игрок';
-    if(tgUser.photo_url) document.getElementById('user-avatar').src = tgUser.photo_url;
+    // Обновляем шапку
+    document.getElementById('header-name').innerText = tgUser.first_name || 'Игрок';
+    document.getElementById('header-uid').innerText = user.uid;
+    if(tgUser.photo_url) document.getElementById('header-avatar').src = tgUser.photo_url;
     
-    // Сохраняем ID для сохранения
-    window.currentUserId = tgUser.id;
+    // Заполняем профиль
+    document.getElementById('profile-tg-id').innerText = tgUser.id;
+    document.getElementById('profile-uid').innerText = '#' + user.uid;
+}
+
+function assignUid() {
+    let globalCounter = parseInt(localStorage.getItem(GLOBAL_UID_KEY) || '100');
+    user.uid = globalCounter;
+    localStorage.setItem(GLOBAL_UID_KEY, globalCounter + 1);
 }
 
 function saveUser() {
-    if(window.currentUserId) {
-        localStorage.setItem(`br_user_${window.currentUserId}`, JSON.stringify(user));
+    if (window.currentTgId) {
+        localStorage.setItem(DB_PREFIX + window.currentTgId, JSON.stringify(user));
         updateUI();
     }
 }
 
-// 3. UI Логика
-function updateUI() {
-    document.getElementById('user-balance').innerText = user.balance;
-    document.getElementById('stats-opened').innerText = user.stats.opened;
-    
-    // Рендер истории
-    const historyBox = document.getElementById('history-list');
-    historyBox.innerHTML = user.history.map(h => `
-        <div class="list-item">
-            <span>${h.action}</span>
-            <span class="${h.amount > 0 ? 'item-positive' : 'item-negative'}">
-                ${h.amount > 0 ? '+' : ''}${h.amount} BC
-            </span>
-        </div>
-    `).reverse().slice(0, 20).join(''); // Последние 20 действий
+// --- UI ЛОГИКА ---
 
-    // Рендер инвентаря
-    const invBox = document.getElementById('inventory-list');
-    invBox.innerHTML = user.inventory.map(item => `
-        <div class="list-item">
-            <span>${item.name}</span>
-            <span style="color: gold;">${item.price} BC</span>
+function updateUI() {
+    // Баланс с анимацией чисел (упрощенно просто текст)
+    document.getElementById('user-balance').innerText = user.balance.toLocaleString();
+    document.getElementById('profile-balance').innerText = user.balance.toLocaleString() + ' BC';
+    document.getElementById('profile-opened').innerText = user.stats.opened;
+
+    // История в профиле
+    const histBox = document.getElementById('profile-history');
+    histBox.innerHTML = user.history.slice().reverse().slice(0, 10).map(h => `
+        <div class="mini-history-item">
+            ${h.action} <span style="float:right; color:${h.amount > 0 ? '#34c759':'#ff3b30'}">${h.amount > 0 ? '+':''}${h.amount}</span>
         </div>
     `).join('');
+
+    // Инвентарь
+    const invGrid = document.getElementById('inventory-grid');
+    if(user.inventory.length === 0) {
+        invGrid.innerHTML = '<p style="grid-column: span 2; text-align:center; color:#555;">Пусто</p>';
+    } else {
+        invGrid.innerHTML = user.inventory.map(item => `
+            <div class="case-card" style="padding: 10px;">
+                <img src="https://via.placeholder.com/60?text=Item" class="case-img" style="width:50px">
+                <div class="case-title" style="font-size:12px">${item.name}</div>
+                <div class="case-price">${item.price} BC</div>
+            </div>
+        `).join('');
+    }
 }
 
-function switchTab(tabName) {
+function switchTab(tabId) {
     document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
     
-    document.getElementById(tabName).classList.add('active');
-    event.currentTarget.classList.add('active');
+    document.getElementById('tab-' + tabId).classList.add('active');
+    
+    // Подсветка кнопки
+    const btnIndex = ['cases', 'shop', 'inventory'].indexOf(tabId);
+    if(btnIndex >= 0) {
+        document.querySelectorAll('.nav-btn')[btnIndex].classList.add('active');
+    }
 }
 
-// 4. Логика Кейсов
+// --- МОДАЛКИ ---
+
+function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+}
+
+function openProfileModal() {
+    document.getElementById('modal-profile').style.display = 'flex';
+}
+
+// --- ЛОГИКА КЕЙСОВ ---
+
+let selectedCase = null;
+
 function loadCases() {
-    // Загрузка из админки или дефолтные
-    let cases = JSON.parse(localStorage.getItem('br_cases'));
+    let cases = JSON.parse(localStorage.getItem(CASES_KEY));
     if (!cases || cases.length === 0) {
-        // Дефолтный кейс, если админ ничего не создал
         cases = [
-            { id: 1, name: "Кейс Новичка", price: 500, img: "https://via.placeholder.com/80/333/fff?text=Start" },
-            { id: 2, name: "Black Russia Elite", price: 2000, img: "https://via.placeholder.com/80/000/red?text=Elite" }
+            { id: 1, name: "Start Pack", price: 500, img: "https://via.placeholder.com/150/333/fff?text=Start", desc: "Идеально для новичков. Шанс выбить Lada Priora." },
+            { id: 2, name: "Elite Case", price: 2500, img: "https://via.placeholder.com/150/4a148c/fff?text=Elite", desc: "Только люксовые авто. Rolls Royce и BMW." },
+            { id: 3, name: "Admin Case", price: 10000, img: "https://via.placeholder.com/150/b71c1c/fff?text=Admin", desc: "Самый дорогой кейс. Шанс получить админку (фейк)." }
         ];
-        localStorage.setItem('br_cases', JSON.stringify(cases));
+        localStorage.setItem(CASES_KEY, JSON.stringify(cases));
     }
 
     const container = document.getElementById('cases-container');
     container.innerHTML = cases.map(c => `
-        <div class="case-card" onclick="openCase(${c.id}, ${c.price}, '${c.name}')">
+        <div class="case-card" onclick="showCasePreview(${c.id})">
             <img src="${c.img}" class="case-img">
             <div class="case-title">${c.name}</div>
             <div class="case-price">${c.price} BC</div>
@@ -120,113 +148,147 @@ function loadCases() {
     `).join('');
 }
 
-let currentWinItem = null;
+function showCasePreview(id) {
+    const cases = JSON.parse(localStorage.getItem(CASES_KEY));
+    selectedCase = cases.find(c => c.id === id);
+    
+    if(!selectedCase) return;
 
-function openCase(id, price, name) {
-    if (user.balance < price) {
-        tg.showAlert("Недостаточно средств!");
+    document.getElementById('preview-img').src = selectedCase.img;
+    document.getElementById('preview-title').innerText = selectedCase.name;
+    document.getElementById('preview-desc').innerText = selectedCase.desc || "Описание отсутствует";
+    document.getElementById('preview-price').innerText = selectedCase.price + " BC";
+    
+    // Привязываем кнопку открытия
+    const btn = document.getElementById('btn-start-open');
+    btn.onclick = () => startRoulette();
+    
+    document.getElementById('modal-preview').style.display = 'flex';
+}
+
+// --- РУЛЕТКА ---
+
+let pendingItem = null;
+
+function startRoulette() {
+    if (user.balance < selectedCase.price) {
+        tg.showAlert("Недостаточно средств! Пополните баланс.");
         return;
     }
 
-    // Списание средств
-    user.balance -= price;
+    // Списание
+    user.balance -= selectedCase.price;
     user.stats.opened++;
-    user.history.push({ action: `Открыт ${name}`, amount: -price });
+    user.history.push({ action: `Кейс: ${selectedCase.name}`, amount: -selectedCase.price });
     saveUser();
+    updateUI();
 
-    // Показываем модалку
-    const modal = document.getElementById('open-modal');
+    // Закрываем превью, открываем рулетку
+    closeModal('modal-preview');
+    const modal = document.getElementById('modal-roulette');
     modal.style.display = 'flex';
-    document.getElementById('win-display').style.display = 'none';
-    document.getElementById('modal-title').innerText = "Крутим...";
 
-    // Генерация рулетки
-    const track = document.getElementById('roulette-track');
-    track.style.transition = 'none';
-    track.style.transform = 'translateX(0)';
+    // Генерируем ленту
+    const strip = document.getElementById('roulette-strip');
+    strip.style.transition = 'none';
+    strip.style.transform = 'translateX(0)';
     
-    // Генерируем возможные предметы (фейк дроп для демо)
-    // В реальном проекте тут должен быть массив, привязанный к ID кейса
-    const items = generateRandomItems(50); 
-    
-    // Выбираем выигрышный элемент (например, 45-й элемент)
-    const winIndex = 40; 
-    currentWinItem = items[winIndex];
+    const items = generateDrop(60); // 60 предметов
+    const winIndex = 50; // Выигрыш на 50 позиции
+    pendingItem = items[winIndex];
 
-    track.innerHTML = items.map(item => `
+    strip.innerHTML = items.map(i => `
         <div class="roulette-item">
-            <img src="https://via.placeholder.com/40?text=Item" style="border-radius:5px;">
-            <span>${item.price}</span>
+            <img src="https://via.placeholder.com/40?text=drop">
+            <span style="font-size:10px; margin-top:5px; color:#aaa;">${i.price}</span>
         </div>
     `).join('');
 
-    // Запуск анимации (небольшая задержка чтобы CSS применился)
+    // Анимация
     setTimeout(() => {
-        // Ширина итема 90px + бордеры. Сдвигаем так, чтобы 40-й элемент встал по центру
-        // Центр контейнера (150px) - (40 * 90px)
-        const itemWidth = 91; // 90px ширина + 1px бордер
-        const offset = (winIndex * itemWidth) - (300 / 2) + (itemWidth / 2);
+        const itemWidth = 91; // 90px + 1px border
+        // Центрирование: (индекс * ширина) - (половина экрана) + (половина предмета)
+        // Ширина видимой области ~300px (зависит от CSS)
+        const offset = (winIndex * itemWidth) - (document.querySelector('.roulette-window').clientWidth / 2) + (itemWidth / 2);
+        const random = Math.floor(Math.random() * 40) - 20;
+
+        strip.style.transition = 'transform 5s cubic-bezier(0.15, 0.9, 0.3, 1)';
+        strip.style.transform = `translateX(-${offset + random}px)`;
         
-        // Добавляем немного рандома чтобы стрелка не всегда была ровно в центре
-        const randomOffset = Math.floor(Math.random() * 40) - 20;
+        tg.HapticFeedback.impactOccurred('medium');
+    }, 100);
 
-        track.style.transition = 'transform 4s cubic-bezier(0.1, 1, 0.3, 1)'; // Эффект замедления
-        track.style.transform = `translateX(-${offset + randomOffset}px)`;
-    }, 50);
-
-    // Показ результата после анимации
+    // Результат
     setTimeout(() => {
-        showWin(currentWinItem);
-    }, 4100);
+        showWinScreen(pendingItem);
+    }, 5200);
 }
 
-function generateRandomItems(count) {
-    const items = [];
-    const names = ["BMW M5", "Lada Priora", "1000 BC", "Skin", "Exp", "Rubles"];
-    for(let i=0; i<count; i++) {
-        let val = Math.floor(Math.random() * 2000) + 100; // Цена предмета от 100 до 2100
-        items.push({
-            name: names[Math.floor(Math.random() * names.length)],
-            price: val
-        });
-    }
-    return items;
+function generateDrop(count) {
+    const drops = [
+        { name: "100 BC", price: 100 },
+        { name: "Toyota Camry", price: 1500 },
+        { name: "BMW M5 F90", price: 5000 },
+        { name: "Exp x2", price: 50 },
+        { name: "Skin: Bomzh", price: 10 },
+        { name: "Lada Vesta", price: 400 }
+    ];
+    let res = [];
+    for(let i=0; i<count; i++) res.push(drops[Math.floor(Math.random() * drops.length)]);
+    return res;
 }
 
-function showWin(item) {
-    document.getElementById('win-display').style.display = 'block';
-    document.getElementById('win-name').innerText = item.name;
-    document.getElementById('win-price').innerText = item.price;
-    document.getElementById('modal-title').innerText = "Успех!";
+function showWinScreen(item) {
+    closeModal('modal-roulette');
+    const winModal = document.getElementById('modal-win');
     
-    // Вибрация телефона (функция ТГ)
+    document.getElementById('win-name').innerText = item.name;
+    document.getElementById('win-sell-price').innerText = item.price;
+    // document.getElementById('win-img').src = ... 
+    
+    winModal.style.display = 'flex';
     tg.HapticFeedback.notificationOccurred('success');
+    
+    // Эффект конфетти можно добавить сюда
 }
 
-function closeModal() {
-    if(currentWinItem) {
-        // Если закрыли, значит забрали в инвентарь
-        user.inventory.push(currentWinItem);
-        // Не добавляем в баланс, предмет лежит вещью
-        saveUser();
-        currentWinItem = null;
+function finishWin(keep) {
+    if (!pendingItem) return;
+
+    if (keep) {
+        user.inventory.push(pendingItem);
+    } else {
+        user.balance += pendingItem.price;
+        user.history.push({ action: `Продажа: ${pendingItem.name}`, amount: pendingItem.price });
     }
-    document.getElementById('open-modal').style.display = 'none';
-}
-
-function sellItem() {
-    if(currentWinItem) {
-        user.balance += currentWinItem.price;
-        user.history.push({ action: `Продажа ${currentWinItem.name}`, amount: currentWinItem.price });
-        saveUser();
-        currentWinItem = null;
-    }
-    document.getElementById('open-modal').style.display = 'none';
-    tg.showAlert("Предмет продан!");
-}
-
-function addBalance(amount) {
-    user.balance += amount;
-    user.history.push({ action: "Пополнение", amount: amount });
+    
     saveUser();
+    closeModal('modal-win');
+    pendingItem = null;
+}
+
+// --- ПОПОЛНЕНИЕ (ИМИТАЦИЯ TELEGRAM STARS) ---
+
+function buyCurrency(amount, stars) {
+    // В реальном приложении здесь отправляется запрос на ваш сервер, 
+    // который возвращает ссылку на инвойс (tg.openInvoice).
+    
+    tg.showConfirm(`Купить ${amount} BC за ${stars} Stars? (Тестовая оплата)`, (confirmed) => {
+        if(confirmed) {
+            // Имитация задержки обработки
+            tg.MainButton.showProgress();
+            tg.MainButton.setText("Обработка...");
+            tg.MainButton.show();
+            
+            setTimeout(() => {
+                user.balance += amount;
+                user.history.push({ action: "Пополнение Stars", amount: amount });
+                saveUser();
+                
+                tg.MainButton.hideProgress();
+                tg.MainButton.hide();
+                tg.showAlert(`Успешно! Начислено ${amount} BC.`);
+            }, 1500);
+        }
+    });
 }

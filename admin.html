@@ -3,72 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - BR Cases</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Admin Panel - BR</title>
+    <style>
+        body { background: #121212; color: white; font-family: monospace; padding: 20px; }
+        input, button { padding: 10px; margin: 5px 0; width: 100%; box-sizing: border-box; background: #222; border: 1px solid #444; color: white; }
+        button { background: #FFD700; color: black; font-weight: bold; cursor: pointer; border: none; }
+        button:hover { opacity: 0.9; }
+        .card { background: #1e1e1e; padding: 15px; margin-bottom: 20px; border: 1px solid #333; }
+        h3 { border-bottom: 1px solid #444; padding-bottom: 5px; color: #FFD700; }
+        .user-row { display: flex; justify-content: space-between; padding: 5px; background: #111; margin-bottom: 2px; }
+    </style>
 </head>
-<body style="padding: 20px;">
+<body>
 
-    <h2>Админ Панель</h2>
-    <p>Добавление нового кейса</p>
+    <h2>ADMIN CONTROL</h2>
 
-    <div class="admin-form">
-        <input type="text" id="case-name" placeholder="Название кейса (напр. BMW Case)">
-        <input type="number" id="case-price" placeholder="Цена открытия (напр. 500)">
-        <input type="text" id="case-img" placeholder="Ссылка на картинку кейса">
-        
-        <button class="btn-main" onclick="addCase()">Добавить кейс</button>
-        <button class="btn-main" style="background: #d32f2f; margin-top: 10px;" onclick="resetData()">Сбросить ВСЕ данные</button>
+    <div class="card">
+        <h3>Управление Кейсами</h3>
+        <input type="text" id="c-name" placeholder="Название (напр. Super Case)">
+        <input type="number" id="c-price" placeholder="Цена (BC)">
+        <input type="text" id="c-img" placeholder="URL картинки">
+        <input type="text" id="c-desc" placeholder="Описание">
+        <button onclick="addCase()">Добавить кейс</button>
+        <button style="background: #d32f2f; color: white;" onclick="clearCases()">Удалить все кейсы</button>
     </div>
 
-    <h3>Список активных кейсов:</h3>
-    <div id="admin-cases-list"></div>
+    <div class="card">
+        <h3>Список Игроков (Локально)</h3>
+        <div id="users-list"></div>
+    </div>
+    
+    <div class="card">
+        <h3>Редактор Баланса</h3>
+        <input type="number" id="target-id" placeholder="Telegram ID игрока">
+        <input type="number" id="target-amount" placeholder="Сумма (+ или -)">
+        <button onclick="modifyBalance()">Изменить баланс</button>
+    </div>
 
-    <script src="script.js"></script>
+    <div class="card">
+        <h3>Дистрибутив</h3>
+        <button onclick="copyScripts()">Скопировать JS код (в буфер)</button>
+    </div>
+
     <script>
-        // Небольшой инлайн скрипт специально для админки, 
-        // использующий функции из основного script.js
-        document.addEventListener('DOMContentLoaded', () => {
-            renderAdminCases();
-        });
+        const CASES_KEY = 'br_cases_data';
+        const DB_PREFIX = 'br_user_';
+
+        document.addEventListener('DOMContentLoaded', loadUsers);
 
         function addCase() {
-            const name = document.getElementById('case-name').value;
-            const price = parseInt(document.getElementById('case-price').value);
-            const img = document.getElementById('case-img').value || 'https://via.placeholder.com/80?text=Case';
+            const name = document.getElementById('c-name').value;
+            const price = +document.getElementById('c-price').value;
+            const img = document.getElementById('c-img').value || 'https://via.placeholder.com/100';
+            const desc = document.getElementById('c-desc').value;
 
-            if(!name || !price) return alert('Заполните поля');
+            if(!name || !price) return alert("Заполни поля");
 
-            let cases = JSON.parse(localStorage.getItem('br_cases')) || [];
-            cases.push({
-                id: Date.now(),
-                name: name,
-                price: price,
-                img: img
-            });
-
-            localStorage.setItem('br_cases', JSON.stringify(cases));
-            alert('Кейс добавлен!');
-            renderAdminCases();
+            let cases = JSON.parse(localStorage.getItem(CASES_KEY) || '[]');
+            cases.push({ id: Date.now(), name, price, img, desc });
+            localStorage.setItem(CASES_KEY, JSON.stringify(cases));
+            alert("Кейс добавлен!");
         }
 
-        function renderAdminCases() {
-            const list = document.getElementById('admin-cases-list');
-            const cases = JSON.parse(localStorage.getItem('br_cases')) || [];
-            list.innerHTML = cases.map(c => `<div class="list-item">${c.name} - ${c.price} BC <button onclick="deleteCase(${c.id})">X</button></div>`).join('');
+        function clearCases() {
+            localStorage.removeItem(CASES_KEY);
+            alert("Кейсы сброшены до стандартных");
         }
 
-        function deleteCase(id) {
-            let cases = JSON.parse(localStorage.getItem('br_cases')) || [];
-            cases = cases.filter(c => c.id !== id);
-            localStorage.setItem('br_cases', JSON.stringify(cases));
-            renderAdminCases();
-        }
-
-        function resetData() {
-            if(confirm('Удалить все кейсы и данные пользователей?')) {
-                localStorage.clear();
-                location.reload();
+        function loadUsers() {
+            const list = document.getElementById('users-list');
+            list.innerHTML = '';
+            
+            // Проходимся по всем ключам localStorage
+            for(let i=0; i<localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if(key.startsWith(DB_PREFIX)) {
+                    const uid = key.replace(DB_PREFIX, '');
+                    const userData = JSON.parse(localStorage.getItem(key));
+                    
+                    list.innerHTML += `
+                        <div class="user-row">
+                            <span>UID: #${userData.uid || '?'} (TG: ${uid})</span>
+                            <span style="color: gold">${userData.balance} BC</span>
+                        </div>
+                    `;
+                }
             }
+        }
+
+        function modifyBalance() {
+            const tgId = document.getElementById('target-id').value;
+            const amount = parseInt(document.getElementById('target-amount').value);
+            
+            const key = DB_PREFIX + tgId;
+            const userData = JSON.parse(localStorage.getItem(key));
+            
+            if(!userData) return alert("Пользователь не найден (он должен хотя бы раз зайти)");
+            
+            userData.balance += amount;
+            userData.history.push({ action: "Admin Change", amount: amount });
+            localStorage.setItem(key, JSON.stringify(userData));
+            
+            alert(`Баланс изменен. Теперь: ${userData.balance}`);
+            loadUsers();
+        }
+
+        function copyScripts() {
+            // Просто пример заглушки, так как скрипт огромный
+            alert("Чтобы скопировать файлы, скачайте их из сообщения чата.");
         }
     </script>
 </body>

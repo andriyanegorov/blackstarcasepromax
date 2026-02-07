@@ -72,6 +72,24 @@ function updateUI() {
 // URL твоего развернутого Google Script
 const API_URL = "https://script.google.com/macros/s/AKfycbxchWD4KsXBbWrw-lMhxHUHOL6ZaI9Jf1AVeUNTQC7w5A1NgXKauLoNnF48S35noAfn/exec";
 
+// --- Payment Logic (FIXED) ---
+
+// Функция инициализации оплаты (ее не было в оригинале)
+function initYooPayment(amount) {
+    // Генерируем уникальную метку заказа
+    const label = `order_${user.uid}_${Date.now()}`;
+    
+    // Заполняем скрытую форму
+    document.getElementById('yoo-sum').value = amount;
+    document.getElementById('yoo-label').value = label;
+    
+    // Сообщаем пользователю (опционально)
+    tg.HapticFeedback.impactOccurred('light');
+    
+    // Отправляем форму (откроется окно оплаты)
+    document.getElementById('yoo-form').submit();
+}
+
 function checkPaymentStatus(orderId) {
     // Показываем лоадер
     tg.MainButton.showProgress();
@@ -81,7 +99,7 @@ function checkPaymentStatus(orderId) {
         .then(data => {
             if (data.status === "success") {
                 tg.showAlert("Оплата получена! Баланс пополнен.");
-                // Тут логика начисления баланса (например, берем сумму из текущего окна оплаты)
+                // Тут логика начисления баланса
                 const amount = parseInt(document.getElementById('yoo-sum').value);
                 user.balance += amount;
                 saveUser();
@@ -93,21 +111,24 @@ function checkPaymentStatus(orderId) {
         })
         .catch(err => {
             console.error(err);
-            tg.showAlert("Ошибка проверки. Обратитесь в поддержку.");
+            tg.showAlert("Ошибка соединения. Проверьте интернет или скрипт.");
             tg.MainButton.hideProgress();
         });
 }
 
-// Изменим функцию в кнопке "Я оплатил"
+// Функция кнопки "Я оплатил"
 function checkFakePayment() {
     const currentLabel = document.getElementById('yoo-label').value;
-    if(!currentLabel) return tg.showAlert("Сначала создайте счет");
+    
+    if(!currentLabel) {
+        return tg.showAlert("Сначала выберите сумму и создайте счет");
+    }
+    
     checkPaymentStatus(currentLabel);
 }
 
 // --- Cases & Roulette ---
 function initCases() {
-    // Можно редактировать список кейсов тут
     cases = [
         { id: 1, name: "Бомж Старт", price: 100, img: "https://cdn-icons-png.flaticon.com/512/1995/1995493.png" },
         { id: 2, name: "Автокейс", price: 500, img: "https://cdn-icons-png.flaticon.com/512/3062/3062634.png" },
@@ -175,8 +196,6 @@ function startRoulette() {
         const cardCenter = CARD_WIDTH / 2;
         
         // Считаем сдвиг: чтобы 75-й элемент встал по центру экрана
-        // Формула: (Index * Width) - (HalfScreen) + (HalfCard)
-        // Добавляем Random +/- 30px для реализма
         const randomOffset = Math.floor(Math.random() * 50) - 25;
         const targetPos = (winIndex * CARD_WIDTH) - screenCenter + cardCenter + randomOffset;
         
@@ -191,7 +210,7 @@ function startRoulette() {
             ticks++;
             if(ticks > 30) clearInterval(interval);
             tg.HapticFeedback.impactOccurred('light');
-        }, 150 + (ticks * 10)); // Увеличение интервала (замедление звука)
+        }, 150 + (ticks * 10)); 
         
         // Финиш
         setTimeout(() => {
@@ -203,7 +222,6 @@ function startRoulette() {
 
 // Генератор предметов (зависит от цены кейса)
 function getRandomItem(casePrice) {
-    // Шансы: чем дороже кейс, тем лучше дроп (простая логика)
     const items = [
         { name: "BMW M5 F90", price: 5000, img: "https://cdn-icons-png.flaticon.com/512/3202/3202926.png", rarity: "rarity-legendary" },
         { name: "Lada Priora", price: 200, img: "https://cdn-icons-png.flaticon.com/512/1995/1995493.png", rarity: "rarity-common" },

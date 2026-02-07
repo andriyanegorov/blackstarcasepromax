@@ -37,7 +37,18 @@ header { display: flex; justify-content: space-between; padding: 16px; backgroun
     display: flex; align-items: center; gap: 8px; 
     font-size: 13px; font-weight: 600; 
     border: 1px solid rgba(255,255,255,0.05); 
+    cursor: pointer;
 }
+
+/* --- ИСПРАВЛЕНИЕ АВАТАРКИ --- */
+#header-avatar {
+    width: 28px;       /* Фиксированная ширина */
+    height: 28px;      /* Фиксированная высота */
+    border-radius: 50%; /* Круглая форма */
+    object-fit: cover; /* Обрезка картинки, чтобы не плющило */
+    display: block;
+}
+
 .balance-pill { color: var(--gold); border-color: rgba(255, 215, 0, 0.2); }
 .uid-tag { font-size: 10px; color: var(--accent); display: block; }
 .add-btn { background: var(--gold); color: black; width: 18px; height: 18px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; }
@@ -82,8 +93,8 @@ header { display: flex; justify-content: space-between; padding: 16px; backgroun
 .nav-btn.active .icon { filter: grayscale(0); transform: translateY(-3px); }
 
 /* Buttons */
-.btn-main { background: var(--gold); border: none; width: 100%; padding: 14px; border-radius: 12px; font-weight: 900; font-size: 16px; text-transform: uppercase; color: black; margin-top: 10px; box-shadow: 0 4px 15px rgba(255,215,0,0.3); }
-.btn-sec { background: #333; color: white; border: none; width: 100%; padding: 14px; border-radius: 12px; font-weight: 600; }
+.btn-main { background: var(--gold); border: none; width: 100%; padding: 14px; border-radius: 12px; font-weight: 900; font-size: 16px; text-transform: uppercase; color: black; margin-top: 10px; box-shadow: 0 4px 15px rgba(255,215,0,0.3); cursor: pointer; }
+.btn-sec { background: #333; color: white; border: none; width: 100%; padding: 14px; border-radius: 12px; font-weight: 600; cursor: pointer; }
 .pulse-btn { animation: pulse 2s infinite; }
 @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); } }
 
@@ -132,7 +143,7 @@ header { display: flex; justify-content: space-between; padding: 16px; backgroun
 /* Modals */
 .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
 .modal-card { background: #181818; width: 85%; padding: 25px; border-radius: 24px; text-align: center; border: 1px solid #333; position: relative; }
-.close-icon { position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.1); border: none; color: white; width: 30px; height: 30px; border-radius: 50%; }
+.close-icon { position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.1); border: none; color: white; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; }
 .preview-case-img { width: 140px; margin: 20px auto; filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.1)); }
 .preview-price-tag { background: rgba(255, 215, 0, 0.1); color: var(--gold); display: inline-block; padding: 8px 16px; border-radius: 12px; font-weight: bold; margin-bottom: 20px; }
 .win-actions { display: flex; gap: 10px; margin-top: 20px; }

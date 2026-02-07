@@ -40,13 +40,12 @@ header { display: flex; justify-content: space-between; padding: 16px; backgroun
     cursor: pointer;
 }
 
-/* --- ИСПРАВЛЕНИЕ АВАТАРКИ --- */
+/* Аватарка */
 #header-avatar {
-    width: 28px;       /* Фиксированная ширина */
-    height: 28px;      /* Фиксированная высота */
-    border-radius: 50%; /* Круглая форма */
-    object-fit: cover; /* Обрезка картинки, чтобы не плющило */
-    display: block;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #333;
 }
 
 .balance-pill { color: var(--gold); border-color: rgba(255, 215, 0, 0.2); }
@@ -120,8 +119,9 @@ header { display: flex; justify-content: space-between; padding: 16px; backgroun
 
 .roulette-track { display: flex; height: 100%; will-change: transform; }
 
+/* Карточка в рулетке фиксированной ширины */
 .roulette-card {
-    min-width: 130px; height: 100%;
+    min-width: 130px; width: 130px; height: 100%;
     display: flex; flex-direction: column; justify-content: center; align-items: center;
     border-right: 1px solid rgba(255,255,255,0.05);
     background: linear-gradient(180deg, #1a1a1a, #0d0d0d);

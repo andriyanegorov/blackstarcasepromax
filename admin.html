@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - BR</title>
+    <title>Admin Panel - Local Storage</title>
     <style>
         body { background: #121212; color: white; font-family: monospace; padding: 20px; }
         input, button { padding: 10px; margin: 5px 0; width: 100%; box-sizing: border-box; background: #222; border: 1px solid #444; color: white; }
@@ -11,106 +11,74 @@
         button:hover { opacity: 0.9; }
         .card { background: #1e1e1e; padding: 15px; margin-bottom: 20px; border: 1px solid #333; }
         h3 { border-bottom: 1px solid #444; padding-bottom: 5px; color: #FFD700; }
-        .user-row { display: flex; justify-content: space-between; padding: 5px; background: #111; margin-bottom: 2px; }
+        .user-row { display: flex; justify-content: space-between; padding: 10px; background: #111; margin-bottom: 5px; border-left: 3px solid #FFD700; }
     </style>
 </head>
 <body>
 
-    <h2>ADMIN CONTROL</h2>
+    <h2>ADMIN CONTROL (Local)</h2>
+    <p style="color: #666; font-size: 12px;">Эта панель видит данные только в текущем браузере.</p>
 
     <div class="card">
-        <h3>Управление Кейсами</h3>
-        <input type="text" id="c-name" placeholder="Название (напр. Super Case)">
-        <input type="number" id="c-price" placeholder="Цена (BC)">
-        <input type="text" id="c-img" placeholder="URL картинки">
-        <input type="text" id="c-desc" placeholder="Описание">
-        <button onclick="addCase()">Добавить кейс</button>
-        <button style="background: #d32f2f; color: white;" onclick="clearCases()">Удалить все кейсы</button>
-    </div>
-
-    <div class="card">
-        <h3>Список Игроков (Локально)</h3>
+        <h3>Игрок на этом устройстве</h3>
         <div id="users-list"></div>
     </div>
     
     <div class="card">
         <h3>Редактор Баланса</h3>
-        <input type="number" id="target-id" placeholder="Telegram ID игрока">
         <input type="number" id="target-amount" placeholder="Сумма (+ или -)">
         <button onclick="modifyBalance()">Изменить баланс</button>
-    </div>
-
-    <div class="card">
-        <h3>Дистрибутив</h3>
-        <button onclick="copyScripts()">Скопировать JS код (в буфер)</button>
+        <button onclick="resetUser()" style="background: red; color: white; margin-top: 10px;">Сбросить данные игрока</button>
     </div>
 
     <script>
-        const CASES_KEY = 'br_cases_data';
-        const DB_PREFIX = 'br_user_';
+        // Ключ такой же, как в script.js
+        const DB_KEY = 'br_user_data';
 
-        document.addEventListener('DOMContentLoaded', loadUsers);
+        document.addEventListener('DOMContentLoaded', loadUser);
 
-        function addCase() {
-            const name = document.getElementById('c-name').value;
-            const price = +document.getElementById('c-price').value;
-            const img = document.getElementById('c-img').value || 'https://via.placeholder.com/100';
-            const desc = document.getElementById('c-desc').value;
-
-            if(!name || !price) return alert("Заполни поля");
-
-            let cases = JSON.parse(localStorage.getItem(CASES_KEY) || '[]');
-            cases.push({ id: Date.now(), name, price, img, desc });
-            localStorage.setItem(CASES_KEY, JSON.stringify(cases));
-            alert("Кейс добавлен!");
-        }
-
-        function clearCases() {
-            localStorage.removeItem(CASES_KEY);
-            alert("Кейсы сброшены до стандартных");
-        }
-
-        function loadUsers() {
+        function loadUser() {
             const list = document.getElementById('users-list');
             list.innerHTML = '';
             
-            // Проходимся по всем ключам localStorage
-            for(let i=0; i<localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if(key.startsWith(DB_PREFIX)) {
-                    const uid = key.replace(DB_PREFIX, '');
-                    const userData = JSON.parse(localStorage.getItem(key));
-                    
-                    list.innerHTML += `
-                        <div class="user-row">
-                            <span>UID: #${userData.uid || '?'} (TG: ${uid})</span>
-                            <span style="color: gold">${userData.balance} BC</span>
+            const saved = localStorage.getItem(DB_KEY);
+            if(saved) {
+                const u = JSON.parse(saved);
+                list.innerHTML = `
+                    <div class="user-row">
+                        <div>
+                            <div style="font-weight:bold">${u.name || 'Гость'}</div>
+                            <div style="font-size:12px; color:#888;">UID: ${u.uid}</div>
                         </div>
-                    `;
-                }
+                        <span style="color: gold; font-size: 18px;">${u.balance} ₽</span>
+                    </div>
+                    <div style="font-size: 12px; margin-top: 5px;">Инвентарь: ${u.inventory.length} шт.</div>
+                `;
+            } else {
+                list.innerHTML = "Данных нет. Зайдите в index.html хотя бы раз.";
             }
         }
 
         function modifyBalance() {
-            const tgId = document.getElementById('target-id').value;
             const amount = parseInt(document.getElementById('target-amount').value);
-            
-            const key = DB_PREFIX + tgId;
-            const userData = JSON.parse(localStorage.getItem(key));
-            
-            if(!userData) return alert("Пользователь не найден (он должен хотя бы раз зайти)");
-            
-            userData.balance += amount;
-            userData.history.push({ action: "Admin Change", amount: amount });
-            localStorage.setItem(key, JSON.stringify(userData));
-            
-            alert(`Баланс изменен. Теперь: ${userData.balance}`);
-            loadUsers();
+            if(isNaN(amount)) return;
+
+            const saved = localStorage.getItem(DB_KEY);
+            if(saved) {
+                const u = JSON.parse(saved);
+                u.balance += amount;
+                localStorage.setItem(DB_KEY, JSON.stringify(u));
+                alert(`Баланс изменен. Теперь: ${u.balance}`);
+                loadUser();
+            }
         }
 
-        function copyScripts() {
-            // Просто пример заглушки, так как скрипт огромный
-            alert("Чтобы скопировать файлы, скачайте их из сообщения чата.");
+        function resetUser() {
+            if(confirm("Удалить весь прогресс?")) {
+                localStorage.removeItem(DB_KEY);
+                alert("Сброшено!");
+                loadUser();
+            }
         }
     </script>
 </body>

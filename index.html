@@ -15,7 +15,7 @@
             <div class="user-pill" onclick="openProfileModal()">
                 <img id="header-avatar" src="https://via.placeholder.com/40" alt="Ava">
                 <div class="user-text">
-                    <span id="header-name">Игрок</span>
+                    <span id="header-name">Загрузка...</span>
                     <span class="uid-tag">UID: <span id="header-uid">...</span></span>
                 </div>
             </div>
@@ -28,7 +28,7 @@
         <main>
             <div id="tab-cases" class="section active">
                 <div class="hero-banner">
-                    <h1>Exclusive Garage</h1>
+                    <h1>Главное меню</h1>
                     <p>Открывай кейсы, выбивай эксклюзив</p>
                 </div>
                 <div class="cases-grid" id="cases-container"></div>
@@ -57,24 +57,16 @@
                     </div>
                 </div>
                 
-                <form id="yoo-form" method="POST" action="https://yoomoney.ru/quickpay/confirm.xml" target="_blank">
-                    <input type="hidden" name="receiver" value="4100117889685528"> 
-                    <input type="hidden" name="label" id="yoo-label" value="">
-                    <input type="hidden" name="quickpay-form" value="shop">
-                    <input type="hidden" name="targets" value="Пополнение баланса">
-                    <input type="hidden" name="sum" id="yoo-sum" value="100" data-type="number">
-                    <input type="hidden" name="paymentType" value="SB"> 
-                </form>
-
                 <div class="payment-check">
-                    <p>После оплаты нажмите кнопку ниже для проверки (Демо режим)</p>
-                    <button class="btn-sec" onclick="checkFakePayment()">Я ОПЛАТИЛ</button>
+                    <p id="payment-msg">Нажмите на сумму для оплаты</p>
+                    <button class="btn-sec" onclick="checkFakePayment()">Я ОПЛАТИЛ (ТЕСТ)</button>
                 </div>
             </div>
 
             <div id="tab-inventory" class="section">
                 <h2>Мой Гараж</h2>
                 <div id="inventory-grid" class="inventory-grid"></div>
+                <p id="empty-inventory" style="text-align:center; color:#666; display:none;">Пусто...</p>
             </div>
         </main>
 
@@ -107,12 +99,9 @@
         
         <div class="roulette-ui-container">
             <div class="pointer-top">▼</div>
-            
             <div class="roulette-window">
-                <div class="roulette-track" id="roulette-track">
-                    </div>
+                <div class="roulette-track" id="roulette-track"></div>
             </div>
-            
             <div class="pointer-bottom">▲</div>
         </div>
 
@@ -138,13 +127,12 @@
         <div class="modal-card">
             <button class="close-icon" onclick="closeModal('modal-profile')">✕</button>
             <h3>Профиль Игрока</h3>
-            <div class="stat-row"><span>ID:</span> <span id="profile-id"></span></div>
-            <div class="stat-row"><span>UID:</span> <span id="profile-uid" style="color:var(--accent)"></span></div>
-            <div class="stat-row"><span>Баланс:</span> <span id="profile-bal" style="color: gold"></span></div>
+            <div class="stat-row"><span>Имя:</span> <span id="profile-id">Loading...</span></div>
+            <div class="stat-row"><span>UID:</span> <span id="profile-uid" style="color:var(--accent)">...</span></div>
+            <div class="stat-row"><span>Баланс:</span> <span id="profile-bal" style="color: gold">0</span></div>
         </div>
     </div>
 
     <script src="script.js"></script>
 </body>
-
 </html>

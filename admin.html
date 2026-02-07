@@ -3,82 +3,233 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Local Storage</title>
+    <title>BR Admin Panel</title>
     <style>
-        body { background: #121212; color: white; font-family: monospace; padding: 20px; }
-        input, button { padding: 10px; margin: 5px 0; width: 100%; box-sizing: border-box; background: #222; border: 1px solid #444; color: white; }
-        button { background: #FFD700; color: black; font-weight: bold; cursor: pointer; border: none; }
-        button:hover { opacity: 0.9; }
-        .card { background: #1e1e1e; padding: 15px; margin-bottom: 20px; border: 1px solid #333; }
-        h3 { border-bottom: 1px solid #444; padding-bottom: 5px; color: #FFD700; }
-        .user-row { display: flex; justify-content: space-between; padding: 10px; background: #111; margin-bottom: 5px; border-left: 3px solid #FFD700; }
+        body { background: #121212; color: #eee; font-family: monospace; padding: 20px; margin: 0; }
+        h2, h3 { color: #FFD700; margin-top: 0; }
+        .container { display: grid; grid-template-columns: 300px 1fr; gap: 20px; }
+        .sidebar { background: #1e1e1e; padding: 15px; border: 1px solid #333; height: fit-content; }
+        .editor { background: #1e1e1e; padding: 15px; border: 1px solid #333; }
+        
+        button { cursor: pointer; padding: 8px; border: none; font-weight: bold; width: 100%; margin-bottom: 5px; }
+        .btn-green { background: #4CAF50; color: white; }
+        .btn-red { background: #ff4d4d; color: white; }
+        .btn-gold { background: #FFD700; color: black; }
+        .btn-item { background: #333; color: white; text-align: left; border-bottom: 1px solid #444; }
+        .btn-item:hover { background: #444; }
+        .btn-item.active { background: #7C4DFF; }
+
+        input, select { width: 100%; padding: 8px; margin-bottom: 10px; background: #222; border: 1px solid #555; color: white; box-sizing: border-box; }
+        label { display: block; font-size: 12px; color: #aaa; margin-bottom: 3px; }
+        
+        .item-row { display: grid; grid-template-columns: 50px 2fr 1fr 2fr 50px; gap: 10px; align-items: center; background: #252525; padding: 5px; margin-bottom: 5px; border-left: 5px solid #555; }
+        .item-img-preview { width: 40px; height: 30px; object-fit: contain; background: #000; }
+        
+        .export-area { width: 100%; height: 150px; background: #000; color: #0f0; border: 1px solid #333; font-size: 11px; margin-top: 10px; }
+        
+        /* Цвета редкости в админке */
+        .border-consumer { border-left-color: #B0B0B0; }
+        .border-common { border-left-color: #4CAF50; }
+        .border-rare { border-left-color: #2196F3; }
+        .border-epic { border-left-color: #9C27B0; }
+        .border-legendary { border-left-color: #FFD700; }
     </style>
 </head>
 <body>
 
-    <h2>ADMIN CONTROL (Local)</h2>
-    <p style="color: #666; font-size: 12px;">Эта панель видит данные только в текущем браузере.</p>
-
-    <div class="card">
-        <h3>Игрок на этом устройстве</h3>
-        <div id="users-list"></div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h2>⚙️ ADMIN PANEL (Rarity System)</h2>
+        <button onclick="exportConfig()" class="btn-gold" style="width: auto; padding: 10px 30px;">СКОПИРОВАТЬ КОНФИГ</button>
     </div>
-    
-    <div class="card">
-        <h3>Редактор Баланса</h3>
-        <input type="number" id="target-amount" placeholder="Сумма (+ или -)">
-        <button onclick="modifyBalance()">Изменить баланс</button>
-        <button onclick="resetUser()" style="background: red; color: white; margin-top: 10px;">Сбросить данные игрока</button>
+
+    <div class="container">
+        <div class="sidebar">
+            <h3>Список Кейсов</h3>
+            <div id="cases-list"></div>
+            <button class="btn-green" onclick="addNewCase()">+ Новый Кейс</button>
+        </div>
+
+        <div class="editor" id="editor-area" style="display:none;">
+            <h3>Редактирование Кейса</h3>
+            
+            <label>Название кейса:</label>
+            <input type="text" id="case-name" oninput="updateCaseMeta()">
+            
+            <label>Стоимость открытия (₽):</label>
+            <input type="number" id="case-price" oninput="updateCaseMeta()">
+            
+            <label>Картинка кейса (URL):</label>
+            <input type="text" id="case-img" oninput="updateCaseMeta()">
+            <img id="case-img-preview" src="" style="height: 60px; display: block; margin-bottom: 15px;">
+
+            <div style="border-top: 1px solid #444; padding-top: 10px; margin-top: 10px;">
+                <div style="display:flex; justify-content:space-between;">
+                    <h3>Предметы внутри</h3>
+                    <button class="btn-green" style="width:auto;" onclick="addItem()">+ Предмет</button>
+                </div>
+                <div style="display:grid; grid-template-columns: 50px 2fr 1fr 2fr 50px; gap:10px; font-size:10px; color:#888; margin-bottom:5px;">
+                    <span>IMG</span>
+                    <span>Название</span>
+                    <span>Цена</span>
+                    <span>Редкость</span>
+                    <span>Удал.</span>
+                </div>
+                <div id="items-container"></div>
+            </div>
+
+            <button class="btn-red" style="margin-top: 20px;" onclick="deleteCurrentCase()">Удалить Кейс</button>
+        </div>
+    </div>
+
+    <div style="margin-top: 30px;">
+        <h3>Результат (Вставить в script.js):</h3>
+        <textarea id="output-json" class="export-area" readonly></textarea>
     </div>
 
     <script>
-        // Ключ такой же, как в script.js
-        const DB_KEY = 'br_user_data';
+        // Исходные данные
+        let gameData = [
+            { 
+                id: 1, 
+                name: "Бомж Старт", 
+                price: 15, 
+                img: "https://cdn-icons-png.flaticon.com/512/1995/1995493.png",
+                items: [
+                    { name: "Lada Priora", price: 200, img: "https://cdn-icons-png.flaticon.com/512/1995/1995493.png", rarity: "consumer" },
+                    { name: "Skin: Bomzh", price: 20, img: "https://cdn-icons-png.flaticon.com/512/4825/4825038.png", rarity: "consumer" },
+                    { name: "BMW M5", price: 5000, img: "https://cdn-icons-png.flaticon.com/512/3202/3202926.png", rarity: "legendary" }
+                ]
+            }
+        ];
 
-        document.addEventListener('DOMContentLoaded', loadUser);
+        let currentCaseIdx = -1;
 
-        function loadUser() {
-            const list = document.getElementById('users-list');
+        const saved = localStorage.getItem('admin_game_config_v2');
+        if(saved) gameData = JSON.parse(saved);
+
+        renderCasesList();
+        exportConfig(); 
+
+        function renderCasesList() {
+            const list = document.getElementById('cases-list');
             list.innerHTML = '';
+            gameData.forEach((c, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `btn-item ${idx === currentCaseIdx ? 'active' : ''}`;
+                btn.innerText = c.name;
+                btn.onclick = () => selectCase(idx);
+                list.appendChild(btn);
+            });
+        }
+
+        function selectCase(idx) {
+            currentCaseIdx = idx;
+            renderCasesList();
+            const c = gameData[idx];
             
-            const saved = localStorage.getItem(DB_KEY);
-            if(saved) {
-                const u = JSON.parse(saved);
-                list.innerHTML = `
-                    <div class="user-row">
-                        <div>
-                            <div style="font-weight:bold">${u.name || 'Гость'}</div>
-                            <div style="font-size:12px; color:#888;">UID: ${u.uid}</div>
-                        </div>
-                        <span style="color: gold; font-size: 18px;">${u.balance} ₽</span>
-                    </div>
-                    <div style="font-size: 12px; margin-top: 5px;">Инвентарь: ${u.inventory.length} шт.</div>
+            document.getElementById('editor-area').style.display = 'block';
+            document.getElementById('case-name').value = c.name;
+            document.getElementById('case-price').value = c.price;
+            document.getElementById('case-img').value = c.img;
+            document.getElementById('case-img-preview').src = c.img;
+            
+            renderItems(c.items);
+        }
+
+        function renderItems(items) {
+            const container = document.getElementById('items-container');
+            container.innerHTML = '';
+            
+            items.forEach((item, idx) => {
+                const row = document.createElement('div');
+                row.className = `item-row border-${item.rarity}`;
+                row.innerHTML = `
+                    <img src="${item.img}" class="item-img-preview">
+                    <input type="text" value="${item.name}" onchange="updateItem(${idx}, 'name', this.value)">
+                    <input type="number" value="${item.price}" onchange="updateItem(${idx}, 'price', this.value)">
+                    <select onchange="updateItem(${idx}, 'rarity', this.value)">
+                        <option value="consumer" ${item.rarity==='consumer'?'selected':''}>Ширпотреб (60%) - Серый</option>
+                        <option value="common" ${item.rarity==='common'?'selected':''}>Обычный (20%) - Зеленый</option>
+                        <option value="rare" ${item.rarity==='rare'?'selected':''}>Редкий (11%) - Синий</option>
+                        <option value="epic" ${item.rarity==='epic'?'selected':''}>Эпический (8%) - Фиол</option>
+                        <option value="legendary" ${item.rarity==='legendary'?'selected':''}>Легендарный (1%) - Желтый</option>
+                    </select>
+                    <button class="btn-red" style="width:30px; padding:5px;" onclick="deleteItem(${idx})">x</button>
+                    
+                    <input type="text" value="${item.img}" placeholder="URL картинки" 
+                           style="grid-column: 1 / -1; margin-top:5px; font-size:10px; color:#aaa;" 
+                           onchange="updateItem(${idx}, 'img', this.value)">
                 `;
-            } else {
-                list.innerHTML = "Данных нет. Зайдите в index.html хотя бы раз.";
-            }
+                container.appendChild(row);
+            });
         }
 
-        function modifyBalance() {
-            const amount = parseInt(document.getElementById('target-amount').value);
-            if(isNaN(amount)) return;
-
-            const saved = localStorage.getItem(DB_KEY);
-            if(saved) {
-                const u = JSON.parse(saved);
-                u.balance += amount;
-                localStorage.setItem(DB_KEY, JSON.stringify(u));
-                alert(`Баланс изменен. Теперь: ${u.balance}`);
-                loadUser();
-            }
+        function updateCaseMeta() {
+            if(currentCaseIdx === -1) return;
+            gameData[currentCaseIdx].name = document.getElementById('case-name').value;
+            gameData[currentCaseIdx].price = parseInt(document.getElementById('case-price').value) || 0;
+            gameData[currentCaseIdx].img = document.getElementById('case-img').value;
+            document.getElementById('case-img-preview').src = gameData[currentCaseIdx].img;
+            renderCasesList();
+            save();
         }
 
-        function resetUser() {
-            if(confirm("Удалить весь прогресс?")) {
-                localStorage.removeItem(DB_KEY);
-                alert("Сброшено!");
-                loadUser();
-            }
+        function updateItem(itemIdx, field, value) {
+            if(field === 'price') value = parseInt(value) || 0;
+            gameData[currentCaseIdx].items[itemIdx][field] = value;
+            renderItems(gameData[currentCaseIdx].items);
+            save();
+        }
+
+        function addItem() {
+            if(currentCaseIdx === -1) return;
+            gameData[currentCaseIdx].items.push({
+                name: "Новый Предмет",
+                price: 100,
+                img: "https://via.placeholder.com/50",
+                rarity: "consumer"
+            });
+            renderItems(gameData[currentCaseIdx].items);
+            save();
+        }
+
+        function deleteItem(itemIdx) {
+            if(!confirm("Удалить предмет?")) return;
+            gameData[currentCaseIdx].items.splice(itemIdx, 1);
+            renderItems(gameData[currentCaseIdx].items);
+            save();
+        }
+
+        function addNewCase() {
+            gameData.push({
+                id: Date.now(),
+                name: "New Case",
+                price: 1000,
+                img: "https://via.placeholder.com/100",
+                items: []
+            });
+            selectCase(gameData.length - 1);
+            save();
+        }
+
+        function deleteCurrentCase() {
+            if(!confirm("Удалить этот кейс?")) return;
+            gameData.splice(currentCaseIdx, 1);
+            currentCaseIdx = -1;
+            document.getElementById('editor-area').style.display = 'none';
+            renderCasesList();
+            save();
+        }
+
+        function save() {
+            localStorage.setItem('admin_game_config_v2', JSON.stringify(gameData));
+            exportConfig();
+        }
+
+        function exportConfig() {
+            const json = JSON.stringify(gameData, null, 4);
+            const str = `const GAME_CONFIG = ${json};`;
+            document.getElementById('output-json').value = str;
         }
     </script>
 </body>

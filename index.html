@@ -10,7 +10,7 @@
 </head>
 <body>
 
-    <div id="app">
+    <div id="blur-container">
         <header>
             <div class="user-pill" onclick="openProfileModal()">
                 <img id="header-avatar" src="https://via.placeholder.com/40" alt="Ava">
@@ -63,47 +63,62 @@
             </div>
 
             <div id="tab-inventory" class="section">
-                <h2>Мой Гараж</h2>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h2 style="margin:0;">Мой Гараж</h2>
+                    <button id="btn-sell-all" class="btn-small-danger" onclick="sellAllItems()" style="display:none;">ПРОДАТЬ ВСЁ</button>
+                </div>
+                
                 <div id="inventory-grid" class="inventory-grid"></div>
-                <p id="empty-inventory" style="text-align:center; color:#666; display:none;">Пусто...</p>
+                <p id="empty-inventory" style="text-align:center; color:#666; display:none; margin-top:50px;">
+                    В гараже пусто...<br>
+                    <span style="font-size:12px; opacity:0.7">Откройте кейс, чтобы получить авто</span>
+                </p>
             </div>
         </main>
-
-        <nav class="bottom-nav">
-            <button class="nav-btn active" onclick="switchTab('cases')">
-                <span class="icon">📦</span> Кейсы
-            </button>
-            <button class="nav-btn" onclick="switchTab('shop')">
-                <span class="icon">💳</span> Баланс
-            </button>
-            <button class="nav-btn" onclick="switchTab('inventory')">
-                <span class="icon">🚗</span> Гараж
-            </button>
-        </nav>
-    </div>
+    </div> 
+    <nav class="bottom-nav">
+        <button class="nav-btn active" onclick="switchTab('cases')">
+            <span class="icon">📦</span> 
+            <span>Кейсы</span>
+        </button>
+        <button class="nav-btn" onclick="switchTab('shop')">
+            <span class="icon">💳</span> 
+            <span>Баланс</span>
+        </button>
+        <button class="nav-btn" onclick="switchTab('inventory')">
+            <span class="icon">🚗</span> 
+            <span>Гараж</span>
+        </button>
+    </nav>
 
     <div class="modal-overlay" id="modal-preview">
-        <div class="modal-card slide-up">
+        <div class="modal-card slide-up" style="justify-content: flex-start;">
             <button class="close-icon" onclick="closeModal('modal-preview')">✕</button>
-            <div class="case-glow-bg"></div>
-            <img id="preview-img" src="" class="preview-case-img">
-            <h2 id="preview-title">Case Name</h2>
-            <div class="preview-price-tag" id="preview-price">500 ₽</div>
-            <button class="btn-main pulse-btn" id="btn-start-open">ОТКРЫТЬ КЕЙС</button>
+            
+            <div class="preview-header">
+                <img id="preview-img" src="" class="preview-case-img">
+                <h2 id="preview-title" style="margin: 5px 0 10px;">Case Name</h2>
+                <div class="preview-price-tag" id="preview-price">500 ₽</div>
+            </div>
+
+            <div style="font-size: 12px; color: #888; margin-bottom: 5px; text-align: left;">Содержимое кейса:</div>
+            
+            <div class="preview-grid-container">
+                <div class="preview-grid" id="preview-items-container"></div>
+            </div>
+
+            <button class="btn-main pulse-btn" id="btn-start-open">ОТКРЫТЬ</button>
         </div>
     </div>
 
     <div class="roulette-fullscreen" id="modal-roulette">
-        <div class="roulette-overlay-bg"></div>
-        
         <div class="roulette-ui-container">
-            <div class="pointer-top">▼</div>
+            <div class="roulette-center-line"></div>
             <div class="roulette-window">
+                <div class="roulette-shadow-overlay"></div>
                 <div class="roulette-track" id="roulette-track"></div>
             </div>
-            <div class="pointer-bottom">▲</div>
         </div>
-
         <div class="roulette-status" id="roulette-status">ЗАПУСК...</div>
     </div>
 
@@ -122,13 +137,46 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="modal-inventory-action">
+        <div class="modal-card pop-in">
+            <button class="close-icon" onclick="closeModal('modal-inventory-action')">✕</button>
+            <h3 style="margin-bottom: 5px;">Управление предметом</h3>
+            
+            <div id="inv-action-preview" style="margin: 20px 0;">
+                <img id="inv-item-img" src="" style="width:100px; height:80px; object-fit:contain;">
+                <h3 id="inv-item-name" style="margin: 10px 0 5px;">Название</h3>
+                <div style="color:#888; font-size:12px;">Гос. цена: <span id="inv-item-price">0</span> ₽</div>
+            </div>
+
+            <div class="win-actions" style="flex-direction: column; width: 100%;">
+                <button class="btn-main" onclick="sellCurrentItem()">
+                    ПРОДАТЬ ЗА <span id="sell-btn-price">0</span> ₽
+                </button>
+                <button class="btn-sec" onclick="withdrawCurrentItem()">
+                    ВЫВЕСТИ В ИГРУ
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="modal-profile">
-        <div class="modal-card">
+        <div class="modal-card" style="max-height: 90vh;">
             <button class="close-icon" onclick="closeModal('modal-profile')">✕</button>
             <h3>Профиль Игрока</h3>
             <div class="stat-row"><span>Имя:</span> <span id="profile-id">Loading...</span></div>
-            <div class="stat-row"><span>UID:</span> <span id="profile-uid" style="color:var(--accent)">...</span></div>
+            <div class="stat-row"><span>UID:</span> <span id="profile-uid" style="color:var(--c-rare)">...</span></div>
             <div class="stat-row"><span>Баланс:</span> <span id="profile-bal" style="color: gold">0</span></div>
+            
+            <div style="margin-top: 15px; text-align: left;">
+                <h4 style="color:#888; margin-bottom:10px; font-size:12px; text-transform:uppercase;">История операций</h4>
+                <div id="history-list" class="history-list"></div>
+            </div>
+
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #333;">
+                <button onclick="addTestMoney()" style="background: #333; border: 1px dashed #555; color: #888; width: 100%; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 12px;">
+                    🛠 + 5000 ₽ (TEST ONLY)
+                </button>
+            </div>
         </div>
     </div>
 

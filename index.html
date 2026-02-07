@@ -6,16 +6,9 @@
     <title>Black Russia Exclusive</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
 </head>
 <body>
-
-    <div id="pc-blocker">
-        <div class="glass-panel">
-            <h2>Mobile Only</h2>
-            <p>Откройте в Telegram на смартфоне для погружения.</p>
-        </div>
-    </div>
 
     <div id="app">
         <header>
@@ -27,7 +20,7 @@
                 </div>
             </div>
             <div class="balance-pill" onclick="switchTab('shop')">
-                <span id="user-balance">0</span> BC
+                <span id="user-balance">0</span> ₽
                 <div class="add-btn">+</div>
             </div>
         </header>
@@ -35,59 +28,64 @@
         <main>
             <div id="tab-cases" class="section active">
                 <div class="hero-banner">
-                    <h1>Exclusive Cases</h1>
-                    <p>Испытай удачу и забери главный приз</p>
+                    <h1>Exclusive Garage</h1>
+                    <p>Открывай кейсы, выбивай эксклюзив</p>
                 </div>
-                <div class="cases-grid" id="cases-container">
-                    </div>
+                <div class="cases-grid" id="cases-container"></div>
             </div>
 
             <div id="tab-shop" class="section">
                 <h2>Пополнение баланса</h2>
                 <div class="shop-grid">
-                    <div class="shop-card" onclick="buyCurrency(100, 50)">
-                        <div class="amount">100 BC</div>
-                        <div class="cost">50 Stars</div>
+                    <div class="shop-card" onclick="initYooPayment(100)">
+                        <div class="amount">100 ₽</div>
+                        <div class="cost">Начальный</div>
                     </div>
-                    <div class="shop-card popular" onclick="buyCurrency(500, 200)">
-                        <div class="badge">Popular</div>
-                        <div class="amount">500 BC</div>
-                        <div class="cost">200 Stars</div>
+                    <div class="shop-card popular" onclick="initYooPayment(500)">
+                        <div class="badge">HIT</div>
+                        <div class="amount">500 ₽</div>
+                        <div class="cost">Продвинутый</div>
                     </div>
-                    <div class="shop-card" onclick="buyCurrency(1000, 350)">
-                        <div class="amount">1000 BC</div>
-                        <div class="cost">350 Stars</div>
-                    </div>
-                    <div class="shop-card premium" onclick="buyCurrency(5000, 1500)">
+                    <div class="shop-card premium" onclick="initYooPayment(1000)">
                         <div class="badge">VIP</div>
-                        <div class="amount">5000 BC</div>
-                        <div class="cost">1500 Stars</div>
+                        <div class="amount">1000 ₽</div>
+                        <div class="cost">Элитный</div>
+                    </div>
+                    <div class="shop-card" onclick="initYooPayment(5000)">
+                        <div class="amount">5000 ₽</div>
+                        <div class="cost">Магнат</div>
                     </div>
                 </div>
                 
-                <h3>История транзакций</h3>
-                <div id="history-list-shop" class="history-list"></div>
+                <form id="yoo-form" method="POST" action="https://yoomoney.ru/quickpay/confirm.xml" target="_blank">
+                    <input type="hidden" name="receiver" value="4100117889685528"> <input type="hidden" name="label" id="yoo-label" value="">
+                    <input type="hidden" name="quickpay-form" value="shop">
+                    <input type="hidden" name="targets" value="Пополнение баланса">
+                    <input type="hidden" name="sum" id="yoo-sum" value="100" data-type="number">
+                    <input type="hidden" name="paymentType" value="SB"> 
+                </form>
+
+                <div class="payment-check">
+                    <p>После оплаты нажмите кнопку ниже для проверки (Демо режим)</p>
+                    <button class="btn-sec" onclick="checkFakePayment()">Я ОПЛАТИЛ</button>
+                </div>
             </div>
 
             <div id="tab-inventory" class="section">
-                <h2>Мой Инвентарь</h2>
-                <div id="inventory-grid" class="inventory-grid">
-                    </div>
+                <h2>Мой Гараж</h2>
+                <div id="inventory-grid" class="inventory-grid"></div>
             </div>
         </main>
 
         <nav class="bottom-nav">
             <button class="nav-btn active" onclick="switchTab('cases')">
-                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M19,19H5V5H19V19M7,7H17V9H7V7M7,11H17V13H7V11M7,15H15V17H7V15Z"/></svg>
-                <span>Кейсы</span>
+                <span class="icon">📦</span> Кейсы
             </button>
             <button class="nav-btn" onclick="switchTab('shop')">
-                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M11,17H13V15H11V17M11,13H13V7H11V13Z"/></svg>
-                <span>Магазин</span>
+                <span class="icon">💳</span> Баланс
             </button>
             <button class="nav-btn" onclick="switchTab('inventory')">
-                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12,2C15.86,2 19,5.13 19,9C19,14.25 12,22 12,22C12,22 5,14.25 5,9C5,5.13 8.14,2 12,2M12,4C9.24,4 7,6.24 7,9C7,11 7,12 12,18.71C17,12 17,11 17,9C17,6.24 14.76,4 12,4M12,11A2,2 0 0,1 10,9A2,2 0 0,1 12,7A2,2 0 0,1 14,9A2,2 0 0,1 12,11Z"/></svg>
-                <span>Инвентарь</span>
+                <span class="icon">🚗</span> Гараж
             </button>
         </nav>
     </div>
@@ -95,66 +93,53 @@
     <div class="modal-overlay" id="modal-preview">
         <div class="modal-card slide-up">
             <button class="close-icon" onclick="closeModal('modal-preview')">✕</button>
+            <div class="case-glow-bg"></div>
             <img id="preview-img" src="" class="preview-case-img">
             <h2 id="preview-title">Case Name</h2>
-            <p id="preview-desc" class="preview-desc">Эксклюзивный кейс с редкими машинами и аксессуарами.</p>
-            <div class="preview-price-tag" id="preview-price">500 BC</div>
+            <div class="preview-price-tag" id="preview-price">500 ₽</div>
             <button class="btn-main pulse-btn" id="btn-start-open">ОТКРЫТЬ КЕЙС</button>
         </div>
     </div>
 
-    <div class="modal-overlay" id="modal-roulette">
-        <div class="roulette-wrapper">
-            <div class="roulette-ui">
-                <div class="pointer-arrow">▼</div>
-                <div class="roulette-window">
-                    <div class="roulette-strip" id="roulette-strip"></div>
-                </div>
+    <div class="roulette-fullscreen" id="modal-roulette">
+        <div class="roulette-overlay-bg"></div>
+        
+        <div class="roulette-ui-container">
+            <div class="pointer-top">▼</div>
+            
+            <div class="roulette-window">
+                <div class="roulette-track" id="roulette-track">
+                    </div>
             </div>
-            <h3 id="roulette-status">Крутим...</h3>
+            
+            <div class="pointer-bottom">▲</div>
         </div>
+
+        <div class="roulette-status" id="roulette-status">ЗАПУСК...</div>
     </div>
 
     <div class="modal-overlay" id="modal-win">
         <div class="modal-card pop-in">
-            <div class="win-glow"></div>
-            <h2>ПОЗДРАВЛЯЕМ!</h2>
-            <img id="win-img" src="" style="width: 100px; margin: 15px 0;">
-            <div class="win-item-name" id="win-name">BMW M5 F90</div>
-            <div class="win-item-price">Цена продажи: <span id="win-sell-price">0</span> BC</div>
+            <div class="win-light-burst"></div>
+            <h2 style="color: #FFD700; text-shadow: 0 0 10px orange;">ПОЗДРАВЛЯЕМ!</h2>
+            <img id="win-img" src="" style="width: 120px; margin: 15px 0;">
+            <div class="win-item-name" id="win-name">ITEM</div>
+            <div class="win-item-price">Стоимость: <span id="win-sell-price">0</span> ₽</div>
             
             <div class="win-actions">
                 <button class="btn-sec" onclick="finishWin(false)">Продать</button>
-                <button class="btn-main" onclick="finishWin(true)">Забрать</button>
+                <button class="btn-main" onclick="finishWin(true)">В гараж</button>
             </div>
         </div>
     </div>
 
     <div class="modal-overlay" id="modal-profile">
-        <div class="modal-card slide-up">
+        <div class="modal-card">
             <button class="close-icon" onclick="closeModal('modal-profile')">✕</button>
             <h3>Профиль Игрока</h3>
-            <div class="profile-stats">
-                <div class="stat-row">
-                    <span>ID Telegram:</span>
-                    <span id="profile-tg-id" class="mono">12345</span>
-                </div>
-                <div class="stat-row">
-                    <span>Уникальный UID:</span>
-                    <span id="profile-uid" class="mono text-gold">#100</span>
-                </div>
-                <div class="stat-row">
-                    <span>Баланс:</span>
-                    <span id="profile-balance" class="text-green">0 BC</span>
-                </div>
-                <div class="stat-row">
-                    <span>Открыто кейсов:</span>
-                    <span id="profile-opened">0</span>
-                </div>
-            </div>
-            <div class="divider"></div>
-            <h4>Последние действия</h4>
-            <div id="profile-history" class="mini-history"></div>
+            <div class="stat-row"><span>ID:</span> <span id="profile-id"></span></div>
+            <div class="stat-row"><span>UID:</span> <span id="profile-uid" style="color:var(--accent)"></span></div>
+            <div class="stat-row"><span>Баланс:</span> <span id="profile-bal" style="color: gold"></span></div>
         </div>
     </div>
 

@@ -4,7 +4,7 @@ const CARD_WIDTH = 134;
 const API_URL = "https://script.google.com/macros/s/AKfycbym7BZkWwdqkB8_yE6ynKaeYKtd8X833chIM6smbbUAs_85epS5W6bz2uBi0pcQBRqF/exec";
 
 /* ==============================================
-   КОНФИГУРАЦИЯ
+   КОНФИГУРАЦИЯ (Вставляется из Админки)
    ============================================== */
 const GAME_CONFIG = [
     {
@@ -13,33 +13,167 @@ const GAME_CONFIG = [
         "price": 29,
         "img": "https://i.imgur.com/9EkONxH.png",
         "items": [
-            { "name": "50.000 Вирт", "price": 20, "img": "https://i.imgur.com/iQ3Ff5L.png", "rarity": "consumer" },
-            { "name": "150.000 Вирт", "price": 75, "img": "https://i.imgur.com/iQ3Ff5L.png", "rarity": "common" },
-            { "name": "400.000 Вирт", "price": 200, "img": "https://i.imgur.com/iQ3Ff5L.png", "rarity": "epic" },
-            { "name": "1.000.000 Вирт", "price": 500, "img": "https://i.imgur.com/iQ3Ff5L.png", "rarity": "legendary" },
-            { "name": "Очки «Сердечки» ", "price": 500, "img": "https://i.imgur.com/xHQRwx0.png", "rarity": "legendary" },
-            { "name": "Серый кейс", "price": 500, "img": "https://i.imgur.com/OGcHP9b.png", "rarity": "legendary" },
-            { "name": "Маска Дали", "price": 70, "img": "https://i.imgur.com/K0JsEMU.png", "rarity": "rare" },
-            { "name": "Очки «Street» ", "price": 19, "img": "https://i.imgur.com/XARdxZn.png", "rarity": "consumer" },
-            { "name": "Скин «Емеля»", "price": 300, "img": "https://i.imgur.com/goOf1rc.png", "rarity": "epic" },
-            { "name": "Скин «Пузатый»", "price": 10, "img": "https://i.imgur.com/2LVGLzg.png", "rarity": "consumer" },
-            { "name": "Набор «Сельчанин»", "price": 70, "img": "https://i.imgur.com/1pJCoj9.png", "rarity": "rare" },
-            { "name": "Набор «Бандит»", "price": 650, "img": "https://i.imgur.com/sBOIGql.png", "rarity": "legendary" },
-            { "name": "ZAZ", "price": 15, "img": "https://i.imgur.com/z0hrLCJ.png", "rarity": "consumer" },
-            { "name": "VAZ 2107", "price": 30, "img": "https://i.imgur.com/Ay8kPfF.png", "rarity": "common" },
-            { "name": "LADA NIVA", "price": 80, "img": "https://i.imgur.com/VDTY224.png", "rarity": "rare" },
-            { "name": "LADA VESTA", "price": 175, "img": "https://i.imgur.com/MxZVdD9.png", "rarity": "epic" },
-            { "name": "Mercedes-Benz W211", "price": 300, "img": "https://i.imgur.com/xFhwl3m.png", "rarity": "legendary" },
-            { "name": "10 BC", "price": 10, "img": "https://i.imgur.com/T1peEpa.png", "rarity": "consumer" },
-            { "name": "25 BC", "price": 25, "img": "https://i.imgur.com/T1peEpa.png", "rarity": "consumer" },
-            { "name": "50 BC", "price": 50, "img": "https://i.imgur.com/T1peEpa.png", "rarity": "common" },
-            { "name": "500 BC", "price": 500, "img": "https://i.imgur.com/T1peEpa.png", "rarity": "legendary" },
-            { "name": "Аптечка", "price": 7, "img": "https://i.imgur.com/4I6uqi4.png", "rarity": "consumer" },
-            { "name": "Ремонтный набор", "price": 7, "img": "https://i.imgur.com/0ncZmAy.png", "rarity": "consumer" },
-            { "name": "Скутер", "price": 15, "img": "https://i.imgur.com/5N2komM.png", "rarity": "consumer" }
+            {
+                "name": "50.000 Вирт",
+                "price": 20,
+                "img": "https://i.imgur.com/iQ3Ff5L.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "150.000 Вирт",
+                "price": 75,
+                "img": "https://i.imgur.com/iQ3Ff5L.png",
+                "rarity": "common"
+            },
+            {
+                "name": "400.000 Вирт",
+                "price": 200,
+                "img": "https://i.imgur.com/iQ3Ff5L.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "1.000.000 Вирт",
+                "price": 500,
+                "img": "https://i.imgur.com/iQ3Ff5L.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Очки «Сердечки» ",
+                "price": 500,
+                "img": "https://i.imgur.com/xHQRwx0.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Серый кейс",
+                "price": 500,
+                "img": "https://i.imgur.com/OGcHP9b.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Маска Дали",
+                "price": 70,
+                "img": "https://i.imgur.com/K0JsEMU.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Очки «Street» ",
+                "price": 19,
+                "img": "https://i.imgur.com/XARdxZn.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "Скин «Емеля»",
+                "price": 300,
+                "img": "https://i.imgur.com/goOf1rc.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Скин «Пузатый»",
+                "price": 10,
+                "img": "https://i.imgur.com/2LVGLzg.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "Набор «Сельчанин»",
+                "price": 70,
+                "img": "https://i.imgur.com/1pJCoj9.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Набор «Бандит»",
+                "price": 650,
+                "img": "https://i.imgur.com/sBOIGql.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "ZAZ",
+                "price": 15,
+                "img": "https://i.imgur.com/z0hrLCJ.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "VAZ 2107",
+                "price": 30,
+                "img": "https://i.imgur.com/Ay8kPfF.png",
+                "rarity": "common"
+            },
+            {
+                "name": "LADA NIVA",
+                "price": 80,
+                "img": "https://i.imgur.com/VDTY224.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "LADA VESTA",
+                "price": 175,
+                "img": "https://i.imgur.com/MxZVdD9.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Mercedes-Benz W211",
+                "price": 300,
+                "img": "https://i.imgur.com/xFhwl3m.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "10 BC",
+                "price": 10,
+                "img": "https://i.imgur.com/T1peEpa.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "25 BC",
+                "price": 25,
+                "img": "https://i.imgur.com/T1peEpa.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "50 BC",
+                "price": 50,
+                "img": "https://i.imgur.com/T1peEpa.png",
+                "rarity": "common"
+            },
+            {
+                "name": "500 BC",
+                "price": 500,
+                "img": "https://i.imgur.com/T1peEpa.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Аптечка",
+                "price": 7,
+                "img": "https://i.imgur.com/4I6uqi4.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "Ремонтный набор",
+                "price": 7,
+                "img": "https://i.imgur.com/0ncZmAy.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "Скутер",
+                "price": 15,
+                "img": "https://i.imgur.com/5N2komM.png",
+                "rarity": "consumer"
+            }
         ]
     }
 ];
+
+// 0 - бесконечный, 1 - одноразовый для игрока
+const PROMO_CODES = [
+    { "code": "ADMINKAADMINKAADMINKA", "val": 1000, "limit": 0 },
+    {
+        "code": "1CODE",
+        "val": 10000,
+        "limit": 1
+    }
+];
+
+/* ==============================================
+   ЛОГИКА
+   ============================================== */
 
 let user = { 
     balance: 0, 
@@ -47,7 +181,8 @@ let user = {
     uid: 0, 
     name: "Гость", 
     avatar: "",
-    history: [] // История операций
+    history: [],
+    activatedPromos: [] // Храним использованные промокоды
 };
 
 let paymentCheckInterval = null;
@@ -71,6 +206,7 @@ function loadUser() {
             const parsed = JSON.parse(saved);
             user = { ...user, ...parsed };
             if(!user.history) user.history = [];
+            if(!user.activatedPromos) user.activatedPromos = []; // Инициализация
         } catch (e) { console.error(e); }
     }
 
@@ -118,6 +254,41 @@ function updateUI() {
 
     const pBal = document.getElementById('profile-bal');
     if(pBal) pBal.innerText = user.balance + " ₽";
+}
+
+// --- ПРОМОКОДЫ (НОВОЕ) ---
+function activatePromo() {
+    const input = document.getElementById('promo-input');
+    const code = input.value.trim();
+    
+    if(!code) return tg.showAlert("Введите код!");
+
+    const promo = PROMO_CODES.find(p => p.code === code);
+
+    if(!promo) {
+        return tg.showAlert("Неверный промокод");
+    }
+
+    // Проверка на повторное использование (если лимит 1)
+    if (promo.limit === 1 && user.activatedPromos.includes(code)) {
+        return tg.showAlert("Вы уже активировали этот код!");
+    }
+
+    // Начисление
+    user.balance += promo.val;
+    
+    // Если одноразовый - запоминаем
+    if(promo.limit === 1) {
+        user.activatedPromos.push(code);
+    }
+
+    addHistory('balance', `Промо: ${code}`, `+${promo.val}`);
+    saveUser();
+    updateUI();
+    
+    input.value = '';
+    tg.showAlert(`Успешно! Начислено ${promo.val} ₽`);
+    tg.HapticFeedback.notificationOccurred('success');
 }
 
 function addTestMoney() {

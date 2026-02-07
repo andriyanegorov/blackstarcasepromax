@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BR Admin Panel</title>
+    <title>BR Admin Ultimate</title>
     <style>
         body { background: #121212; color: #eee; font-family: monospace; padding: 20px; margin: 0; }
         h2, h3 { color: #FFD700; margin-top: 0; }
-        .container { display: grid; grid-template-columns: 300px 1fr; gap: 20px; }
+        .container { display: grid; grid-template-columns: 250px 1fr; gap: 20px; }
         .sidebar { background: #1e1e1e; padding: 15px; border: 1px solid #333; height: fit-content; }
         .editor { background: #1e1e1e; padding: 15px; border: 1px solid #333; }
         
@@ -15,6 +15,7 @@
         .btn-green { background: #4CAF50; color: white; }
         .btn-red { background: #ff4d4d; color: white; }
         .btn-gold { background: #FFD700; color: black; }
+        .btn-blue { background: #2196F3; color: white; }
         .btn-item { background: #333; color: white; text-align: left; border-bottom: 1px solid #444; }
         .btn-item:hover { background: #444; }
         .btn-item.active { background: #7C4DFF; }
@@ -23,11 +24,16 @@
         label { display: block; font-size: 12px; color: #aaa; margin-bottom: 3px; }
         
         .item-row { display: grid; grid-template-columns: 50px 2fr 1fr 2fr 50px; gap: 10px; align-items: center; background: #252525; padding: 5px; margin-bottom: 5px; border-left: 5px solid #555; }
+        .promo-row { display: grid; grid-template-columns: 2fr 1fr 2fr 50px; gap: 10px; align-items: center; background: #252525; padding: 10px; margin-bottom: 5px; border-left: 5px solid #FFD700; }
+        
         .item-img-preview { width: 40px; height: 30px; object-fit: contain; background: #000; }
-        
         .export-area { width: 100%; height: 150px; background: #000; color: #0f0; border: 1px solid #333; font-size: 11px; margin-top: 10px; }
+
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { background: #333; border: 1px solid #555; color: #aaa; flex: 1; padding: 10px; text-align: center; cursor: pointer; }
+        .tab-btn.active { background: #FFD700; color: black; border-color: #FFD700; font-weight: bold; }
         
-        /* Цвета редкости в админке */
+        /* Цвета редкости */
         .border-consumer { border-left-color: #B0B0B0; }
         .border-common { border-left-color: #4CAF50; }
         .border-rare { border-left-color: #2196F3; }
@@ -38,11 +44,16 @@
 <body>
 
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h2>⚙️ ADMIN PANEL (Rarity System)</h2>
-        <button onclick="exportConfig()" class="btn-gold" style="width: auto; padding: 10px 30px;">СКОПИРОВАТЬ КОНФИГ</button>
+        <h2>⚙️ ADMIN PANEL</h2>
+        <button onclick="exportConfig()" class="btn-gold" style="width: auto; padding: 10px 30px;">СКОПИРОВАТЬ CONFIG.JS</button>
     </div>
 
-    <div class="container">
+    <div class="tabs">
+        <div class="tab-btn active" onclick="setMode('cases')" id="tab-cases">📦 Управление Кейсами</div>
+        <div class="tab-btn" onclick="setMode('promos')" id="tab-promos">🎟 Управление Промокодами</div>
+    </div>
+
+    <div class="container" id="view-cases">
         <div class="sidebar">
             <h3>Список Кейсов</h3>
             <div id="cases-list"></div>
@@ -51,65 +62,91 @@
 
         <div class="editor" id="editor-area" style="display:none;">
             <h3>Редактирование Кейса</h3>
-            
             <label>Название кейса:</label>
             <input type="text" id="case-name" oninput="updateCaseMeta()">
-            
-            <label>Стоимость открытия (₽):</label>
+            <label>Стоимость (₽):</label>
             <input type="number" id="case-price" oninput="updateCaseMeta()">
-            
-            <label>Картинка кейса (URL):</label>
+            <label>Картинка (URL):</label>
             <input type="text" id="case-img" oninput="updateCaseMeta()">
             <img id="case-img-preview" src="" style="height: 60px; display: block; margin-bottom: 15px;">
 
             <div style="border-top: 1px solid #444; padding-top: 10px; margin-top: 10px;">
                 <div style="display:flex; justify-content:space-between;">
-                    <h3>Предметы внутри</h3>
+                    <h3>Предметы</h3>
                     <button class="btn-green" style="width:auto;" onclick="addItem()">+ Предмет</button>
-                </div>
-                <div style="display:grid; grid-template-columns: 50px 2fr 1fr 2fr 50px; gap:10px; font-size:10px; color:#888; margin-bottom:5px;">
-                    <span>IMG</span>
-                    <span>Название</span>
-                    <span>Цена</span>
-                    <span>Редкость</span>
-                    <span>Удал.</span>
                 </div>
                 <div id="items-container"></div>
             </div>
-
             <button class="btn-red" style="margin-top: 20px;" onclick="deleteCurrentCase()">Удалить Кейс</button>
         </div>
     </div>
 
+    <div class="container" id="view-promos" style="display:none; grid-template-columns: 1fr;">
+        <div class="editor">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3>Список Промокодов</h3>
+                <button class="btn-blue" style="width:auto; padding: 10px 20px;" onclick="addPromo()">+ Добавить код</button>
+            </div>
+            <div style="margin-top: 15px;">
+                <div style="display:grid; grid-template-columns: 2fr 1fr 2fr 50px; gap:10px; font-size:12px; color:#888; margin-bottom:5px; padding:0 10px;">
+                    <span>Код (Пример: ADMIN)</span>
+                    <span>Сумма (₽)</span>
+                    <span>Тип (Разовый/Вечный)</span>
+                    <span>Del</span>
+                </div>
+                <div id="promos-container"></div>
+            </div>
+        </div>
+    </div>
+
     <div style="margin-top: 30px;">
-        <h3>Результат (Вставить в script.js):</h3>
+        <h3>Результат (Вставить в начало script.js):</h3>
         <textarea id="output-json" class="export-area" readonly></textarea>
     </div>
 
     <script>
-        // Исходные данные
+        // === ДАННЫЕ ПО УМОЛЧАНИЮ ===
         let gameData = [
-            { 
-                id: 1, 
-                name: "Бомж Старт", 
-                price: 15, 
-                img: "https://cdn-icons-png.flaticon.com/512/1995/1995493.png",
-                items: [
-                    { name: "Lada Priora", price: 200, img: "https://cdn-icons-png.flaticon.com/512/1995/1995493.png", rarity: "consumer" },
-                    { name: "Skin: Bomzh", price: 20, img: "https://cdn-icons-png.flaticon.com/512/4825/4825038.png", rarity: "consumer" },
-                    { name: "BMW M5", price: 5000, img: "https://cdn-icons-png.flaticon.com/512/3202/3202926.png", rarity: "legendary" }
+            {
+                "id": 1,
+                "name": "Бомж Старт",
+                "price": 29,
+                "img": "https://i.imgur.com/9EkONxH.png",
+                "items": [
+                    { "name": "50.000 Вирт", "price": 20, "img": "https://i.imgur.com/iQ3Ff5L.png", "rarity": "consumer" },
+                    { "name": "1.000.000 Вирт", "price": 500, "img": "https://i.imgur.com/iQ3Ff5L.png", "rarity": "legendary" }
                 ]
             }
         ];
 
+        let promoData = [
+            { "code": "ADMINKAADMINKAADMINKA", "val": 1000, "limit": 0 }
+        ];
+
         let currentCaseIdx = -1;
 
-        const saved = localStorage.getItem('admin_game_config_v2');
-        if(saved) gameData = JSON.parse(saved);
+        // Загрузка
+        const savedCases = localStorage.getItem('admin_game_config_v2');
+        if(savedCases) gameData = JSON.parse(savedCases);
 
+        const savedPromos = localStorage.getItem('admin_promo_config_v1');
+        if(savedPromos) promoData = JSON.parse(savedPromos);
+
+        // Инициализация
         renderCasesList();
+        renderPromos();
         exportConfig(); 
 
+        // === УПРАВЛЕНИЕ ВКЛАДКАМИ ===
+        function setMode(mode) {
+            document.getElementById('view-cases').style.display = mode === 'cases' ? 'grid' : 'none';
+            document.getElementById('view-promos').style.display = mode === 'promos' ? 'grid' : 'none';
+            
+            document.getElementById('tab-cases').className = `tab-btn ${mode==='cases'?'active':''}`;
+            document.getElementById('tab-promos').className = `tab-btn ${mode==='promos'?'active':''}`;
+        }
+
+        // === ЛОГИКА КЕЙСОВ ===
         function renderCasesList() {
             const list = document.getElementById('cases-list');
             list.innerHTML = '';
@@ -148,17 +185,14 @@
                     <input type="text" value="${item.name}" onchange="updateItem(${idx}, 'name', this.value)">
                     <input type="number" value="${item.price}" onchange="updateItem(${idx}, 'price', this.value)">
                     <select onchange="updateItem(${idx}, 'rarity', this.value)">
-                        <option value="consumer" ${item.rarity==='consumer'?'selected':''}>Ширпотреб (60%) - Серый</option>
-                        <option value="common" ${item.rarity==='common'?'selected':''}>Обычный (20%) - Зеленый</option>
-                        <option value="rare" ${item.rarity==='rare'?'selected':''}>Редкий (11%) - Синий</option>
-                        <option value="epic" ${item.rarity==='epic'?'selected':''}>Эпический (8%) - Фиол</option>
-                        <option value="legendary" ${item.rarity==='legendary'?'selected':''}>Легендарный (1%) - Желтый</option>
+                        <option value="consumer" ${item.rarity==='consumer'?'selected':''}>Ширпотреб</option>
+                        <option value="common" ${item.rarity==='common'?'selected':''}>Обычный</option>
+                        <option value="rare" ${item.rarity==='rare'?'selected':''}>Редкий</option>
+                        <option value="epic" ${item.rarity==='epic'?'selected':''}>Эпический</option>
+                        <option value="legendary" ${item.rarity==='legendary'?'selected':''}>Легендарный</option>
                     </select>
                     <button class="btn-red" style="width:30px; padding:5px;" onclick="deleteItem(${idx})">x</button>
-                    
-                    <input type="text" value="${item.img}" placeholder="URL картинки" 
-                           style="grid-column: 1 / -1; margin-top:5px; font-size:10px; color:#aaa;" 
-                           onchange="updateItem(${idx}, 'img', this.value)">
+                    <input type="text" value="${item.img}" placeholder="URL" style="grid-column: 1 / -1; font-size:10px; color:#aaa;" onchange="updateItem(${idx}, 'img', this.value)">
                 `;
                 container.appendChild(row);
             });
@@ -183,37 +217,26 @@
 
         function addItem() {
             if(currentCaseIdx === -1) return;
-            gameData[currentCaseIdx].items.push({
-                name: "Новый Предмет",
-                price: 100,
-                img: "https://via.placeholder.com/50",
-                rarity: "consumer"
-            });
+            gameData[currentCaseIdx].items.push({ name: "Новый", price: 100, img: "", rarity: "consumer" });
             renderItems(gameData[currentCaseIdx].items);
             save();
         }
 
-        function deleteItem(itemIdx) {
-            if(!confirm("Удалить предмет?")) return;
-            gameData[currentCaseIdx].items.splice(itemIdx, 1);
+        function deleteItem(idx) {
+            if(!confirm("Удалить?")) return;
+            gameData[currentCaseIdx].items.splice(idx, 1);
             renderItems(gameData[currentCaseIdx].items);
             save();
         }
 
         function addNewCase() {
-            gameData.push({
-                id: Date.now(),
-                name: "New Case",
-                price: 1000,
-                img: "https://via.placeholder.com/100",
-                items: []
-            });
+            gameData.push({ id: Date.now(), name: "New Case", price: 1000, img: "", items: [] });
             selectCase(gameData.length - 1);
             save();
         }
 
         function deleteCurrentCase() {
-            if(!confirm("Удалить этот кейс?")) return;
+            if(!confirm("Удалить кейс?")) return;
             gameData.splice(currentCaseIdx, 1);
             currentCaseIdx = -1;
             document.getElementById('editor-area').style.display = 'none';
@@ -221,14 +244,59 @@
             save();
         }
 
+        // === ЛОГИКА ПРОМОКОДОВ ===
+        function renderPromos() {
+            const container = document.getElementById('promos-container');
+            container.innerHTML = '';
+
+            promoData.forEach((promo, idx) => {
+                const row = document.createElement('div');
+                row.className = 'promo-row';
+                row.innerHTML = `
+                    <input type="text" value="${promo.code}" placeholder="CODE" onchange="updatePromo(${idx}, 'code', this.value)" style="margin:0; font-weight:bold; color:gold;">
+                    <input type="number" value="${promo.val}" placeholder="Сумма" onchange="updatePromo(${idx}, 'val', this.value)" style="margin:0;">
+                    <select onchange="updatePromo(${idx}, 'limit', this.value)" style="margin:0;">
+                        <option value="1" ${promo.limit == 1 ? 'selected' : ''}>1 раз на аккаунт</option>
+                        <option value="0" ${promo.limit == 0 ? 'selected' : ''}>Бесконечно</option>
+                    </select>
+                    <button class="btn-red" style="width:30px; margin:0;" onclick="deletePromo(${idx})">x</button>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function addPromo() {
+            promoData.push({ code: "NEWCODE", val: 100, limit: 1 });
+            renderPromos();
+            save();
+        }
+
+        function deletePromo(idx) {
+            if(!confirm("Удалить промокод?")) return;
+            promoData.splice(idx, 1);
+            renderPromos();
+            save();
+        }
+
+        function updatePromo(idx, field, val) {
+            if(field === 'val' || field === 'limit') val = parseInt(val);
+            promoData[idx][field] = val;
+            save(); // Автосохранение
+        }
+
+        // === ОБЩЕЕ ===
         function save() {
             localStorage.setItem('admin_game_config_v2', JSON.stringify(gameData));
+            localStorage.setItem('admin_promo_config_v1', JSON.stringify(promoData));
             exportConfig();
         }
 
         function exportConfig() {
-            const json = JSON.stringify(gameData, null, 4);
-            const str = `const GAME_CONFIG = ${json};`;
+            const jsonCases = JSON.stringify(gameData, null, 4);
+            const jsonPromos = JSON.stringify(promoData, null, 4);
+            
+            const str = `const GAME_CONFIG = ${jsonCases};\n\nconst PROMO_CODES = ${jsonPromos};`;
+            
             document.getElementById('output-json').value = str;
         }
     </script>

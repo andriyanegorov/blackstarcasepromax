@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Black Russia Cases</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+
+    <div id="pc-blocker">
+        <h2>Ошибка доступа</h2>
+        <p>Вход разрешен только через Telegram Mini App</p>
+    </div>
+
+    <div id="app" style="display: none;">
+        <header>
+            <div class="user-info">
+                <img id="user-avatar" src="https://via.placeholder.com/40" alt="Ava">
+                <span id="user-name">Игрок</span>
+            </div>
+            <div class="balance-box">
+                <span id="user-balance">0</span> BC
+            </div>
+        </header>
+
+        <nav>
+            <button class="nav-btn active" onclick="switchTab('cases')">Кейсы</button>
+            <button class="nav-btn" onclick="switchTab('profile')">Профиль</button>
+            <button class="nav-btn" onclick="switchTab('history')">История</button>
+        </nav>
+
+        <div id="cases" class="section active">
+            <h3 style="text-align: center;">Доступные кейсы</h3>
+            <div class="cases-grid" id="cases-container">
+                </div>
+        </div>
+
+        <div id="profile" class="section">
+            <h3>Статистика</h3>
+            <div class="list-item">
+                <span>Всего открыто кейсов:</span>
+                <span id="stats-opened">0</span>
+            </div>
+            <div class="list-item">
+                <span>Инвентарь (стоимость):</span>
+                <span id="stats-inventory">0</span>
+            </div>
+            <h3>Пополнить баланс (Тест)</h3>
+            <button class="btn-main" onclick="addBalance(1000)" style="width: 100%; background: #43a047;">+1000 BC</button>
+            <br><br>
+            <div id="inventory-list">
+                </div>
+        </div>
+
+        <div id="history" class="section">
+            <h3>История действий</h3>
+            <div id="history-list">
+                </div>
+        </div>
+    </div>
+
+    <div class="modal" id="open-modal">
+        <h2 id="modal-title">Открытие...</h2>
+        <div class="roulette-container">
+            <div class="roulette-line"></div>
+            <div class="roulette-track" id="roulette-track">
+                </div>
+        </div>
+        <div id="win-display" style="display: none; text-align: center; margin-bottom: 20px;">
+            <p>Вы выиграли:</p>
+            <h1 id="win-name" style="color: var(--accent);">Машина</h1>
+            <p style="color: #ffd700;">Цена: <span id="win-price">0</span> BC</p>
+            <button class="btn-main" onclick="sellItem()">Продать</button>
+            <button class="btn-main" style="background: #333;" onclick="closeModal()">В инвентарь</button>
+        </div>
+        <button id="close-btn" class="btn-main" onclick="closeModal()" style="display: none; background: #555;">Закрыть</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

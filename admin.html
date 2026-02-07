@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - BR Cases</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body style="padding: 20px;">
+
+    <h2>Админ Панель</h2>
+    <p>Добавление нового кейса</p>
+
+    <div class="admin-form">
+        <input type="text" id="case-name" placeholder="Название кейса (напр. BMW Case)">
+        <input type="number" id="case-price" placeholder="Цена открытия (напр. 500)">
+        <input type="text" id="case-img" placeholder="Ссылка на картинку кейса">
+        
+        <button class="btn-main" onclick="addCase()">Добавить кейс</button>
+        <button class="btn-main" style="background: #d32f2f; margin-top: 10px;" onclick="resetData()">Сбросить ВСЕ данные</button>
+    </div>
+
+    <h3>Список активных кейсов:</h3>
+    <div id="admin-cases-list"></div>
+
+    <script src="script.js"></script>
+    <script>
+        // Небольшой инлайн скрипт специально для админки, 
+        // использующий функции из основного script.js
+        document.addEventListener('DOMContentLoaded', () => {
+            renderAdminCases();
+        });
+
+        function addCase() {
+            const name = document.getElementById('case-name').value;
+            const price = parseInt(document.getElementById('case-price').value);
+            const img = document.getElementById('case-img').value || 'https://via.placeholder.com/80?text=Case';
+
+            if(!name || !price) return alert('Заполните поля');
+
+            let cases = JSON.parse(localStorage.getItem('br_cases')) || [];
+            cases.push({
+                id: Date.now(),
+                name: name,
+                price: price,
+                img: img
+            });
+
+            localStorage.setItem('br_cases', JSON.stringify(cases));
+            alert('Кейс добавлен!');
+            renderAdminCases();
+        }
+
+        function renderAdminCases() {
+            const list = document.getElementById('admin-cases-list');
+            const cases = JSON.parse(localStorage.getItem('br_cases')) || [];
+            list.innerHTML = cases.map(c => `<div class="list-item">${c.name} - ${c.price} BC <button onclick="deleteCase(${c.id})">X</button></div>`).join('');
+        }
+
+        function deleteCase(id) {
+            let cases = JSON.parse(localStorage.getItem('br_cases')) || [];
+            cases = cases.filter(c => c.id !== id);
+            localStorage.setItem('br_cases', JSON.stringify(cases));
+            renderAdminCases();
+        }
+
+        function resetData() {
+            if(confirm('Удалить все кейсы и данные пользователей?')) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>

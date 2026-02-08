@@ -3,35 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BR Admin Ultimate</title>
+    <title>BR Admin Ultimate V2 (Synced)</title>
     <style>
-        body { background: #121212; color: #eee; font-family: monospace; padding: 20px; margin: 0; }
-        h2, h3 { color: #FFD700; margin-top: 0; }
-        .container { display: grid; grid-template-columns: 250px 1fr; gap: 20px; }
-        .sidebar { background: #1e1e1e; padding: 15px; border: 1px solid #333; height: fit-content; }
-        .editor { background: #1e1e1e; padding: 15px; border: 1px solid #333; }
+        body { background: #121212; color: #eee; font-family: 'Segoe UI', monospace; padding: 20px; margin: 0; box-sizing: border-box; }
+        h2, h3, h4 { color: #FFD700; margin-top: 0; }
         
-        button { cursor: pointer; padding: 8px; border: none; font-weight: bold; width: 100%; margin-bottom: 5px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        
+        .container { display: grid; grid-template-columns: 280px 1fr; gap: 20px; }
+        @media (max-width: 800px) { .container { grid-template-columns: 1fr; } }
+
+        .sidebar { background: #1e1e1e; padding: 15px; border: 1px solid #333; border-radius: 8px; height: fit-content; max-height: 80vh; overflow-y: auto; }
+        .editor { background: #1e1e1e; padding: 20px; border: 1px solid #333; border-radius: 8px; }
+        
+        button { cursor: pointer; padding: 10px; border: none; font-weight: bold; width: 100%; margin-bottom: 5px; border-radius: 4px; transition: 0.2s; }
+        button:hover { filter: brightness(1.1); }
+        
         .btn-green { background: #4CAF50; color: white; }
         .btn-red { background: #ff4d4d; color: white; }
         .btn-gold { background: #FFD700; color: black; }
         .btn-blue { background: #2196F3; color: white; }
-        .btn-item { background: #333; color: white; text-align: left; border-bottom: 1px solid #444; }
-        .btn-item:hover { background: #444; }
-        .btn-item.active { background: #7C4DFF; }
-
-        input, select { width: 100%; padding: 8px; margin-bottom: 10px; background: #222; border: 1px solid #555; color: white; box-sizing: border-box; }
-        label { display: block; font-size: 12px; color: #aaa; margin-bottom: 3px; }
+        .btn-gray { background: #444; color: #ccc; font-size: 12px; }
         
-        .item-row { display: grid; grid-template-columns: 50px 2fr 1fr 2fr 50px; gap: 10px; align-items: center; background: #252525; padding: 5px; margin-bottom: 5px; border-left: 5px solid #555; }
-        .promo-row { display: grid; grid-template-columns: 2fr 1fr 2fr 50px; gap: 10px; align-items: center; background: #252525; padding: 10px; margin-bottom: 5px; border-left: 5px solid #FFD700; }
-        
-        .item-img-preview { width: 40px; height: 30px; object-fit: contain; background: #000; }
-        .export-area { width: 100%; height: 150px; background: #000; color: #0f0; border: 1px solid #333; font-size: 11px; margin-top: 10px; }
+        .btn-item { background: #2a2a2a; color: white; text-align: left; border-bottom: 1px solid #333; padding: 12px; }
+        .btn-item:hover { background: #333; }
+        .btn-item.active { background: #FFD700; color: black; border-color: #FFD700; }
 
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { background: #333; border: 1px solid #555; color: #aaa; flex: 1; padding: 10px; text-align: center; cursor: pointer; }
-        .tab-btn.active { background: #FFD700; color: black; border-color: #FFD700; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; margin-bottom: 10px; background: #121212; border: 1px solid #444; color: white; box-sizing: border-box; border-radius: 4px; }
+        label { display: block; font-size: 12px; color: #aaa; margin-bottom: 4px; font-weight: bold; }
+        
+        /* Grid для предметов */
+        .items-header { display: grid; grid-template-columns: 50px 2fr 1fr 1.5fr 40px; gap: 10px; padding: 0 10px; font-size: 12px; color: #888; margin-bottom: 5px; }
+        .item-row { display: grid; grid-template-columns: 50px 2fr 1fr 1.5fr 40px; gap: 10px; align-items: start; background: #252525; padding: 10px; margin-bottom: 8px; border-left: 4px solid #555; border-radius: 4px; }
+        
+        .item-row input, .item-row select { margin-bottom: 5px; font-size: 13px; padding: 6px; }
+        .item-img-preview { width: 40px; height: 40px; object-fit: contain; background: #000; border-radius: 4px; border: 1px solid #333; }
+        
+        .export-area { width: 100%; height: 120px; background: #080808; color: #0f0; border: 1px solid #333; font-size: 11px; margin-top: 10px; font-family: monospace; padding: 10px; resize: vertical; }
+
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; background: #1e1e1e; padding: 5px; border-radius: 8px; }
+        .tab-btn { background: transparent; color: #aaa; flex: 1; padding: 12px; text-align: center; cursor: pointer; border-radius: 6px; font-weight: 600; }
+        .tab-btn.active { background: #333; color: #FFD700; }
+        
+        .chances-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 20px; padding: 15px; background: #181818; border: 1px solid #333; border-radius: 6px; }
         
         /* Цвета редкости */
         .border-consumer { border-left-color: #B0B0B0; }
@@ -39,109 +53,241 @@
         .border-rare { border-left-color: #2196F3; }
         .border-epic { border-left-color: #9C27B0; }
         .border-legendary { border-left-color: #FFD700; }
+        .border-mythical { border-left-color: #FF0055; }
+        
+        .promo-row { display: grid; grid-template-columns: 2fr 1fr 1fr 40px; gap: 10px; background: #252525; padding: 10px; margin-bottom: 5px; border-radius: 4px; border-left: 4px solid gold; }
     </style>
 </head>
 <body>
 
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h2>⚙️ ADMIN PANEL</h2>
-        <button onclick="exportConfig()" class="btn-gold" style="width: auto; padding: 10px 30px;">СКОПИРОВАТЬ CONFIG.JS</button>
+    <div class="header">
+        <div>
+            <h2>⚙️ ADMIN PANEL</h2>
+            <div style="font-size: 12px; color: #666;">Редактор конфигурации для script.js</div>
+        </div>
+        <div style="display:flex; gap:10px;">
+             <button onclick="resetToDefault()" class="btn-gray" style="width: auto;">↺ Сброс данных</button>
+             <button onclick="copyConfig()" class="btn-gold" style="width: auto; padding: 10px 30px;" id="copy-btn">СКОПИРОВАТЬ CONFIG.JS</button>
+        </div>
     </div>
 
     <div class="tabs">
-        <div class="tab-btn active" onclick="setMode('cases')" id="tab-cases">📦 Управление Кейсами</div>
-        <div class="tab-btn" onclick="setMode('promos')" id="tab-promos">🎟 Управление Промокодами</div>
+        <div class="tab-btn active" onclick="setMode('cases')" id="tab-cases">📦 КЕЙСЫ</div>
+        <div class="tab-btn" onclick="setMode('promos')" id="tab-promos">🎟 ПРОМОКОДЫ</div>
     </div>
 
     <div class="container" id="view-cases">
         <div class="sidebar">
-            <h3>Список Кейсов</h3>
+            <h3 style="margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; color: #666;">Список Кейсов</h3>
             <div id="cases-list"></div>
-            <button class="btn-green" onclick="addNewCase()">+ Новый Кейс</button>
+            <button class="btn-green" style="margin-top: 10px;" onclick="addNewCase()">+ Новый Кейс</button>
         </div>
 
         <div class="editor" id="editor-area" style="display:none;">
-            <h3>Редактирование Кейса</h3>
-            <label>Название кейса:</label>
-            <input type="text" id="case-name" oninput="updateCaseMeta()">
-            <label>Стоимость (₽):</label>
-            <input type="number" id="case-price" oninput="updateCaseMeta()">
-            <label>Картинка (URL):</label>
-            <input type="text" id="case-img" oninput="updateCaseMeta()">
-            <img id="case-img-preview" src="" style="height: 60px; display: block; margin-bottom: 15px;">
+            <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 20px;">
+                <img id="case-img-preview" src="" style="width: 80px; height: 80px; object-fit: contain; background: #111; border: 1px solid #333; border-radius: 8px;">
+                <div style="flex: 1;">
+                    <label>Название кейса:</label>
+                    <input type="text" id="case-name" oninput="updateCaseMeta()">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div>
+                            <label>Цена (₽):</label>
+                            <input type="number" id="case-price" oninput="updateCaseMeta()">
+                        </div>
+                        <div>
+                            <label>Картинка (URL):</label>
+                            <input type="text" id="case-img" oninput="updateCaseMeta()">
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-            <div style="border-top: 1px solid #444; padding-top: 10px; margin-top: 10px;">
-                <div style="display:flex; justify-content:space-between;">
-                    <h3>Предметы</h3>
-                    <button class="btn-green" style="width:auto;" onclick="addItem()">+ Предмет</button>
+            <h4 style="border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 10px;">🎲 Шансы выпадения (%)</h4>
+            <div class="chances-grid">
+                <div><label style="color:#B0B0B0">Ширп</label><input type="number" step="0.01" id="chance-consumer" onchange="updateChances()"></div>
+                <div><label style="color:#4CAF50">Обычный</label><input type="number" step="0.01" id="chance-common" onchange="updateChances()"></div>
+                <div><label style="color:#2196F3">Редкий</label><input type="number" step="0.01" id="chance-rare" onchange="updateChances()"></div>
+                <div><label style="color:#9C27B0">Эпик</label><input type="number" step="0.01" id="chance-epic" onchange="updateChances()"></div>
+                <div><label style="color:#FFD700">Легендарный</label><input type="number" step="0.01" id="chance-legendary" onchange="updateChances()"></div>
+                <div><label style="color:#FF0055">МИФИЧЕСКИЙ</label><input type="number" step="0.01" id="chance-mythical" onchange="updateChances()"></div>
+            </div>
+
+            <div style="background: #1a1a1a; padding: 10px; border-radius: 8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h4 style="margin:0;">Содержимое кейса</h4>
+                    <button class="btn-green" style="width:auto; font-size:12px;" onclick="addItem()">+ Добавить предмет</button>
+                </div>
+                
+                <div class="items-header">
+                    <span>IMG</span>
+                    <span>Название</span>
+                    <span>Цена (₽)</span>
+                    <span>Редкость</span>
+                    <span>Del</span>
                 </div>
                 <div id="items-container"></div>
             </div>
-            <button class="btn-red" style="margin-top: 20px;" onclick="deleteCurrentCase()">Удалить Кейс</button>
+            
+            <button class="btn-red" style="margin-top: 30px;" onclick="deleteCurrentCase()">Удалить этот Кейс</button>
         </div>
     </div>
 
     <div class="container" id="view-promos" style="display:none; grid-template-columns: 1fr;">
         <div class="editor">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h3>Список Промокодов</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+                <h3>Активные Промокоды</h3>
                 <button class="btn-blue" style="width:auto; padding: 10px 20px;" onclick="addPromo()">+ Добавить код</button>
             </div>
-            <div style="margin-top: 15px;">
-                <div style="display:grid; grid-template-columns: 2fr 1fr 2fr 50px; gap:10px; font-size:12px; color:#888; margin-bottom:5px; padding:0 10px;">
-                    <span>Код (Пример: ADMIN)</span>
-                    <span>Сумма (₽)</span>
-                    <span>Тип (Разовый/Вечный)</span>
-                    <span>Del</span>
-                </div>
-                <div id="promos-container"></div>
+            <div class="items-header" style="grid-template-columns: 2fr 1fr 1fr 40px;">
+                <span>Код (Пример: BONUS)</span>
+                <span>Сумма (₽)</span>
+                <span>Лимит (0=Беск, 1=Разовый)</span>
+                <span>Del</span>
             </div>
+            <div id="promos-container"></div>
         </div>
     </div>
 
     <div style="margin-top: 30px;">
-        <h3>Результат (Вставить в начало script.js):</h3>
-        <textarea id="output-json" class="export-area" readonly></textarea>
+        <h3 style="font-size: 14px; color: #888;">Результат (Для вставки в начало script.js):</h3>
+        <textarea id="output-json" class="export-area" readonly onclick="this.select()"></textarea>
     </div>
 
     <script>
-        // === ДАННЫЕ ПО УМОЛЧАНИЮ ===
-        let gameData = [
+        // === ДАННЫЕ ИЗ SCRIPT.JS (АКТУАЛЬНЫЕ) ===
+        // Эти данные используются как дефолтные, если LocalStorage пуст
+        const DEFAULT_GAME_CONFIG = [
             {
                 "id": 1,
-                "name": "Бомж Старт",
+                "name": "Кейс Бомжа",
                 "price": 29,
                 "img": "https://i.imgur.com/9EkONxH.png",
+                "chances": { "consumer": 20, "common": 50, "rare": 20, "epic": 8, "legendary": 1.92, "mythical": 0.08 },
                 "items": [
                     { "name": "50.000 Вирт", "price": 20, "img": "https://i.imgur.com/iQ3Ff5L.png", "rarity": "consumer" },
-                    { "name": "1.000.000 Вирт", "price": 500, "img": "https://i.imgur.com/iQ3Ff5L.png", "rarity": "legendary" }
+                    { "name": "150.000 Вирт", "price": 75, "img": "https://i.imgur.com/iQ3Ff5L.png", "rarity": "common" },
+                    { "name": "400.000 Вирт", "price": 200, "img": "https://i.imgur.com/iQ3Ff5L.png", "rarity": "epic" },
+                    { "name": "1.000.000 Вирт", "price": 500, "img": "https://i.imgur.com/iQ3Ff5L.png", "rarity": "legendary" },
+                    { "name": "Очки «Сердечки»", "price": 500, "img": "https://i.imgur.com/xHQRwx0.png", "rarity": "legendary" },
+                    { "name": "Серый кейс", "price": 500, "img": "https://i.imgur.com/OGcHP9b.png", "rarity": "legendary" },
+                    { "name": "Маска Дали", "price": 70, "img": "https://i.imgur.com/K0JsEMU.png", "rarity": "rare" },
+                    { "name": "Очки «Street»", "price": 19, "img": "https://i.imgur.com/XARdxZn.png", "rarity": "consumer" },
+                    { "name": "Скин «Емеля»", "price": 300, "img": "https://i.imgur.com/goOf1rc.png", "rarity": "epic" },
+                    { "name": "Скин «Пузатый»", "price": 10, "img": "https://i.imgur.com/2LVGLzg.png", "rarity": "consumer" },
+                    { "name": "Набор «Сельчанин»", "price": 70, "img": "https://i.imgur.com/1pJCoj9.png", "rarity": "rare" },
+                    { "name": "Набор «Бандит»", "price": 650, "img": "https://i.imgur.com/sBOIGql.png", "rarity": "legendary" },
+                    { "name": "ZAZ", "price": 15, "img": "https://i.imgur.com/z0hrLCJ.png", "rarity": "consumer" },
+                    { "name": "VAZ 2107", "price": 30, "img": "https://i.imgur.com/Ay8kPfF.png", "rarity": "common" },
+                    { "name": "LADA NIVA", "price": 80, "img": "https://i.imgur.com/VDTY224.png", "rarity": "rare" },
+                    { "name": "LADA VESTA", "price": 175, "img": "https://i.imgur.com/MxZVdD9.png", "rarity": "epic" },
+                    { "name": "Mercedes-Benz W210", "price": 300, "img": "https://i.imgur.com/xFhwl3m.png", "rarity": "legendary" },
+                    { "name": "10 BC", "price": 10, "img": "https://i.imgur.com/T1peEpa.png", "rarity": "consumer" },
+                    { "name": "25 BC", "price": 25, "img": "https://i.imgur.com/T1peEpa.png", "rarity": "consumer" },
+                    { "name": "50 BC", "price": 50, "img": "https://i.imgur.com/T1peEpa.png", "rarity": "common" },
+                    { "name": "500 BC", "price": 500, "img": "https://i.imgur.com/T1peEpa.png", "rarity": "legendary" },
+                    { "name": "Аптечка", "price": 7, "img": "https://i.imgur.com/4I6uqi4.png", "rarity": "consumer" },
+                    { "name": "Ремонтный набор", "price": 7, "img": "https://i.imgur.com/0ncZmAy.png", "rarity": "consumer" },
+                    { "name": "Скутер", "price": 15, "img": "https://i.imgur.com/5N2komM.png", "rarity": "consumer" }
+                ]
+            },
+            {
+                "id": 1770544149013,
+                "name": "Стандартный Кейс",
+                "price": 199,
+                "img": "https://i.imgur.com/k9iiubl.png",
+                "chances": { "consumer": 0, "common": 65, "rare": 25, "epic": 8, "legendary": 1.92, "mythical": 0.08 },
+                "items": [
+                    { "name": "Скин «Хоуми»", "price": 59, "img": "https://i.imgur.com/vUSoZ3w.png", "rarity": "common" },
+                    { "name": "Скин «Опасный мужчина»", "price": 69, "img": "https://i.imgur.com/Iumo5AU.png", "rarity": "common" },
+                    { "name": "Скин «Рыбчка»", "price": 89, "img": "https://i.imgur.com/7QB7INu.png", "rarity": "common" },
+                    { "name": "Рюкзак «Мопс»", "price": 79, "img": "https://i.imgur.com/IqxXto2.png", "rarity": "common" },
+                    { "name": "Корона короля", "price": 299, "img": "https://i.imgur.com/jMuPEij.png", "rarity": "epic" },
+                    { "name": "Маска «Иноске»", "price": 129, "img": "https://i.imgur.com/ljfQ3WL.png", "rarity": "epic" },
+                    { "name": "Volkswagel Golf GTi", "price": 99, "img": "https://i.imgur.com/AhDn5yf.png", "rarity": "common" },
+                    { "name": "BMW X5", "price": 219, "img": "https://i.imgur.com/mzc09cl.png", "rarity": "rare" },
+                    { "name": "Nissan Qashqai", "price": 199, "img": "https://i.imgur.com/aaSHLsI.png", "rarity": "rare" },
+                    { "name": "Audi A4", "price": 199, "img": "https://i.imgur.com/98BPi1T.png", "rarity": "rare" },
+                    { "name": "Acura TSX", "price": 199, "img": "https://i.imgur.com/sdjKmAW.png", "rarity": "rare" },
+                    { "name": "Chevrolet Camaro ZL1", "price": 999, "img": "https://i.imgur.com/nwLfhH9.png", "rarity": "epic" },
+                    { "name": "Ducati SuperSport", "price": 799, "img": "https://i.imgur.com/PLprcfn.png", "rarity": "epic" },
+                    { "name": "Lamborghini Aventador S", "price": 4999, "img": "https://i.imgur.com/38CkTrt.png", "rarity": "legendary" },
+                    { "name": "Mercedes AMG GT-R", "price": 2999, "img": "https://i.imgur.com/jnX4NvI_d.png?maxwidth=520&shape=thumb&fidelity=high", "rarity": "legendary" },
+                    { "name": "100 BC", "price": 100, "img": "https://i.imgur.com/T1peEpa_d.png?maxwidth=520&shape=thumb&fidelity=high", "rarity": "common" },
+                    { "name": "200 BC", "price": 200, "img": "https://i.imgur.com/T1peEpa_d.png?maxwidth=520&shape=thumb&fidelity=high", "rarity": "rare" }
+                ]
+            },
+            {
+                "id": 1770550347497,
+                "name": "Авто-Кейс 2.0",
+                "price": 999,
+                "img": "https://i.imgur.com/2busFmB.png",
+                "chances": { "consumer": 1, "common": 1, "rare": 1, "epic": 1, "legendary": 45, "mythical": 45 },
+                "items": [
+                    { "name": "BMW M5 E60", "price": 549, "img": "https://i.imgur.com/DO7L8do.png", "rarity": "rare" },
+                    { "name": "Subaru WRX STi", "price": 499, "img": "https://i.imgur.com/TTbWXcs.png", "rarity": "rare" },
+                    { "name": "Toyota Camry 3.5", "price": 599, "img": "https://i.imgur.com/AnTZ6oV.png", "rarity": "rare" },
+                    { "name": "Volkswagen Passat", "price": 719, "img": "https://i.imgur.com/wTKU7AT.png", "rarity": "rare" },
+                    { "name": "Mercedes-Benz GT63s", "price": 1699, "img": "https://i.imgur.com/S9MRfzI.png", "rarity": "epic" },
+                    { "name": "Lamborghini Aventador S", "price": 4999, "img": "https://i.imgur.com/T2oklf8.png", "rarity": "legendary" },
+                    { "name": "Aurus Senat", "price": 6999, "img": "https://i.imgur.com/ExQjhq2.png", "rarity": "legendary" },
+                    { "name": "Mercedes-Benz G63 AMG", "price": 5500, "img": "https://i.imgur.com/E7Sbn3I.png", "rarity": "legendary" },
+                    { "name": "Bugatti Divo", "price": 19999, "img": "https://i.imgur.com/TDNAGwZ.png", "rarity": "mythical" },
+                    { "name": "Lamborghini Urus", "price": 3999, "img": "https://i.imgur.com/7ehMTjl.png", "rarity": "epic" },
+                    { "name": "Lamborghini Huracan", "price": 3999, "img": "https://i.imgur.com/T2oklf8.png", "rarity": "epic" },
+                    { "name": "BMW M4 F84", "price": 739, "img": "https://i.imgur.com/88nCiib.png", "rarity": "rare" },
+                    { "name": "XPENG P7", "price": 999, "img": "https://i.imgur.com/XFale9P.png", "rarity": "rare" },
+                    { "name": "BMW X6M F16", "price": 1999, "img": "https://i.imgur.com/JSqzmE2.png", "rarity": "epic" },
+                    { "name": "Alfa Romeo Guilia", "price": 699, "img": "https://i.imgur.com/NFJDSKI.png", "rarity": "rare" },
+                    { "name": "BMW X5M E70", "price": 799, "img": "https://i.imgur.com/r1gigSb.png", "rarity": "rare" },
+                    { "name": "Ducatti Supersport", "price": 699, "img": "https://i.imgur.com/VM2gthk.png", "rarity": "rare" }
                 ]
             }
         ];
 
-        let promoData = [
-            { "code": "ADMINKAADMINKAADMINKA", "val": 1000, "limit": 0 }
+        const DEFAULT_PROMO_CODES = [
+            { "code": "ADMINKAADMINKAADMINKA", "val": 1000, "limit": 0 },
+            { "code": "1CODE", "val": 10000, "limit": 1 }
         ];
 
+        let gameData = [];
+        let promoData = [];
         let currentCaseIdx = -1;
 
-        // Загрузка
-        const savedCases = localStorage.getItem('admin_game_config_v2');
-        if(savedCases) gameData = JSON.parse(savedCases);
+        // === ИНИЦИАЛИЗАЦИЯ ===
+        function init() {
+            const savedCases = localStorage.getItem('admin_game_config_v4');
+            const savedPromos = localStorage.getItem('admin_promo_config_v2');
 
-        const savedPromos = localStorage.getItem('admin_promo_config_v1');
-        if(savedPromos) promoData = JSON.parse(savedPromos);
+            if(savedCases && savedCases !== "[]") {
+                gameData = JSON.parse(savedCases);
+            } else {
+                gameData = JSON.parse(JSON.stringify(DEFAULT_GAME_CONFIG)); // Глубокая копия
+            }
 
-        // Инициализация
-        renderCasesList();
-        renderPromos();
-        exportConfig(); 
+            if(savedPromos) {
+                promoData = JSON.parse(savedPromos);
+            } else {
+                promoData = JSON.parse(JSON.stringify(DEFAULT_PROMO_CODES));
+            }
 
-        // === УПРАВЛЕНИЕ ВКЛАДКАМИ ===
+            renderCasesList();
+            renderPromos();
+            exportConfig();
+        }
+
+        // Сброс до дефолта (если накосячили)
+        function resetToDefault() {
+            if(!confirm("Вы уверены? Это сотрет все ваши изменения и вернет кейсы из script.js")) return;
+            localStorage.removeItem('admin_game_config_v4');
+            localStorage.removeItem('admin_promo_config_v2');
+            init();
+            document.getElementById('editor-area').style.display = 'none';
+        }
+
+        // === ВКЛАДКИ ===
         function setMode(mode) {
             document.getElementById('view-cases').style.display = mode === 'cases' ? 'grid' : 'none';
             document.getElementById('view-promos').style.display = mode === 'promos' ? 'grid' : 'none';
-            
             document.getElementById('tab-cases').className = `tab-btn ${mode==='cases'?'active':''}`;
             document.getElementById('tab-promos').className = `tab-btn ${mode==='promos'?'active':''}`;
         }
@@ -153,7 +299,10 @@
             gameData.forEach((c, idx) => {
                 const btn = document.createElement('button');
                 btn.className = `btn-item ${idx === currentCaseIdx ? 'active' : ''}`;
-                btn.innerText = c.name;
+                btn.innerHTML = `
+                    <div style="font-size:14px; font-weight:bold;">${c.name}</div>
+                    <div style="font-size:11px; color:#888;">${c.price} ₽ • ${c.items.length} предметов</div>
+                `;
                 btn.onclick = () => selectCase(idx);
                 list.appendChild(btn);
             });
@@ -170,6 +319,16 @@
             document.getElementById('case-img').value = c.img;
             document.getElementById('case-img-preview').src = c.img;
             
+            // Если шансы не заданы, берем дефолт
+            if(!c.chances) c.chances = { consumer: 50, common: 30, rare: 15, epic: 4, legendary: 1, mythical: 0 };
+            
+            document.getElementById('chance-consumer').value = c.chances.consumer || 0;
+            document.getElementById('chance-common').value = c.chances.common || 0;
+            document.getElementById('chance-rare').value = c.chances.rare || 0;
+            document.getElementById('chance-epic').value = c.chances.epic || 0;
+            document.getElementById('chance-legendary').value = c.chances.legendary || 0;
+            document.getElementById('chance-mythical').value = c.chances.mythical || 0;
+
             renderItems(c.items);
         }
 
@@ -182,17 +341,20 @@
                 row.className = `item-row border-${item.rarity}`;
                 row.innerHTML = `
                     <img src="${item.img}" class="item-img-preview">
-                    <input type="text" value="${item.name}" onchange="updateItem(${idx}, 'name', this.value)">
-                    <input type="number" value="${item.price}" onchange="updateItem(${idx}, 'price', this.value)">
+                    <div>
+                        <input type="text" value="${item.name}" onchange="updateItem(${idx}, 'name', this.value)" placeholder="Название">
+                        <input type="text" value="${item.img}" placeholder="URL картинки" style="font-size:10px; color:#888; margin:0;" onchange="updateItem(${idx}, 'img', this.value)">
+                    </div>
+                    <input type="number" value="${item.price}" onchange="updateItem(${idx}, 'price', this.value)" placeholder="Цена">
                     <select onchange="updateItem(${idx}, 'rarity', this.value)">
-                        <option value="consumer" ${item.rarity==='consumer'?'selected':''}>Ширпотреб</option>
-                        <option value="common" ${item.rarity==='common'?'selected':''}>Обычный</option>
-                        <option value="rare" ${item.rarity==='rare'?'selected':''}>Редкий</option>
-                        <option value="epic" ${item.rarity==='epic'?'selected':''}>Эпический</option>
-                        <option value="legendary" ${item.rarity==='legendary'?'selected':''}>Легендарный</option>
+                        <option value="consumer" ${item.rarity==='consumer'?'selected':''}>Ширп (Серый)</option>
+                        <option value="common" ${item.rarity==='common'?'selected':''}>Обычный (Зеленый)</option>
+                        <option value="rare" ${item.rarity==='rare'?'selected':''}>Редкий (Синий)</option>
+                        <option value="epic" ${item.rarity==='epic'?'selected':''}>Эпик (Фиол)</option>
+                        <option value="legendary" ${item.rarity==='legendary'?'selected':''}>Лега (Золото)</option>
+                        <option value="mythical" ${item.rarity==='mythical'?'selected':''}>МИФ (Красный)</option>
                     </select>
-                    <button class="btn-red" style="width:30px; padding:5px;" onclick="deleteItem(${idx})">x</button>
-                    <input type="text" value="${item.img}" placeholder="URL" style="grid-column: 1 / -1; font-size:10px; color:#aaa;" onchange="updateItem(${idx}, 'img', this.value)">
+                    <button class="btn-red" style="width:100%; padding:8px;" onclick="deleteItem(${idx})">🗑</button>
                 `;
                 container.appendChild(row);
             });
@@ -203,40 +365,64 @@
             gameData[currentCaseIdx].name = document.getElementById('case-name').value;
             gameData[currentCaseIdx].price = parseInt(document.getElementById('case-price').value) || 0;
             gameData[currentCaseIdx].img = document.getElementById('case-img').value;
-            document.getElementById('case-img-preview').src = gameData[currentCaseIdx].img;
+            
+            const imgPreview = document.getElementById('case-img-preview');
+            imgPreview.src = gameData[currentCaseIdx].img;
+            imgPreview.onerror = function() { this.src = 'https://via.placeholder.com/80?text=Err'; };
+            
             renderCasesList();
+            save();
+        }
+
+        function updateChances() {
+            if(currentCaseIdx === -1) return;
+            gameData[currentCaseIdx].chances = {
+                consumer: parseFloat(document.getElementById('chance-consumer').value) || 0,
+                common: parseFloat(document.getElementById('chance-common').value) || 0,
+                rare: parseFloat(document.getElementById('chance-rare').value) || 0,
+                epic: parseFloat(document.getElementById('chance-epic').value) || 0,
+                legendary: parseFloat(document.getElementById('chance-legendary').value) || 0,
+                mythical: parseFloat(document.getElementById('chance-mythical').value) || 0
+            };
             save();
         }
 
         function updateItem(itemIdx, field, value) {
             if(field === 'price') value = parseInt(value) || 0;
             gameData[currentCaseIdx].items[itemIdx][field] = value;
-            renderItems(gameData[currentCaseIdx].items);
+            if(field === 'rarity') renderItems(gameData[currentCaseIdx].items); // перерисовка цвета бордера
             save();
         }
 
         function addItem() {
             if(currentCaseIdx === -1) return;
-            gameData[currentCaseIdx].items.push({ name: "Новый", price: 100, img: "", rarity: "consumer" });
+            gameData[currentCaseIdx].items.push({ name: "Новый предмет", price: 100, img: "https://via.placeholder.com/150", rarity: "consumer" });
             renderItems(gameData[currentCaseIdx].items);
             save();
         }
 
         function deleteItem(idx) {
-            if(!confirm("Удалить?")) return;
+            if(!confirm("Удалить предмет?")) return;
             gameData[currentCaseIdx].items.splice(idx, 1);
             renderItems(gameData[currentCaseIdx].items);
             save();
         }
 
         function addNewCase() {
-            gameData.push({ id: Date.now(), name: "New Case", price: 1000, img: "", items: [] });
+            gameData.push({ 
+                id: Date.now(), 
+                name: "Новый Кейс", 
+                price: 100, 
+                img: "https://via.placeholder.com/150", 
+                chances: { consumer: 50, common: 30, rare: 15, epic: 4, legendary: 0.92, mythical: 0.08 },
+                items: [] 
+            });
             selectCase(gameData.length - 1);
             save();
         }
 
         function deleteCurrentCase() {
-            if(!confirm("Удалить кейс?")) return;
+            if(!confirm("Удалить этот кейс полностью?")) return;
             gameData.splice(currentCaseIdx, 1);
             currentCaseIdx = -1;
             document.getElementById('editor-area').style.display = 'none';
@@ -256,17 +442,17 @@
                     <input type="text" value="${promo.code}" placeholder="CODE" onchange="updatePromo(${idx}, 'code', this.value)" style="margin:0; font-weight:bold; color:gold;">
                     <input type="number" value="${promo.val}" placeholder="Сумма" onchange="updatePromo(${idx}, 'val', this.value)" style="margin:0;">
                     <select onchange="updatePromo(${idx}, 'limit', this.value)" style="margin:0;">
-                        <option value="1" ${promo.limit == 1 ? 'selected' : ''}>1 раз на аккаунт</option>
-                        <option value="0" ${promo.limit == 0 ? 'selected' : ''}>Бесконечно</option>
+                        <option value="1" ${promo.limit == 1 ? 'selected' : ''}>Один раз (1)</option>
+                        <option value="0" ${promo.limit == 0 ? 'selected' : ''}>Бесконечно (0)</option>
                     </select>
-                    <button class="btn-red" style="width:30px; margin:0;" onclick="deletePromo(${idx})">x</button>
+                    <button class="btn-red" style="width:100%; margin:0; padding:8px;" onclick="deletePromo(${idx})">🗑</button>
                 `;
                 container.appendChild(row);
             });
         }
 
         function addPromo() {
-            promoData.push({ code: "NEWCODE", val: 100, limit: 1 });
+            promoData.push({ code: "NEW_CODE_" + Math.floor(Math.random()*1000), val: 1000, limit: 1 });
             renderPromos();
             save();
         }
@@ -281,13 +467,13 @@
         function updatePromo(idx, field, val) {
             if(field === 'val' || field === 'limit') val = parseInt(val);
             promoData[idx][field] = val;
-            save(); // Автосохранение
+            save(); 
         }
 
-        // === ОБЩЕЕ ===
+        // === СОХРАНЕНИЕ И ЭКСПОРТ ===
         function save() {
-            localStorage.setItem('admin_game_config_v2', JSON.stringify(gameData));
-            localStorage.setItem('admin_promo_config_v1', JSON.stringify(promoData));
+            localStorage.setItem('admin_game_config_v4', JSON.stringify(gameData));
+            localStorage.setItem('admin_promo_config_v2', JSON.stringify(promoData));
             exportConfig();
         }
 
@@ -295,10 +481,37 @@
             const jsonCases = JSON.stringify(gameData, null, 4);
             const jsonPromos = JSON.stringify(promoData, null, 4);
             
-            const str = `const GAME_CONFIG = ${jsonCases};\n\nconst PROMO_CODES = ${jsonPromos};`;
-            
+            // Формируем готовый кусок кода для вставки
+            const str = `/* ==============================================
+   КОНФИГУРАЦИЯ (ВСТАВИТЬ ЭТО В НАЧАЛО SCRIPT.JS)
+   ============================================== */
+const GAME_CONFIG = ${jsonCases};
+
+const PROMO_CODES = ${jsonPromos};
+`;
             document.getElementById('output-json').value = str;
         }
+
+        function copyConfig() {
+            const textarea = document.getElementById('output-json');
+            textarea.select();
+            
+            // Современный способ
+            if(navigator.clipboard) {
+                navigator.clipboard.writeText(textarea.value).then(() => {
+                    alert("Конфиг скопирован! Теперь замените начало файла script.js этим текстом.");
+                }).catch(err => {
+                    document.execCommand('copy'); // Фоллбэк
+                    alert("Скопировано!");
+                });
+            } else {
+                document.execCommand('copy');
+                alert("Скопировано!");
+            }
+        }
+
+        // Запуск
+        init();
     </script>
 </body>
 </html>

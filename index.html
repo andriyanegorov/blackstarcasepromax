@@ -36,7 +36,6 @@
 
             <div id="tab-shop" class="section">
                 <h2>Пополнение баланса</h2>
-                
                 <div class="promo-container" style="background: #1a1a1a; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1);">
                     <div style="font-size: 12px; color: #888; margin-bottom: 8px;">Есть промокод?</div>
                     <div style="display: flex; gap: 8px;">
@@ -68,7 +67,12 @@
                         <div class="cost">Магнат</div>
                     </div>
                 </div>
-                
+
+                <div class="custom-pay-block">
+                    <input type="number" id="custom-amount" class="custom-pay-input" placeholder="Своя сумма (от 10₽)">
+                    <button class="btn-pay-custom" onclick="payCustomAmount()">ОПЛАТИТЬ</button>
+                </div>
+
                 <div class="payment-check">
                     <p id="payment-msg">Нажмите на сумму для оплаты</p>
                 </div>
@@ -88,6 +92,7 @@
             </div>
         </main>
     </div> 
+
     <nav class="bottom-nav">
         <button class="nav-btn active" onclick="switchTab('cases')">
             <span class="icon">📦</span> 
@@ -104,7 +109,7 @@
     </nav>
 
     <div class="modal-overlay" id="modal-preview">
-        <div class="modal-card slide-up" style="justify-content: flex-start;">
+        <div class="modal-card slide-up" style="justify-content: flex-start; max-height: 85vh;">
             <button class="close-icon" onclick="closeModal('modal-preview')">✕</button>
             
             <div class="preview-header">
@@ -113,37 +118,58 @@
                 <div class="preview-price-tag" id="preview-price">500 ₽</div>
             </div>
 
-            <div style="font-size: 12px; color: #888; margin-bottom: 5px; text-align: left;">Содержимое кейса:</div>
+            <div class="qty-selector">
+                <button class="qty-btn active" onclick="setOpenCount(1)">x1</button>
+                <button class="qty-btn" onclick="setOpenCount(2)">x2</button>
+                <button class="qty-btn" onclick="setOpenCount(5)">x5</button>
+                <button class="qty-btn" onclick="setOpenCount(10)">x10</button>
+            </div>
+
+            <div style="font-size: 12px; color: #888; margin-bottom: 5px; text-align: left; width: 100%;">Содержимое кейса:</div>
             
             <div class="preview-grid-container">
                 <div class="preview-grid" id="preview-items-container"></div>
             </div>
 
-            <button class="btn-main pulse-btn" id="btn-start-open">ОТКРЫТЬ</button>
+            <div class="preview-footer">
+                <label class="fast-open-toggle">
+                    <div class="switch">
+                        <input type="checkbox" id="fast-open-check">
+                        <span class="slider"></span>
+                    </div>
+                    <span>Быстрое открытие</span>
+                </label>
+
+                <button class="btn-main pulse-btn" id="btn-start-open" onclick="startRouletteSequence()">
+                    ОТКРЫТЬ ЗА <span id="btn-total-price">0</span> ₽
+                </button>
+            </div>
         </div>
     </div>
 
     <div class="roulette-fullscreen" id="modal-roulette">
-        <div class="roulette-ui-container">
-            <div class="roulette-center-line"></div>
-            <div class="roulette-window">
-                <div class="roulette-shadow-overlay"></div>
-                <div class="roulette-track" id="roulette-track"></div>
-            </div>
-        </div>
+        <div id="roulette-playground" class="roulette-playground"></div>
         <div class="roulette-status" id="roulette-status">ЗАПУСК...</div>
     </div>
 
     <div class="modal-overlay" id="modal-win">
-        <div class="modal-card pop-in">
-            <div class="win-light-burst"></div>
-            <h2 style="color: #FFD700; text-shadow: 0 0 10px orange;">ПОЗДРАВЛЯЕМ!</h2>
-            <img id="win-img" src="" style="width: 120px; margin: 15px 0;">
-            <div class="win-item-name" id="win-name">ITEM</div>
-            <div class="win-item-price">Стоимость: <span id="win-sell-price">0</span> ₽</div>
+        <div class="modal-card pop-in" id="win-card" style="max-height: 90vh;">
             
-            <div class="win-actions">
-                <button class="btn-sec" onclick="finishWin(false)">Продать</button>
+            <div class="win-effects-container" id="win-effects">
+                <div class="sunburst"></div>
+                <div class="win-pulse"></div>
+            </div>
+
+            <h2 style="color: #FFD700; text-shadow: 0 0 10px orange; z-index: 2; position: relative; margin-top:0;">ПОЗДРАВЛЯЕМ!</h2>
+            
+            <div id="win-grid" class="win-grid"></div>
+
+            <div style="z-index: 2; position: relative; margin-top: 10px; font-size: 12px; color: #aaa;">
+                Общая стоимость: <span id="win-total-price" style="color:white; font-weight:bold;">0</span> ₽
+            </div>
+            
+            <div class="win-actions" style="z-index: 2; position: relative;">
+                <button class="btn-sec" onclick="finishWin(false)">Продать всё</button>
                 <button class="btn-main" onclick="finishWin(true)">В гараж</button>
             </div>
         </div>
@@ -182,9 +208,6 @@
             <div style="margin-top: 15px; text-align: left;">
                 <h4 style="color:#888; margin-bottom:10px; font-size:12px; text-transform:uppercase;">История операций</h4>
                 <div id="history-list" class="history-list"></div>
-            </div>
-
-            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #333;">
             </div>
         </div>
     </div>

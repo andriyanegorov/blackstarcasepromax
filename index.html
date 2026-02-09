@@ -31,7 +31,21 @@
                     <h1>Главное меню</h1>
                     <p>Открывай кейсы, выбивай эксклюзив</p>
                 </div>
-                <div class="cases-grid" id="cases-container"></div>
+
+                <h3 class="category-title">🔥 Кейсы Black Russia</h3>
+                <div class="cases-grid" id="cases-default"></div>
+
+                <h3 class="category-title">📦 Кейсы с Наборами</h3>
+                <div class="cases-grid" id="cases-bundles"></div>
+
+                <h3 class="category-title">💀 Всё или Ничего?</h3>
+                <div class="cases-grid" id="cases-risk"></div>
+
+                <div class="disclaimer-box">
+                    <strong>⚠️ ВНИМАНИЕ</strong><br>
+                    Предметы выводятся строго в виртах!<br>
+                    (Курс: 1₽ = 10,000 Вирт)
+                </div>
             </div>
 
             <div id="tab-shop" class="section">
@@ -109,28 +123,32 @@
     </nav>
 
     <div class="modal-overlay" id="modal-preview">
-        <div class="modal-card slide-up" style="justify-content: flex-start; max-height: 85vh;">
+        <div class="modal-card slide-up" style="justify-content: flex-start; max-height: 85vh; padding-top: 30px;">
             <button class="close-icon" onclick="closeModal('modal-preview')">✕</button>
-            
             <div class="preview-header">
-                <img id="preview-img" src="" class="preview-case-img">
+                <div style="position: relative; width: 140px; margin: 0 auto;">
+                    <img id="preview-img" src="" class="preview-case-img">
+                    <div id="chances-popover" class="chances-popover">
+                        <div class="popover-title">ШАНСЫ ВЫПАДЕНИЯ</div>
+                        <div id="chances-list-content"></div>
+                    </div>
+                </div>
                 <h2 id="preview-title" style="margin: 5px 0 10px;">Case Name</h2>
-                <div class="preview-price-tag" id="preview-price">500 ₽</div>
+                <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <div class="preview-price-tag" id="preview-price">500 ₽</div>
+                    <button class="btn-info" onclick="toggleChances()">?</button>
+                </div>
             </div>
-
             <div class="qty-selector">
                 <button class="qty-btn active" onclick="setOpenCount(1)">x1</button>
                 <button class="qty-btn" onclick="setOpenCount(2)">x2</button>
                 <button class="qty-btn" onclick="setOpenCount(5)">x5</button>
                 <button class="qty-btn" onclick="setOpenCount(10)">x10</button>
             </div>
-
             <div style="font-size: 12px; color: #888; margin-bottom: 5px; text-align: left; width: 100%;">Содержимое кейса:</div>
-            
             <div class="preview-grid-container">
                 <div class="preview-grid" id="preview-items-container"></div>
             </div>
-
             <div class="preview-footer">
                 <label class="fast-open-toggle">
                     <div class="switch">
@@ -139,7 +157,6 @@
                     </div>
                     <span>Быстрое открытие</span>
                 </label>
-
                 <button class="btn-main pulse-btn" id="btn-start-open" onclick="startRouletteSequence()">
                     ОТКРЫТЬ ЗА <span id="btn-total-price">0</span> ₽
                 </button>
@@ -154,20 +171,15 @@
 
     <div class="modal-overlay" id="modal-win">
         <div class="modal-card pop-in" id="win-card" style="max-height: 90vh;">
-            
             <div class="win-effects-container" id="win-effects">
                 <div class="sunburst"></div>
                 <div class="win-pulse"></div>
             </div>
-
             <h2 style="color: #FFD700; text-shadow: 0 0 10px orange; z-index: 2; position: relative; margin-top:0;">ПОЗДРАВЛЯЕМ!</h2>
-            
             <div id="win-grid" class="win-grid"></div>
-
             <div style="z-index: 2; position: relative; margin-top: 10px; font-size: 12px; color: #aaa;">
                 Общая стоимость: <span id="win-total-price" style="color:white; font-weight:bold;">0</span> ₽
             </div>
-            
             <div class="win-actions" style="z-index: 2; position: relative;">
                 <button class="btn-sec" onclick="finishWin(false)">Продать всё</button>
                 <button class="btn-main" onclick="finishWin(true)">В гараж</button>
@@ -179,13 +191,14 @@
         <div class="modal-card pop-in">
             <button class="close-icon" onclick="closeModal('modal-inventory-action')">✕</button>
             <h3 style="margin-bottom: 5px;">Управление предметом</h3>
-            
             <div id="inv-action-preview" style="margin: 20px 0;">
                 <img id="inv-item-img" src="" style="width:100px; height:80px; object-fit:contain;">
                 <h3 id="inv-item-name" style="margin: 10px 0 5px;">Название</h3>
                 <div style="color:#888; font-size:12px;">Гос. цена: <span id="inv-item-price">0</span> ₽</div>
+                <div style="color:#4CAF50; font-size:12px; font-weight:bold; margin-top:5px;">
+                    (<span id="inv-item-virt-price">0 Вирт</span>)
+                </div>
             </div>
-
             <div class="win-actions" style="flex-direction: column; width: 100%;">
                 <button class="btn-main" onclick="sellCurrentItem()">
                     ПРОДАТЬ ЗА <span id="sell-btn-price">0</span> ₽
@@ -197,14 +210,78 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="modal-withdraw-success">
+        <div class="modal-card pop-in">
+            <button class="close-icon" onclick="closeModal('modal-withdraw-success')">✕</button>
+            <div class="success-icon-container">
+                <svg viewBox="0 0 24 24" class="success-svg">
+                    <path fill="none" d="M0 0h24v24H0z"/>
+                    <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-1.177-7.86l-2.765-2.767L7 12.431l3.119 3.121a1 1 0 0 0 1.414 0l8.752-8.754L19.22 5.74l-8.397 8.4z" fill="var(--gold)"/>
+                </svg>
+            </div>
+            <h3 style="margin: 10px 0; color: var(--gold);">ЗАЯВКА ОТПРАВЛЕНА</h3>
+            <p id="withdraw-success-msg" style="color: #ccc; font-size: 13px; line-height: 1.5;">
+                Вывод оформлен
+            </p>
+            <button class="btn-sec" style="margin-top: 20px;" onclick="closeModal('modal-withdraw-success')">ПОНЯТНО</button>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="modal-profile">
         <div class="modal-card" style="max-height: 90vh;">
             <button class="close-icon" onclick="closeModal('modal-profile')">✕</button>
             <h3>Профиль Игрока</h3>
-            <div class="stat-row"><span>Имя:</span> <span id="profile-id">Loading...</span></div>
-            <div class="stat-row"><span>UID:</span> <span id="profile-uid" style="color:var(--c-rare)">...</span></div>
+            <div style="background: #111; padding: 15px; border-radius: 12px; margin-bottom: 15px; text-align: left; border: 1px solid #333;">
+                <label style="font-size: 10px; color: #888;">Игровой Никнейм</label>
+                <input type="text" id="setting-nick" class="profile-input" placeholder="Ivan_Ivanov">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                    <div>
+                        <label style="font-size: 10px; color: #888; display: block;">Сервер</label>
+                        <select id="setting-server" class="profile-input">
+                            <option value="Red">Red</option><option value="Green">Green</option><option value="Blue">Blue</option>
+                            <option value="Yellow">Yellow</option><option value="Orange">Orange</option><option value="Purple">Purple</option>
+                            <option value="Lime">Lime</option><option value="Pink">Pink</option><option value="Cherry">Cherry</option>
+                            <option value="Black">Black</option><option value="Indigo">Indigo</option><option value="White">White</option>
+                            <option value="Magenta">Magenta</option><option value="Crimson">Crimson</option><option value="Gold">Gold</option>
+                            <option value="Azure">Azure</option><option value="Platinum">Platinum</option><option value="Aqua">Aqua</option>
+                            <option value="Gray">Gray</option><option value="Ice">Ice</option><option value="Chilli">Chilli</option>
+                            <option value="Choco">Choco</option><option value="Mocsow">Mocsow</option><option value="SPB">SPB</option>
+                            <option value="Ufa">Ufa</option><option value="Sochi">Sochi</option><option value="Kazan">Kazan</option>
+                            <option value="Samara">Samara</option><option value="Rostov">Rostov</option><option value="Anapa">Anapa</option>
+                            <option value="EKB">EKB</option><option value="Krasnodar">Krasnodar</option><option value="Arzamas">Arzamas</option>
+                            <option value="Novosib">Novosib</option><option value="Grozny">Grozny</option><option value="Saratov">Saratov</option>
+                            <option value="Omsk">Omsk</option><option value="Irkuts">Irkuts</option><option value="Volgograd">Volgograd</option>
+                            <option value="Voronezh">Voronezh</option><option value="Belgorod">Belgorod</option><option value="Makhachkala">Makhachkala</option>
+                            <option value="Vladikavkaz">Vladikavkaz</option><option value="Vladivostok">Vladivostok</option><option value="Kaliningrad">Kaliningrad</option>
+                            <option value="Chelyabinsk">Chelyabinsk</option><option value="Krasnoyarsk">Krasnoyarsk</option><option value="Cheboksary">Cheboksary</option>
+                            <option value="Khabarovsk">Khabarovsk</option><option value="Perm">Perm</option><option value="Tula">Tula</option>
+                            <option value="Ryazan">Ryazan</option><option value="Murmansk">Murmansk</option><option value="Penza">Penza</option>
+                            <option value="Kursk">Kursk</option><option value="Arkhangelsk">Arkhangelsk</option><option value="Orenburg">Orenburg</option>
+                            <option value="Kirov">Kirov</option><option value="Kemerovo">Kemerovo</option><option value="Tyumen">Tyumen</option>
+                            <option value="Tolyatti">Tolyatti</option><option value="Ivanovo">Ivanovo</option><option value="Stavropol">Stavropol</option>
+                            <option value="Smolensk">Smolensk</option><option value="Pskov">Pskov</option><option value="Bryansk">Bryansk</option>
+                            <option value="Orel">Orel</option><option value="Yaroslavl">Yaroslavl</option><option value="Barnaul">Barnaul</option>
+                            <option value="Lipetsk">Lipetsk</option><option value="Ulyanovsk">Ulyanovsk</option><option value="Yakutsk">Yakutsk</option>
+                            <option value="Tambov">Tambov</option><option value="Bratsk">Bratsk</option><option value="Astrakhan">Astrakhan</option>
+                            <option value="Chita">Chita</option><option value="Kostroma">Kostroma</option><option value="Vladimir">Vladimir</option>
+                            <option value="Kaluga">Kaluga</option><option value="Novgorod">Novgorod</option><option value="Taganrog">Taganrog</option>
+                            <option value="Vologda">Vologda</option><option value="Tver">Tver</option><option value="Tomsk">Tomsk</option>
+                            <option value="Izhevsk">Izhevsk</option><option value="Surgut">Surgut</option><option value="Podolsk">Podolsk</option>
+                            <option value="Magadan">Magadan</option><option value="Cherepovets">Cherepovets</option><option value="Norilsk">Norilsk</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 10px; color: #888; display: block;">Банк. счет</label>
+                        <input type="number" id="setting-bank" class="profile-input" placeholder="000000">
+                    </div>
+                </div>
+
+                <button class="btn-main" onclick="saveSettings()" style="margin-top: 15px; padding: 10px;">СОХРАНИТЬ</button>
+            </div>
+            <div class="stat-row"><span>Имя:</span> <span id="profile-id" style="color:#fff; font-weight:bold;">...</span></div>
+            <div class="stat-row"><span>ID аккаунта:</span> <span id="profile-uid" style="color:var(--c-rare)">...</span></div>
             <div class="stat-row"><span>Баланс:</span> <span id="profile-bal" style="color: gold">0</span></div>
-            
             <div style="margin-top: 15px; text-align: left;">
                 <h4 style="color:#888; margin-bottom:10px; font-size:12px; text-transform:uppercase;">История операций</h4>
                 <div id="history-list" class="history-list"></div>

@@ -7,9 +7,13 @@
 const tg = window.Telegram.WebApp;
 const API_URL = "https://script.google.com/macros/s/AKfycbym7BZkWwdqkB8_yE6ynKaeYKtd8X833chIM6smbbUAs_85epS5W6bz2uBi0pcQBRqF/exec";
 const BOT_TOKEN = "8555487401:AAFWK-AOovV9DbnKW62ZAVIvEJWAtung05Y";
-const CHAT_ID = "@blackrussiacases_news"; 
-const CHANNEL_URL = "https://t.me/blackrussiacases_news"; 
-const TOPICS = { WITHDRAW: 2, DEPOSIT: 4, LOGS: 8 };
+
+// --- НАСТРОЙКИ ЛОГОВ (КУДА ПРИХОДЯТ ОТЧЕТЫ) ---
+const LOG_CHAT_ID = "@brcasesvidacha"; // Чат для выдачи/логов
+const TOPICS = { WITHDRAW: 2, DEPOSIT: 4, LOGS: 8 }; // ID топиков в чате логов (Убедись, что они верные!)
+
+// --- НАСТРОЙКИ ПОДПИСКИ (НА ЧТО ПОДПИСЫВАТЬСЯ) ---
+const SUB_CHANNEL_URL = "https://t.me/blackrussiacases_news"; // Канал для обязательной подписки
 
 const PLACEHOLDER_IMG = "https://placehold.co/150x150/1a1a1a/ffffff?text=No+Image";
 
@@ -22,35 +26,893 @@ const RARITY_COLORS = { 'consumer': '#B0B0B0', 'common': '#4CAF50', 'rare': '#3b
 /* ==============================================
    КОНФИГУРАЦИЯ
    ============================================== */
-let GAME_CONFIG = [
+/* ==============================================
+   КОНФИГУРАЦИЯ (ВСТАВИТЬ ЭТО В НАЧАЛО SCRIPT.JS)
+   ============================================== */
+const GAME_CONFIG = [
     {
         "id": "sub_case_1",
         "name": "Раз в ДВА ДНЯ! (За подписку)",
         "price": 0,
         "category": "free",
         "img": "img/free_case.png",
-        "chances": { "consumer": 60, "common": 20, "rare": 11, "epic": 8, "legendary": 1, "mythical": 0 },
+        "chances": {
+            "consumer": 40,
+            "common": 30,
+            "rare": 20,
+            "epic": 8,
+            "legendary": 2,
+            "mythical": 0
+        },
         "items": [
-            { "name": "50.000 Вирт", "price": 5, "img": "img/money.png", "rarity": "consumer" },
-            { "name": "100.000 Вирт", "price": 10, "img": "img/money.png", "rarity": "common" },
-            { "name": "BMW M5 F90", "price": 400, "img": "img/m5f90.png", "rarity": "legendary" },
-            { "name": "Маска Демона", "price": 150, "img": "img/demon.png", "rarity": "epic" },
-            { "name": "Аптечка", "price": 7, "img": "img/aptechka.png", "rarity": "consumer" },
-            { "name": "10 BC", "price": 10, "img": "img/bc.png", "rarity": "common" }
+            {
+                "name": "50.000 Вирт",
+                "price": 5,
+                "img": "img/money.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "100.000 Вирт",
+                "price": 10,
+                "img": "img/money.png",
+                "rarity": "common"
+            },
+            {
+                "name": "BMW M5 F90",
+                "price": 400,
+                "img": "img/m5f90.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Маска Демона",
+                "price": 150,
+                "img": "img/demon.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Аптечка",
+                "price": 7,
+                "img": "img/aptechka.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "10 BC",
+                "price": 10,
+                "img": "img/bc.png",
+                "rarity": "common"
+            }
+        ]
+    },
+    {
+        "id": 1,
+        "name": "Кейс Бомжа",
+        "price": 29,
+        "category": "default",
+        "img": "img/bomj_case.png",
+        "chances": {
+            "consumer": 50,
+            "common": 38,
+            "rare": 8,
+            "epic": 3,
+            "legendary": 1,
+            "mythical": 1
+        },
+        "items": [
+            {
+                "name": "50.000 Вирт",
+                "price": 5,
+                "img": "img/money.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "150.000 Вирт",
+                "price": 15,
+                "img": "img/money.png",
+                "rarity": "common"
+            },
+            {
+                "name": "400.000 Вирт",
+                "price": 40,
+                "img": "img/money.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "5.000.000 Вирт",
+                "price": 500,
+                "img": "img/money.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Очки «Сердечки»",
+                "price": 500,
+                "img": "img/heartglass.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Серый кейс",
+                "price": 500,
+                "img": "img/graycase.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Маска Дали",
+                "price": 70,
+                "img": "img/dali.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Очки «Street»",
+                "price": 19,
+                "img": "img/streetglass.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "Скин «Емеля»",
+                "price": 300,
+                "img": "img/emelya.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Скин «Пузатый»",
+                "price": 10,
+                "img": "img/pyzatiy.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "Набор «Сельчанин»",
+                "price": 70,
+                "img": "img/pack_selchanin.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Набор «Бандит»",
+                "price": 650,
+                "img": "img/pack_bandit.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "ZAZ",
+                "price": 15,
+                "img": "img/zaz.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "VAZ 2107",
+                "price": 30,
+                "img": "img/2107.png",
+                "rarity": "common"
+            },
+            {
+                "name": "LADA NIVA",
+                "price": 80,
+                "img": "img/niva.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "LADA VESTA",
+                "price": 175,
+                "img": "img/vesta.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Mercedes-Benz W210",
+                "price": 300,
+                "img": "img/w210.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "10 BC",
+                "price": 10,
+                "img": "img/bc.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "25 BC",
+                "price": 25,
+                "img": "img/bc.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "50 BC",
+                "price": 50,
+                "img": "img/bc.png",
+                "rarity": "common"
+            },
+            {
+                "name": "500 BC",
+                "price": 500,
+                "img": "img/bc.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Аптечка",
+                "price": 7,
+                "img": "img/aptechka.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "Ремонтный набор",
+                "price": 7,
+                "img": "img/remka.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "Скутер",
+                "price": 15,
+                "img": "img/skuter.png",
+                "rarity": "common"
+            }
+        ]
+    },
+    {
+        "id": 1770544149013,
+        "name": "Стандартный Кейс",
+        "price": 199,
+        "category": "default",
+        "img": "img/standart_case.png",
+        "chances": {
+            "consumer": 0,
+            "common": 60,
+            "rare": 34,
+            "epic": 5,
+            "legendary": 1,
+            "mythical": 0
+        },
+        "items": [
+            {
+                "name": "Скин «Хоуми»",
+                "price": 59,
+                "img": "img/homie.png",
+                "rarity": "common"
+            },
+            {
+                "name": "Скин «Опасный мужчина»",
+                "price": 69,
+                "img": "img/dangerman.png",
+                "rarity": "common"
+            },
+            {
+                "name": "Скин «Рыбчка»",
+                "price": 89,
+                "img": "img/ribachka.png",
+                "rarity": "common"
+            },
+            {
+                "name": "Рюкзак «Мопс»",
+                "price": 79,
+                "img": "img/mops.png",
+                "rarity": "common"
+            },
+            {
+                "name": "Корона короля",
+                "price": 249,
+                "img": "img/korona.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Маска «Иноске»",
+                "price": 129,
+                "img": "img/inoske.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Volkswagel Golf GTi",
+                "price": 99,
+                "img": "img/golf.png",
+                "rarity": "common"
+            },
+            {
+                "name": "BMW X5",
+                "price": 219,
+                "img": "img/x5.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Nissan Qashqai",
+                "price": 199,
+                "img": "img/qashqai.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Audi A4",
+                "price": 199,
+                "img": "img/a4.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Acura TSX",
+                "price": 199,
+                "img": "img/tsx.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Chevrolet Camaro ZL1",
+                "price": 999,
+                "img": "img/camaro.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Ducati SuperSport",
+                "price": 799,
+                "img": "img/supersport.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Lamborghini Aventador S",
+                "price": 2999,
+                "img": "img/aventador.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Mercedes AMG GT-R",
+                "price": 1999,
+                "img": "img/gtr.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "100 BC",
+                "price": 100,
+                "img": "img/bc.png",
+                "rarity": "common"
+            },
+            {
+                "name": "200 BC",
+                "price": 200,
+                "img": "img/bc.png",
+                "rarity": "rare"
+            }
+        ]
+    },
+    {
+        "id": 1770550347497,
+        "name": "Авто-Кейс 2.0",
+        "price": 999,
+        "category": "default",
+        "img": "img/auto_case.png",
+        "chances": {
+            "consumer": 0,
+            "common": 0,
+            "rare": 86,
+            "epic": 13,
+            "legendary": 1,
+            "mythical": 0
+        },
+        "items": [
+            {
+                "name": "BMW M5 E60",
+                "price": 499,
+                "img": "img/m5e60.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Subaru WRX STi",
+                "price": 549,
+                "img": "img/wrx.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Toyota Camry 3.5",
+                "price": 599,
+                "img": "img/camry.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Volkswagen Passat",
+                "price": 719,
+                "img": "img/passat.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Mercedes-Benz GT63s",
+                "price": 1199,
+                "img": "img/gt63s.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Lamborghini Aventador S",
+                "price": 4999,
+                "img": "img/aventador.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Aurus Senat",
+                "price": 6999,
+                "img": "img/senat.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Mercedes-Benz G63 AMG",
+                "price": 5499,
+                "img": "img/g63.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Bugatti Divo",
+                "price": 19999,
+                "img": "img/divo.png",
+                "rarity": "mythical"
+            },
+            {
+                "name": "Lamborghini Urus",
+                "price": 3799,
+                "img": "img/urus.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Lamborghini Huracan",
+                "price": 2999,
+                "img": "img/huracan.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "BMW M4 F84",
+                "price": 739,
+                "img": "img/m4f84.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "XPENG P7",
+                "price": 999,
+                "img": "img/p7.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "BMW X6M F16",
+                "price": 1999,
+                "img": "img/x6mf16.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Alfa Romeo Guilia",
+                "price": 699,
+                "img": "img/romeo.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "BMW X5M E70",
+                "price": 799,
+                "img": "img/x5me70.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Ducatti Supersport",
+                "price": 699,
+                "img": "img/supersport.png",
+                "rarity": "rare"
+            }
+        ]
+    },
+    {
+        "id": 1770563185594,
+        "name": "Особый Кейс",
+        "price": 3999,
+        "category": "default",
+        "img": "img/osobiy_case.png",
+        "chances": {
+            "consumer": 0,
+            "common": 0,
+            "rare": 0,
+            "epic": 0,
+            "legendary": 99.9,
+            "mythical": 0.1
+        },
+        "items": [
+            {
+                "name": "Ocean Yacht",
+                "price": 19999,
+                "img": "img/ocean.png",
+                "rarity": "mythical"
+            },
+            {
+                "name": "Rolls Royce Spectre",
+                "price": 29999,
+                "img": "img/spectre.png",
+                "rarity": "mythical"
+            },
+            {
+                "name": "Tesla CyberTruck",
+                "price": 19999,
+                "img": "img/cybertruck.png",
+                "rarity": "mythical"
+            },
+            {
+                "name": "Mercedes-Benz G63 AMG 6x6",
+                "price": 39999,
+                "img": "img/g636x6.png",
+                "rarity": "mythical"
+            },
+            {
+                "name": "Bugatti Chiron",
+                "price": 19999,
+                "img": "img/chiron.png",
+                "rarity": "mythical"
+            },
+            {
+                "name": "Bugatti Veyron",
+                "price": 24999,
+                "img": "img/veyron.png",
+                "rarity": "mythical"
+            },
+            {
+                "name": "Ferrari Enzo",
+                "price": 3999,
+                "img": "img/enzo.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Daewoo Matiz",
+                "price": 2999,
+                "img": "img/matiz.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Ducati XDiavel",
+                "price": 1499,
+                "img": "img/xdiavel.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Lamborghini Urus",
+                "price": 3799,
+                "img": "img/urus.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Mercedes-Benz G63 AMG Max",
+                "price": 5999,
+                "img": "img/g63.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Mercedes-Benz SLR McLaren",
+                "price": 3999,
+                "img": "img/slrmclaren.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Lamborghini Aventador",
+                "price": 4999,
+                "img": "img/aventador.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Зловещий",
+                "price": 1999,
+                "img": "img/zloveshiy.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Invetero Coquette D5",
+                "price": 2999,
+                "img": "img/coquette.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "F1",
+                "price": 2999,
+                "img": "img/f1.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Mercedes-Benz AMG GT R",
+                "price": 3299,
+                "img": "img/gtr.png",
+                "rarity": "legendary"
+            }
+        ]
+    },
+    {
+        "id": 1770583808350,
+        "name": "Кейс с Наборами",
+        "price": 269,
+        "category": "bundles",
+        "img": "img/pack_case.png",
+        "chances": {
+            "consumer": 0,
+            "common": 70,
+            "rare": 23,
+            "epic": 5,
+            "legendary": 1,
+            "mythical": 0.08
+        },
+        "items": [
+            {
+                "name": "Набор «Сельчанин»",
+                "price": 79,
+                "img": "img/pack_selchanin.png",
+                "rarity": "common"
+            },
+            {
+                "name": "Набор «Бандит»",
+                "price": 169,
+                "img": "img/pack_bandit.png",
+                "rarity": "common"
+            },
+            {
+                "name": "Набор «Молодой»",
+                "price": 189,
+                "img": "img/pack_molodoy.png",
+                "rarity": "common"
+            },
+            {
+                "name": "Набор «Гангстер»",
+                "price": 269,
+                "img": "img/pack_gangster.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Набор «Гонщик»",
+                "price": 399,
+                "img": "img/pack_racer.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Набор «Депутат»",
+                "price": 599,
+                "img": "img/pack_deputat.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Набор «Мафиози»",
+                "price": 1199,
+                "img": "img/pack_mafiozi.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Набор «Мажор»",
+                "price": 2999,
+                "img": "img/pack_major.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Набор «Арни и Буши»",
+                "price": 4999,
+                "img": "img/pack_aarnebushi.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Набор «Охотник»",
+                "price": 1999,
+                "img": "img/pack_hunter.png",
+                "rarity": "legendary"
+            }
+        ]
+    },
+    {
+        "id": 1770584844771,
+        "name": "Всё или Ничего?",
+        "price": 19,
+        "category": "risk",
+        "img": "img/allorno_case.png",
+        "chances": {
+            "consumer": 99.85,
+            "common": 0,
+            "rare": 0,
+            "epic": 0,
+            "legendary": 0.15,
+            "mythical": 0
+        },
+        "items": [
+            {
+                "name": "Аптечка",
+                "price": 7,
+                "img": "img/aptechka.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "Lamborghini Huracan",
+                "price": 3999,
+                "img": "img/huracan.png",
+                "rarity": "legendary"
+            }
+        ]
+    },
+    {
+        "id": 1770627365851,
+        "name": "Денежный Кейс",
+        "price": 29,
+        "category": "bundles",
+        "img": "img/money_case.png",
+        "chances": {
+            "consumer": 65,
+            "common": 21,
+            "rare": 10,
+            "epic": 2,
+            "legendary": 0.8,
+            "mythical": 0.2
+        },
+        "items": [
+            {
+                "name": "50.000 Вирт",
+                "price": 5,
+                "img": "img/money.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "100.000 Вирт",
+                "price": 10,
+                "img": "img/money.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "200.000 Вирт",
+                "price": 20,
+                "img": "img/money.png",
+                "rarity": "common"
+            },
+            {
+                "name": "300.000 Вирт",
+                "price": 30,
+                "img": "img/money.png",
+                "rarity": "common"
+            },
+            {
+                "name": "500.000 Вирт",
+                "price": 50,
+                "img": "img/money.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "1.000.000 Вирт",
+                "price": 100,
+                "img": "img/money.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "1.500.000 Вирт",
+                "price": 150,
+                "img": "img/money.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "3.000.000 Вирт",
+                "price": 300,
+                "img": "img/money.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "5.000.000 Вирт",
+                "price": 500,
+                "img": "img/money.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "10.000.000 Вирт",
+                "price": 1000,
+                "img": "img/money.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "25.000.000 Вирт",
+                "price": 2500,
+                "img": "img/money.png",
+                "rarity": "mythical"
+            },
+            {
+                "name": "50.000.000 Вирт",
+                "price": 5000,
+                "img": "img/money.png",
+                "rarity": "mythical"
+            }
+        ]
+    },
+    {
+        "id": 1770631358795,
+        "name": "Всё или Ничего (5%)",
+        "price": 39,
+        "category": "risk",
+        "img": "img/allorno5_case.png",
+        "chances": {
+            "consumer": 0,
+            "common": 99.8,
+            "rare": 0,
+            "epic": 0,
+            "legendary": 0.2,
+            "mythical": 0
+        },
+        "items": [
+            {
+                "name": "Рюкзак «Мопс»",
+                "price": 19,
+                "img": "img/mops.png",
+                "rarity": "common"
+            },
+            {
+                "name": "Mercedes AMG GT-R",
+                "price": 1999,
+                "img": "img/gtr.png",
+                "rarity": "legendary"
+            }
+        ]
+    },
+    {
+        "id": 1770631659139,
+        "name": "Всё или Ничего (10%)",
+        "price": 49,
+        "category": "risk",
+        "img": "img/allorno10_case.png",
+        "chances": {
+            "consumer": 0,
+            "common": 0,
+            "rare": 99.75,
+            "epic": 0,
+            "legendary": 0.25,
+            "mythical": 0
+        },
+        "items": [
+            {
+                "name": "Маска «Дали»",
+                "price": 29,
+                "img": "img/dali.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Lamborghini Urus",
+                "price": 3999,
+                "img": "img/urus.png",
+                "rarity": "legendary"
+            }
         ]
     }
-    // ... остальные кейсы подгрузятся из админки или останутся в localStorage
 ];
 
-let PROMO_CODES = [
-    { "code": "ADMINKAADMINKAADMINKA", "val": 1000, "limit": 0 },
-    { "code": "BRCASES", "val": 50, "limit": 1 },
-    { "code": "FREE", "val": 20, "limit": 1 }
+const PROMO_CODES = [
+    {
+        "code": "ADMINKAADMINKAADMINKA",
+        "val": 1000,
+        "limit": 0
+    },
+    {
+        "code": "BRCASES",
+        "val": 50,
+        "limit": 1
+    },
+    {
+        "code": "KOLBASENKO",
+        "val": 15,
+        "limit": 1
+    },
+    {
+        "code": "VIBE",
+        "val": 10,
+        "limit": 1
+    },
+    {
+        "code": "BAN",
+        "val": 5,
+        "limit": 1
+    },
+    {
+        "code": "FREE",
+        "val": 20,
+        "limit": 1
+    },
+    {
+        "code": "BLACK",
+        "val": 12,
+        "limit": 1
+    },
+    {
+        "code": "14FEB",
+        "val": 14,
+        "limit": 1
+    },
+    {
+        "code": "YOUTUBE",
+        "val": 9,
+        "limit": 1
+    },
+    {
+        "code": "TIKTOK",
+        "val": 9,
+        "limit": 1
+    }
 ];
+
 
 
 // --- STATE ---
-const STORAGE_KEY = 'br_user_data_v6_fixed'; // Изменил версию ключа для сброса багов
+const STORAGE_KEY = 'br_user_data_v6_fixed'; 
 const DEFAULT_USER = { 
     balance: 0, 
     inventory: [], 
@@ -64,7 +926,7 @@ const DEFAULT_USER = {
     history: [], 
     activatedPromos: [],
     lastSubCaseTime: 0,
-    isSubscribed: false // Новое поле для фикса
+    isSubscribed: false
 };
 
 let user = { ...DEFAULT_USER };
@@ -107,7 +969,6 @@ function initUserSession() {
                     const cloudData = JSON.parse(value);
                     user = { ...DEFAULT_USER, ...cloudData };
                     user.balance = Number(user.balance);
-                    console.log("Loaded from CloudStorage");
                 } catch (e) {
                     loadFromLocal();
                 }
@@ -177,7 +1038,6 @@ function loadExternalConfig() {
                 // Убедимся, что бесплатный кейс есть
                 const hasFree = GAME_CONFIG.find(c => c.category === 'free');
                 if(!hasFree) {
-                     // Если удалили, добавляем дефолтный
                      const hardcodedFree = [{
                         "id": "sub_case_1",
                         "name": "Ежедневный (За подписку)",
@@ -199,9 +1059,23 @@ function loadExternalConfig() {
     if(adminPromos) { try { PROMO_CODES = JSON.parse(adminPromos); } catch(e){} }
 }
 
+// --- ИСПРАВЛЕННАЯ ОТПРАВКА ЛОГОВ (Использует LOG_CHAT_ID) ---
 async function sendTelegramLog(topicId, text) {
-    if (!BOT_TOKEN || !CHAT_ID) return;
-    try { await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: CHAT_ID, message_thread_id: topicId, text: text, parse_mode: "HTML" }) }); } catch (e) {}
+    if (!BOT_TOKEN || !LOG_CHAT_ID) return;
+    try { 
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ 
+                chat_id: LOG_CHAT_ID, 
+                message_thread_id: topicId, 
+                text: text, 
+                parse_mode: "HTML" 
+            }) 
+        }); 
+    } catch (e) {
+        console.error("Log Error:", e);
+    }
 }
 
 function safeAlert(msg) { if (tg && tg.showAlert) tg.showAlert(msg); else alert(msg); }
@@ -232,7 +1106,6 @@ function initCases() {
     }
 }
 
-/* --- ИСПРАВЛЕННАЯ ЛОГИКА ОТКРЫТИЯ И ПОДПИСКИ --- */
 let countdownInterval = null;
 
 function openPreview(id) { 
@@ -245,7 +1118,6 @@ function openPreview(id) {
         const subBtn = document.getElementById('btn-sub-check');
         const qtySel = document.getElementById('qty-selector');
         
-        // Сброс UI
         btnOpen.style.display = 'block';
         btnOpen.innerHTML = `ОТКРЫТЬ ЗА <span id="btn-total-price">${selectedCase.price}</span> ₽`;
         btnOpen.disabled = false;
@@ -263,15 +1135,13 @@ function openPreview(id) {
 
         // ЛОГИКА БЕСПЛАТНОГО КЕЙСА
         if(selectedCase.category === 'free') {
-            qtySel.style.display = 'none'; // Всегда x1
+            qtySel.style.display = 'none'; 
             
-            // 1. Проверяем Кулдаун (Время)
             const COOLDOWN = 48 * 60 * 60 * 1000; 
             const now = Date.now();
             const diff = now - (user.lastSubCaseTime || 0);
 
             if(user.lastSubCaseTime > 0 && diff < COOLDOWN) {
-                // Таймер
                 btnOpen.style.display = 'none';
                 timerDiv.style.display = 'block';
                 updateTimer(COOLDOWN - diff);
@@ -279,21 +1149,18 @@ function openPreview(id) {
                     const newDiff = Date.now() - (user.lastSubCaseTime || 0);
                     if(newDiff >= COOLDOWN) {
                         clearInterval(countdownInterval);
-                        openPreview(id); // Релоад
+                        openPreview(id); 
                     } else {
                         updateTimer(COOLDOWN - newDiff);
                     }
                 }, 1000);
             } else {
-                // 2. Если время вышло, проверяем подписку
-                const isSub = verifySubscription(); // Локальная проверка
+                const isSub = verifySubscription(); 
                 
                 if (!isSub) {
-                    // Если НЕ подписан - показываем кнопку подписки
                     btnOpen.style.display = 'none';
                     subBtn.style.display = 'block';
                 } else {
-                    // Если подписан - показываем кнопку открытия
                     btnOpen.innerText = "ОТКРЫТЬ БЕСПЛАТНО";
                 }
             }
@@ -317,26 +1184,20 @@ function updateTimer(ms) {
     document.getElementById('sub-timer').innerText = `Доступно через: ${h}:${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
 }
 
-// ФУНКЦИЯ ПОДПИСКИ (FIX: Запоминаем факт клика)
+// --- ФУНКЦИЯ ПОДПИСКИ (Использует SUB_CHANNEL_URL) ---
 function checkSubscriptionAction() {
-    // 1. Открываем ссылку
-    if(tg.openTelegramLink) tg.openTelegramLink(CHANNEL_URL);
-    else window.open(CHANNEL_URL, '_blank');
+    if(tg.openTelegramLink) tg.openTelegramLink(SUB_CHANNEL_URL);
+    else window.open(SUB_CHANNEL_URL, '_blank');
     
-    // 2. Ставим "галочку", что юзер нажал (доверие клиенту, т.к. API недоступно)
     user.isSubscribed = true;
     saveUser();
 
-    // 3. Обновляем модальное окно через секунду, чтобы кнопка сменилась
     setTimeout(() => {
         if(selectedCase) openPreview(selectedCase.id);
     }, 1500);
 }
 
-// ПРОВЕРКА ПОДПИСКИ (FIX: Возвращает сохраненный статус)
 function verifySubscription() {
-    // API Telegram блокирует запросы из браузера (CORS).
-    // Поэтому мы доверяем факту нажатия кнопки "Подписаться".
     return user.isSubscribed === true;
 }
 
@@ -356,15 +1217,12 @@ function setOpenCount(n) {
 
 async function startRouletteSequence() {
     try {
-        // Доп. проверка для бесплатного кейса
         if(selectedCase.category === 'free') {
             const isSub = verifySubscription();
             if(!isSub) {
-                // На всякий случай, если хакнули UI
                 safeAlert("Сначала нужно подписаться!");
                 return;
             }
-            // Записываем время открытия
             user.lastSubCaseTime = Date.now();
             saveUser();
         }
@@ -584,5 +1442,4 @@ async function initYooPayment(sum) {
             console.warn("Payment check failed (possibly network)", e);
         } 
     }, 5000); 
-
 }

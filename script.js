@@ -797,6 +797,28 @@ const GAME_CONFIG = [
         ]
     },
     {
+        "id": 1770628973097,
+        "name": "BC Кейс",
+        "price": 29,
+        "category": "bundles",
+        "img": "img/bc_case.png",
+        "chances": { "consumer": 60, "common": 21, "rare": 15, "epic": 2, "legendary": 0.8, "mythical": 0.2 },
+        "items": [
+            { "name": "5 BC", "price": 5, "img": "img/bc.png", "rarity": "consumer" },
+            { "name": "10 BC", "price": 10, "img": "img/bc.png", "rarity": "consumer" },
+            { "name": "20 BC", "price": 20, "img": "img/bc.png", "rarity": "common" },
+            { "name": "30 BC", "price": 30, "img": "img/bc.png", "rarity": "common" },
+            { "name": "50 BC", "price": 50, "img": "img/bc.png", "rarity": "rare" },
+            { "name": "100 BC", "price": 100, "img": "img/bc.png", "rarity": "rare" },
+            { "name": "150 BC", "price": 150, "img": "img/bc.png", "rarity": "epic" },
+            { "name": "300 BC", "price": 300, "img": "img/bc.png", "rarity": "epic" },
+            { "name": "500 BC", "price": 500, "img": "img/bc.png", "rarity": "legendary" },
+            { "name": "1000 BC", "price": 1000, "img": "img/bc.png", "rarity": "legendary" },
+            { "name": "2500 BC", "price": 2500, "img": "img/bc.png", "rarity": "mythical" },
+            { "name": "5000 BC", "price": 5000, "img": "https://i.imgur.com/T1peEpa_d.png?maxwidth=520&shape=thumb&fidelity=high", "rarity": "mythical" }
+        ]
+    },
+    {
         "id": 1770631358795,
         "name": "Всё или Ничего (5%)",
         "price": 39,
@@ -823,6 +845,74 @@ const GAME_CONFIG = [
                 "img": "img/gtr.png",
                 "rarity": "legendary"
             }
+        ]
+    },
+    {
+        "id": 1770662160253,
+        "name": "Кейс с аксессуарами ",
+        "price": 89,
+        "category": "bundles",
+        "img": "img/accesories_case.png",
+        "chances": { "consumer": 65, "common": 26, "rare": 6, "epic": 3, "legendary": 1, "mythical": 0 },
+        "items": [
+            { "name": "Кейс Серый", "price": 250, "img": "img/graycase.png", "rarity": "epic" },
+            { "name": "Маска Дали", "price": 29, "img": "img/dali.png", "rarity": "consumer" },
+            { "name": "Очки «Street»", "price": 19, "img": "img/streetglass.png", "rarity": "consumer" },
+            { "name": "Корона Короля", "price": 99, "img": "img/korona.png", "rarity": "rare" },
+            { "name": "Рюкзак «Мопс»", "price": 79, "img": "img/mops.png", "rarity": "common" },
+            { "name": "Рюкзак Боксера", "price": 1699, "img": "img/boxer.png", "rarity": "legendary" },
+            { "name": "Водяной Пистолет", "price": 1399, "img": "img/vodyanoi.png", "rarity": "legendary" },
+            { "name": "Голова Коня", "price": 399, "img": "img/konya.png", "rarity": "epic" },
+            { "name": "Маска Ведущего", "price": 249, "img": "img/squid.png", "rarity": "epic" },
+            { "name": "Крылья Демона", "price": 149, "img": "img/demonfly.png", "rarity": "rare" },
+            { "name": "Демонические Рожки", "price": 99, "img": "img/demon.png", "rarity": "common" },
+            { "name": "Маска Чилл", "price": 1299, "img": "img/chill.png", "rarity": "legendary" },
+            { "name": "BR VISUALS MAX", "price": 69, "img": "img/vr.png", "rarity": "common" },
+            { "name": "Новогодний Топорик", "price": 249, "img": "img/newyearaxe.png", "rarity": "epic" },
+            { "name": "Побитые Очки", "price": 10, "img": "img/brokeglass.png", "rarity": "consumer" },
+            { "name": "Шлем MechaCat", "price": 49, "img": "img/mechacat.png", "rarity": "common" },
+            { "name": "Кейс Снеговик", "price": 149, "img": "img/casesnegovik.png", "rarity": "rare" },
+            { "name": "Пакет", "price": 49, "img": "img/packet.png", "rarity": "consumer" }
+        ]
+    },
+    {
+        "id": 1770663755440,
+        "name": "Кейс Скинов",
+        "price": 189,
+        "category": "bundles",
+        "img": "img/skin_case.png",
+        "chances": { "consumer": 65, "common": 19, "rare": 11, "epic": 4.5, "legendary": 0.5, "mythical": 0 },
+        "items": [
+            { "name": "Фирменная одежда", "price": 14999, "img": "img/admin.png", "rarity": "mythical" },
+            { "name": "Скелетон", "price": 2999, "img": "img/skeleton.png", "rarity": "legendary" },
+            { "name": "Известный", "price": 2499, "img": "img/vlada4.png", "rarity": "legendary" },
+            { "name": "Господин", "price": 2499, "img": "img/putin.png", "rarity": "legendary" },
+            { "name": "Известный", "price": 2499, "img": "img/buster.png", "rarity": "legendary" },
+            { "name": "Злой", "price": 1799, "img": "img/ono.png", "rarity": "legendary" },
+            { "name": "Известный", "price": 1249, "img": "img/ronaldo.png", "rarity": "epic" },
+            { "name": "Известный", "price": 1249, "img": "img/litvin.png", "rarity": "epic" },
+            { "name": "Илон Маск", "price": 1249, "img": "img/elonmusk.png", "rarity": "epic" },
+            { "name": "Игрок 456", "price": 749, "img": "img/456.png", "rarity": "epic" },
+            { "name": "Мужчина", "price": 2499, "img": "img/man.png", "rarity": "legendary" },
+            { "name": "Дед Мороз", "price": 1249, "img": "img/santa.png", "rarity": "epic" },
+            { "name": "Иван Блогер", "price": 2499, "img": "img/zolo.png", "rarity": "legendary" },
+            { "name": "Блогер", "price": 2499, "img": "img/nekoglai.png", "rarity": "legendary" },
+            { "name": "Поззи", "price": 1249, "img": "img/pozzi.png", "rarity": "epic" },
+            { "name": "Пчелка", "price": 399, "img": "img/pchelka.png", "rarity": "rare" },
+            { "name": "Женщина", "price": 1249, "img": "img/woman.png", "rarity": "epic" },
+            { "name": "Посейдон", "price": 1499, "img": "img/poseydon.png", "rarity": "legendary" },
+            { "name": "Борик", "price": 749, "img": "img/borik.png", "rarity": "epic" },
+            { "name": "Одежда 29", "price": 9, "img": "img/29.png", "rarity": "consumer" },
+            { "name": "Защитница закона", "price": 59, "img": "img/zakon.png", "rarity": "consumer" },
+            { "name": "Иван Береговой", "price": 79, "img": "img/beregovoy.png", "rarity": "consumer" },
+            { "name": "Королева Манипуляций", "price": 149, "img": "img/manipulyaciy.png", "rarity": "common" },
+            { "name": "Бабушка Серафима", "price": 79, "img": "img/serafima.png", "rarity": "consumer" },
+            { "name": "Бомж", "price": 9, "img": "img/bomj.png", "rarity": "consumer" },
+            { "name": "Емеля", "price": 299, "img": "img/emelya.png", "rarity": "common" },
+            { "name": "Пузатый", "price": 19, "img": "img/pyzatiy.png", "rarity": "consumer" },
+            { "name": "Рыбачка", "price": 399, "img": "img/ribachka.png", "rarity": "common" },
+            { "name": "Хоуми", "price": 349, "img": "img/homie.png", "rarity": "rare" },
+            { "name": "Опасный", "price": 399, "img": "img/dangerman.png", "rarity": "rare" }
         ]
     },
     {
@@ -1442,4 +1532,5 @@ async function initYooPayment(sum) {
             console.warn("Payment check failed (possibly network)", e);
         } 
     }, 5000); 
+
 }

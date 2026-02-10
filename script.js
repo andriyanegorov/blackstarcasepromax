@@ -7,8 +7,8 @@
 const tg = window.Telegram.WebApp;
 const API_URL = "https://script.google.com/macros/s/AKfycbym7BZkWwdqkB8_yE6ynKaeYKtd8X833chIM6smbbUAs_85epS5W6bz2uBi0pcQBRqF/exec";
 const BOT_TOKEN = "8555487401:AAFWK-AOovV9DbnKW62ZAVIvEJWAtung05Y";
-const CHAT_ID = "@brcasesvidacha"; 
-const CHANNEL_URL = "https://t.me/brcasesvidacha"; 
+const CHAT_ID = "@blackrussiacases_news"; 
+const CHANNEL_URL = "https://t.me/blackrussiacases_news"; 
 const TOPICS = { WITHDRAW: 2, DEPOSIT: 4, LOGS: 8 };
 
 // --- FIX: УНИВЕРСАЛЬНАЯ ЗАГЛУШКА ---
@@ -26,11 +26,11 @@ const RARITY_COLORS = { 'consumer': '#B0B0B0', 'common': '#4CAF50', 'rare': '#3b
 const GAME_CONFIG = [
     {
         "id": "sub_case_1",
-        "name": "Ежедневный (За подписку)",
+        "name": "Раз в ДВА ДНЯ! (За подписку)",
         "price": 0,
         "category": "free",
         "img": "img/free_case.png",
-        "chances": { "consumer": 40, "common": 30, "rare": 20, "epic": 8, "legendary": 2, "mythical": 0 },
+        "chances": { "consumer": 60, "common": 20, "rare": 11, "epic": 8, "legendary": 1, "mythical": 0 },
         "items": [
             { "name": "50.000 Вирт", "price": 5, "img": "img/money.png", "rarity": "consumer" },
             { "name": "100.000 Вирт", "price": 10, "img": "img/money.png", "rarity": "common" },
@@ -211,7 +211,7 @@ const GAME_CONFIG = [
     },
     {
         "id": 1770631358795,
-        "name": "Всё или Ничего (5%)",
+        "name": "Всё или Ничего? (5%)",
         "price": 39,
         "category": "risk",
         "img": "img/allorno5_case.png",
@@ -223,7 +223,7 @@ const GAME_CONFIG = [
     },
     {
         "id": 1770631659139,
-        "name": "Всё или Ничего (10%)",
+        "name": "Всё или Ничего? (10%)",
         "price": 49,
         "category": "risk",
         "img": "img/allorno10_case.png",
@@ -796,4 +796,5 @@ async function initYooPayment(sum) {
             console.warn("Payment check failed (possibly network)", e);
         } 
     }, 5000); 
+
 }

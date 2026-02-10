@@ -7,7 +7,33 @@
     --c-consumer: #B0B0B0; --c-common: #4CAF50; --c-rare: #3b82f6;
     --c-epic: #a855f7; --c-legendary: #eab308; --c-mythical: #ff3333;
 }
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+
+/* ЗАЩИТА КОНТЕНТА (Отключено для ПК версии по запросу) */
+* { 
+    box-sizing: border-box; 
+    -webkit-tap-highlight-color: transparent; 
+    outline: none; 
+    /* -webkit-touch-callout: none; */ 
+    /* -webkit-user-select: none; */
+    /* -khtml-user-select: none; */
+    /* -moz-user-select: none; */
+    /* -ms-user-select: none; */
+    /* user-select: none; */
+}
+
+/* Картинки "прозрачны" для кликов */
+img {
+    pointer-events: none; 
+    user-drag: none;
+    -webkit-user-drag: none;
+}
+
+input, textarea, select {
+    -webkit-user-select: text;
+    user-select: text;
+    pointer-events: auto;
+}
+
 body { margin: 0; background: var(--bg-dark); color: #fff; font-family: 'Inter', sans-serif; min-height: 100vh; padding-bottom: 90px; overflow-x: hidden; }
 
 /* BG GLOW */
@@ -159,15 +185,32 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px;
 /* MODALS */
 .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: flex-end; }
 .modal-overlay.center-modal { align-items: center; } 
-.modal-glass { background: #121212; width: 100%; border-radius: 24px 24px 0 0; padding: 25px 20px; border-top: 1px solid var(--glass-border); animation: slideUp 0.3s ease; max-height: 90vh; display: flex; flex-direction: column; }
+.modal-glass { position: relative; background: #121212; width: 100%; border-radius: 24px 24px 0 0; padding: 25px 20px; border-top: 1px solid var(--glass-border); animation: slideUp 0.3s ease; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
 .center-modal .modal-glass { width: 90%; border-radius: 24px; border: 1px solid var(--glass-border); animation: popIn 0.3s ease; transition: box-shadow 0.3s, border-color 0.3s; }
 .modal-glass.full-height { height: 80vh; }
 @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-.btn-close { position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.1); border: none; color: #fff; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; z-index: 10; }
+
+.btn-close { 
+    position: absolute; 
+    top: 15px; 
+    right: 15px; 
+    background: rgba(255,255,255,0.1); 
+    border: none; 
+    color: #fff; 
+    width: 28px; 
+    height: 28px; 
+    border-radius: 50%; 
+    cursor: pointer; 
+    z-index: 100;
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-size: 14px;
+}
 
 /* PREVIEW MODAL */
-.case-preview-top { text-align: center; margin-bottom: 20px; }
+.case-preview-top { text-align: center; margin-bottom: 20px; padding-top: 10px; }
 .case-preview-top img { width: 120px; filter: drop-shadow(0 0 20px rgba(255,255,255,0.1)); margin-bottom: 10px; }
 .price-pill { display: inline-block; background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 20px; font-size: 12px; color: var(--primary); font-weight: 700; }
 .qty-selector { display: flex; gap: 8px; margin-bottom: 20px; }
@@ -187,6 +230,10 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px;
 input:checked + .toggle-track { background: var(--primary); }
 input:checked + .toggle-track::after { transform: translateX(14px); background: #000; }
 .toggle-fast input { display: none; }
+
+/* SUBSCRIPTION & TIMER */
+.sub-timer { text-align: center; font-size: 12px; color: #ff4d4d; margin-bottom: 10px; font-weight: bold; }
+.btn-sub-check { background: #229ED9; color: white; margin-bottom: 10px; } /* Telegram Blue */
 
 /* MODERN INV MODAL */
 .modern-item-modal { padding: 0 !important; overflow: hidden; position: relative; border: 1px solid #333; background: #000; }

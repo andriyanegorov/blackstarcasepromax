@@ -3,9 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BR Admin Ultimate V3 (Full Data)</title>
+    <title>BR Admin Ultimate V3 (Local Images)</title>
     <style>
         body { background: #121212; color: #eee; font-family: 'Segoe UI', monospace; padding: 20px; margin: 0; box-sizing: border-box; }
+        
+        /* ЗАЩИТА ОТКЛЮЧЕНА */
+        /* * { -webkit-user-select: none; user-select: none; } */
+        input, textarea, select { -webkit-user-select: text; user-select: text; }
+
         h2, h3, h4 { color: #FFD700; margin-top: 0; }
         
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
@@ -36,7 +41,7 @@
         .item-row { display: grid; grid-template-columns: 50px 2fr 1fr 1.5fr 40px; gap: 10px; align-items: start; background: #252525; padding: 10px; margin-bottom: 8px; border-left: 4px solid #555; border-radius: 4px; }
         
         .item-row input, .item-row select { margin-bottom: 5px; font-size: 13px; padding: 6px; }
-        .item-img-preview { width: 40px; height: 40px; object-fit: contain; background: #000; border-radius: 4px; border: 1px solid #333; }
+        .item-img-preview { width: 40px; height: 40px; object-fit: contain; background: #000; border-radius: 4px; border: 1px solid #333; pointer-events: none; }
         
         .export-area { width: 100%; height: 120px; background: #080808; color: #0f0; border: 1px solid #333; font-size: 11px; margin-top: 10px; font-family: monospace; padding: 10px; resize: vertical; }
 
@@ -61,7 +66,7 @@
     <div class="header">
         <div>
             <h2>⚙️ ADMIN PANEL</h2>
-            <div style="font-size: 12px; color: #666;">Редактор конфигурации (Full Data Loaded)</div>
+            <div style="font-size: 12px; color: #666;">Редактор конфигурации (Local Images Mode)</div>
         </div>
         <div style="display:flex; gap:10px;">
              <button onclick="resetToDefault()" class="btn-gray" style="width: auto;">↺ Сброс данных</button>
@@ -98,6 +103,7 @@
                                 <option value="default">Black Russia (Обычные)</option>
                                 <option value="bundles">Наборы</option>
                                 <option value="risk">Всё или Ничего</option>
+                                <option value="free">Бесплатный</option>
                             </select>
                         </div>
                         <div>
@@ -160,170 +166,44 @@
     </div>
 
     <script>
-        // === ПОЛНАЯ КОНФИГУРАЦИЯ ИЗ SCRIPT.JS ===
+        // Защита админки от копирования ОТКЛЮЧЕНА
+        // document.addEventListener('contextmenu', event => event.preventDefault());
+        // document.addEventListener('dragstart', event => event.preventDefault());
+
+        const STORAGE_KEY_CASES = 'admin_game_config_v7';
+        const STORAGE_KEY_PROMOS = 'admin_promo_config_v3';
+        
+        // --- FIX: УНИВЕРСАЛЬНАЯ ЗАГЛУШКА ---
+        const PLACEHOLDER_IMG = "https://placehold.co/100x100/1a1a1a/ffffff?text=No+Image";
+
+        // ОБНОВЛЕННЫЕ ДАННЫЕ ПО УМОЛЧАНИЮ С ЛОКАЛЬНЫМИ КАРТИНКАМИ
         const DEFAULT_GAME_CONFIG = [
             {
-                "id": 1,
-                "name": "Кейс Бомжа",
-                "price": 29,
-                "category": "default",
-                "img": "https://i.imgur.com/9EkONxH.png",
-                "chances": { "consumer": 65, "common": 15, "rare": 10, "epic": 8, "legendary": 1, "mythical": 1 },
+                "id": "sub_case_1",
+                "name": "Ежедневный (За подписку)",
+                "price": 0,
+                "category": "free",
+                "img": "img/case_daily.png",
+                "chances": { "consumer": 40, "common": 30, "rare": 20, "epic": 8, "legendary": 2, "mythical": 0 },
                 "items": [
-                    { "name": "50.000 Вирт", "price": 20, "img": "https://i.imgur.com/iQ3Ff5L.png", "rarity": "consumer" },
-                    { "name": "150.000 Вирт", "price": 75, "img": "https://i.imgur.com/iQ3Ff5L.png", "rarity": "common" },
-                    { "name": "400.000 Вирт", "price": 200, "img": "https://i.imgur.com/iQ3Ff5L.png", "rarity": "epic" },
-                    { "name": "1.000.000 Вирт", "price": 500, "img": "https://i.imgur.com/iQ3Ff5L.png", "rarity": "legendary" },
-                    { "name": "Очки «Сердечки»", "price": 500, "img": "https://i.imgur.com/xHQRwx0.png", "rarity": "legendary" },
-                    { "name": "Серый кейс", "price": 500, "img": "https://i.imgur.com/OGcHP9b.png", "rarity": "legendary" },
-                    { "name": "Маска Дали", "price": 70, "img": "https://i.imgur.com/K0JsEMU.png", "rarity": "rare" },
-                    { "name": "Очки «Street»", "price": 19, "img": "https://i.imgur.com/XARdxZn.png", "rarity": "consumer" },
-                    { "name": "Скин «Емеля»", "price": 300, "img": "https://i.imgur.com/goOf1rc.png", "rarity": "epic" },
-                    { "name": "Скин «Пузатый»", "price": 10, "img": "https://i.imgur.com/2LVGLzg.png", "rarity": "consumer" },
-                    { "name": "Набор «Сельчанин»", "price": 70, "img": "https://i.imgur.com/1pJCoj9.png", "rarity": "rare" },
-                    { "name": "Набор «Бандит»", "price": 650, "img": "https://i.imgur.com/sBOIGql.png", "rarity": "legendary" },
-                    { "name": "ZAZ", "price": 15, "img": "https://i.imgur.com/z0hrLCJ.png", "rarity": "consumer" },
-                    { "name": "VAZ 2107", "price": 30, "img": "https://i.imgur.com/Ay8kPfF.png", "rarity": "common" },
-                    { "name": "LADA NIVA", "price": 80, "img": "https://i.imgur.com/VDTY224.png", "rarity": "rare" },
-                    { "name": "LADA VESTA", "price": 175, "img": "https://i.imgur.com/MxZVdD9.png", "rarity": "epic" },
-                    { "name": "Mercedes-Benz W210", "price": 300, "img": "https://i.imgur.com/xFhwl3m.png", "rarity": "legendary" },
-                    { "name": "10 BC", "price": 10, "img": "https://i.imgur.com/T1peEpa.png", "rarity": "consumer" },
-                    { "name": "25 BC", "price": 25, "img": "https://i.imgur.com/T1peEpa.png", "rarity": "consumer" },
-                    { "name": "50 BC", "price": 50, "img": "https://i.imgur.com/T1peEpa.png", "rarity": "common" },
-                    { "name": "500 BC", "price": 500, "img": "https://i.imgur.com/T1peEpa.png", "rarity": "legendary" },
-                    { "name": "Аптечка", "price": 7, "img": "https://i.imgur.com/4I6uqi4.png", "rarity": "consumer" },
-                    { "name": "Ремонтный набор", "price": 7, "img": "https://i.imgur.com/0ncZmAy.png", "rarity": "consumer" },
-                    { "name": "Скутер", "price": 15, "img": "https://i.imgur.com/5N2komM.png", "rarity": "consumer" }
-                ]
-            },
-            {
-                "id": 1770544149013,
-                "name": "Стандартный Кейс",
-                "price": 199,
-                "category": "default",
-                "img": "https://i.imgur.com/KKJOZze.png",
-                "chances": { "consumer": 0, "common": 65, "rare": 25, "epic": 8, "legendary": 1.92, "mythical": 0.08 },
-                "items": [
-                    { "name": "Скин «Хоуми»", "price": 59, "img": "https://i.imgur.com/vUSoZ3w.png", "rarity": "common" },
-                    { "name": "Скин «Опасный мужчина»", "price": 69, "img": "https://i.imgur.com/Iumo5AU.png", "rarity": "common" },
-                    { "name": "Скин «Рыбчка»", "price": 89, "img": "https://i.imgur.com/7QB7INu.png", "rarity": "common" },
-                    { "name": "Рюкзак «Мопс»", "price": 79, "img": "https://i.imgur.com/IqxXto2.png", "rarity": "common" },
-                    { "name": "Корона короля", "price": 299, "img": "https://i.imgur.com/jMuPEij.png", "rarity": "epic" },
-                    { "name": "Маска «Иноске»", "price": 129, "img": "https://i.imgur.com/ljfQ3WL.png", "rarity": "epic" },
-                    { "name": "Volkswagel Golf GTi", "price": 99, "img": "https://i.imgur.com/AhDn5yf.png", "rarity": "common" },
-                    { "name": "BMW X5", "price": 219, "img": "https://i.imgur.com/mzc09cl.png", "rarity": "rare" },
-                    { "name": "Nissan Qashqai", "price": 199, "img": "https://i.imgur.com/aaSHLsI.png", "rarity": "rare" },
-                    { "name": "Audi A4", "price": 199, "img": "https://i.imgur.com/98BPi1T.png", "rarity": "rare" },
-                    { "name": "Acura TSX", "price": 199, "img": "https://i.imgur.com/sdjKmAW.png", "rarity": "rare" },
-                    { "name": "Chevrolet Camaro ZL1", "price": 999, "img": "https://i.imgur.com/nwLfhH9.png", "rarity": "epic" },
-                    { "name": "Ducati SuperSport", "price": 799, "img": "https://i.imgur.com/PLprcfn.png", "rarity": "epic" },
-                    { "name": "Lamborghini Aventador S", "price": 4999, "img": "https://i.imgur.com/38CkTrt.png", "rarity": "legendary" },
-                    { "name": "Mercedes AMG GT-R", "price": 2999, "img": "https://i.imgur.com/jnX4NvI_d.png?maxwidth=520&shape=thumb&fidelity=high", "rarity": "legendary" },
-                    { "name": "100 BC", "price": 100, "img": "https://i.imgur.com/T1peEpa_d.png?maxwidth=520&shape=thumb&fidelity=high", "rarity": "common" },
-                    { "name": "200 BC", "price": 200, "img": "https://i.imgur.com/T1peEpa_d.png?maxwidth=520&shape=thumb&fidelity=high", "rarity": "rare" }
-                ]
-            },
-            {
-                "id": 1770550347497,
-                "name": "Авто-Кейс 2.0",
-                "price": 999,
-                "category": "default",
-                "img": "https://i.imgur.com/2busFmB.png",
-                "chances": { "consumer": 0, "common": 0, "rare": 75, "epic": 24, "legendary": 1, "mythical": 0 },
-                "items": [
-                    { "name": "BMW M5 E60", "price": 549, "img": "https://i.imgur.com/DO7L8do.png", "rarity": "rare" },
-                    { "name": "Subaru WRX STi", "price": 499, "img": "https://i.imgur.com/TTbWXcs.png", "rarity": "rare" },
-                    { "name": "Toyota Camry 3.5", "price": 599, "img": "https://i.imgur.com/AnTZ6oV.png", "rarity": "rare" },
-                    { "name": "Volkswagen Passat", "price": 719, "img": "https://i.imgur.com/wTKU7AT.png", "rarity": "rare" },
-                    { "name": "Mercedes-Benz GT63s", "price": 1699, "img": "https://i.imgur.com/S9MRfzI.png", "rarity": "epic" },
-                    { "name": "Lamborghini Aventador S", "price": 4999, "img": "https://i.imgur.com/T2oklf8.png", "rarity": "legendary" },
-                    { "name": "Aurus Senat", "price": 6999, "img": "https://i.imgur.com/ExQjhq2.png", "rarity": "legendary" },
-                    { "name": "Mercedes-Benz G63 AMG", "price": 5500, "img": "https://i.imgur.com/E7Sbn3I.png", "rarity": "legendary" },
-                    { "name": "Bugatti Divo", "price": 19999, "img": "https://i.imgur.com/TDNAGwZ.png", "rarity": "mythical" },
-                    { "name": "Lamborghini Urus", "price": 3999, "img": "https://i.imgur.com/7ehMTjl.png", "rarity": "epic" },
-                    { "name": "Lamborghini Huracan", "price": 3999, "img": "https://i.imgur.com/T2oklf8.png", "rarity": "epic" },
-                    { "name": "BMW M4 F84", "price": 739, "img": "https://i.imgur.com/88nCiib.png", "rarity": "rare" },
-                    { "name": "XPENG P7", "price": 999, "img": "https://i.imgur.com/XFale9P.png", "rarity": "rare" },
-                    { "name": "BMW X6M F16", "price": 1999, "img": "https://i.imgur.com/JSqzmE2.png", "rarity": "epic" },
-                    { "name": "Alfa Romeo Guilia", "price": 699, "img": "https://i.imgur.com/NFJDSKI.png", "rarity": "rare" },
-                    { "name": "BMW X5M E70", "price": 799, "img": "https://i.imgur.com/r1gigSb.png", "rarity": "rare" },
-                    { "name": "Ducatti Supersport", "price": 699, "img": "https://i.imgur.com/VM2gthk.png", "rarity": "rare" }
-                ]
-            },
-            {
-                "id": 1770563185594,
-                "name": "Особый Кейс",
-                "price": 9999,
-                "category": "default",
-                "img": "https://i.imgur.com/qzvZZmz.png",
-                "chances": { "consumer": 0, "common": 0, "rare": 0, "epic": 0, "legendary": 99.95, "mythical": 0.05 },
-                "items": [
-                    { "name": "Ocean Yacht", "price": 19999, "img": "https://i.imgur.com/U0T51l8.png", "rarity": "mythical" },
-                    { "name": "Rolls Royce Spectre", "price": 29999, "img": "https://i.imgur.com/vlmo0vU.png", "rarity": "mythical" },
-                    { "name": "Tesla CyberTruck", "price": 19999, "img": "https://i.imgur.com/Yhafdvt.png", "rarity": "mythical" },
-                    { "name": "Mercedes-Benz G63 AMG 6x6", "price": 39999, "img": "https://i.imgur.com/oFp8ZbQ.png", "rarity": "mythical" },
-                    { "name": "Bugatti Chiron", "price": 39999, "img": "https://i.imgur.com/chK3mjR.png", "rarity": "mythical" },
-                    { "name": "Bugatti Veyron", "price": 49999, "img": "https://i.imgur.com/5q4a8L6.png", "rarity": "mythical" },
-                    { "name": "Ferrari Enzo", "price": 4999, "img": "https://i.imgur.com/J3mN0Lp.png", "rarity": "legendary" },
-                    { "name": "Daewoo Matiz", "price": 6999, "img": "https://i.imgur.com/4QpI1cf.png", "rarity": "legendary" },
-                    { "name": "Ducati XDiavel", "price": 2999, "img": "https://i.imgur.com/rQn4wfp.pnga", "rarity": "legendary" },
-                    { "name": "Lamborghini Urus", "price": 9999, "img": "https://i.imgur.com/PYEdyJD.png", "rarity": "legendary" },
-                    { "name": "Mercedes-Benz G63 AMG Max", "price": 13999, "img": "https://i.imgur.com/KF2mLzy.png", "rarity": "legendary" },
-                    { "name": "Mercedes-Benz SLR McLaren", "price": 14999, "img": "https://i.imgur.com/wiTkzQa.png", "rarity": "legendary" },
-                    { "name": "Lamborghini Aventador", "price": 7999, "img": "https://i.imgur.com/HJCd4kU.png", "rarity": "legendary" },
-                    { "name": "Зловещий", "price": 9999, "img": "https://i.imgur.com/o7R4s2h.png", "rarity": "legendary" },
-                    { "name": "Invetero Coquette D5", "price": 10999, "img": "https://i.imgur.com/RWjulPn.png", "rarity": "legendary" },
-                    { "name": "F1", "price": 9999, "img": "https://i.imgur.com/rPjYhNj.png", "rarity": "legendary" },
-                    { "name": "Mercedes-Benz AMG GT R", "price": 2999, "img": "https://i.imgur.com/t470enD.png", "rarity": "legendary" }
-                ]
-            },
-            {
-                "id": 1770583808350,
-                "name": "Кейс с Наборами",
-                "price": 269,
-                "category": "bundles",
-                "img": "https://i.imgur.com/2tU356X.png",
-                "chances": { "consumer": 0, "common": 70, "rare": 20, "epic": 9, "legendary": 1, "mythical": 0.08 },
-                "items": [
-                    { "name": "Набор «Сельчанин»", "price": 79, "img": "https://i.imgur.com/79vFssV.png", "rarity": "common" },
-                    { "name": "Набор «Бандит»", "price": 169, "img": "https://i.imgur.com/rXL1LFI.png", "rarity": "common" },
-                    { "name": "Набор «Молодой»", "price": 189, "img": "https://i.imgur.com/XbLw0XA.png", "rarity": "common" },
-                    { "name": "Набор «Гангстер»", "price": 269, "img": "https://i.imgur.com/7BBOmaL.png", "rarity": "rare" },
-                    { "name": "Набор «Гонщик»", "price": 399, "img": "https://i.imgur.com/ba9a9FD.png", "rarity": "rare" },
-                    { "name": "Набор «Депутат»", "price": 599, "img": "https://i.imgur.com/bDwpbtF.png", "rarity": "epic" },
-                    { "name": "Набор «Мафиози»", "price": 1999, "img": "https://i.imgur.com/0giSUQx.png", "rarity": "epic" },
-                    { "name": "Набор «Мажор»", "price": 2999, "img": "https://i.imgur.com/YspWgzR.png", "rarity": "legendary" },
-                    { "name": "Набор «Арни и Буши»", "price": 4999, "img": "https://i.imgur.com/wGHvZJv.png", "rarity": "legendary" },
-                    { "name": "Набор «Охотник»", "price": 1999, "img": "https://i.imgur.com/nJrdJCQ.png", "rarity": "legendary" }
-                ]
-            },
-            {
-                "id": 1770584844771,
-                "name": "Всё или Ничего?",
-                "price": 19,
-                "category": "risk",
-                "img": "https://i.imgur.com/12hzaW0.png",
-                "chances": { "consumer": 99.95, "common": 0, "rare": 0, "epic": 0, "legendary": 0.05, "mythical": 0 },
-                "items": [
-                    { "name": "Аптечка", "price": 7, "img": "https://i.imgur.com/4I6uqi4_d.png?maxwidth=520&shape=thumb&fidelity=high", "rarity": "consumer" },
-                    { "name": "Lamborghini Huracan", "price": 3999, "img": "https://i.imgur.com/T2oklf8.png", "rarity": "legendary" }
+                     { "name": "50.000 Вирт", "price": 5, "img": "img/virt_50k.png", "rarity": "consumer" },
+                     { "name": "100.000 Вирт", "price": 10, "img": "img/virt_100k.png", "rarity": "common" },
+                     { "name": "BMW M5 F90", "price": 400, "img": "img/bmw_m5_f90.png", "rarity": "legendary" },
+                     { "name": "Маска Демона", "price": 150, "img": "img/mask_demon.png", "rarity": "epic" },
+                     { "name": "Аптечка", "price": 7, "img": "img/medkit.png", "rarity": "consumer" },
+                     { "name": "10 BC", "price": 10, "img": "img/bc_10.png", "rarity": "common" }
                 ]
             }
         ];
 
         const DEFAULT_PROMO_CODES = [
             { "code": "ADMINKAADMINKAADMINKA", "val": 1000, "limit": 0 },
-            { "code": "1CODE", "val": 10000, "limit": 1 },
-            { "code": "NEW_CODE_371", "val": -296992, "limit": 1 }
+            { "code": "1CODE", "val": 10000, "limit": 1 }
         ];
 
         let gameData = [];
         let promoData = [];
         let currentCaseIdx = -1;
-
-        // ИСПОЛЬЗУЕМ НОВЫЕ КЛЮЧИ (V6 и V3), ЧТОБЫ ПОДТЯНУЛИСЬ НОВЫЕ ДАННЫЕ
-        const STORAGE_KEY_CASES = 'admin_game_config_v6';
-        const STORAGE_KEY_PROMOS = 'admin_promo_config_v3';
 
         function init() {
             const savedCases = localStorage.getItem(STORAGE_KEY_CASES);
@@ -386,6 +266,7 @@
             document.getElementById('case-img').value = c.img;
             document.getElementById('case-category').value = c.category || 'default';
             document.getElementById('case-img-preview').src = c.img;
+            document.getElementById('case-img-preview').onerror = function() { this.src = PLACEHOLDER_IMG };
             
             if(!c.chances) c.chances = { consumer: 50, common: 30, rare: 15, epic: 4, legendary: 1, mythical: 0 };
             
@@ -407,7 +288,7 @@
                 const row = document.createElement('div');
                 row.className = `item-row border-${item.rarity}`;
                 row.innerHTML = `
-                    <img src="${item.img}" class="item-img-preview">
+                    <img src="${item.img}" class="item-img-preview" onerror="this.src='${PLACEHOLDER_IMG}'">
                     <div>
                         <input type="text" value="${item.name}" onchange="updateItem(${idx}, 'name', this.value)" placeholder="Название">
                         <input type="text" value="${item.img}" placeholder="URL картинки" style="font-size:10px; color:#888; margin:0;" onchange="updateItem(${idx}, 'img', this.value)">
@@ -436,7 +317,6 @@
             
             const imgPreview = document.getElementById('case-img-preview');
             imgPreview.src = gameData[currentCaseIdx].img;
-            imgPreview.onerror = function() { this.src = 'https://via.placeholder.com/80?text=Err'; };
             
             renderCasesList();
             save();
@@ -464,7 +344,7 @@
 
         function addItem() {
             if(currentCaseIdx === -1) return;
-            gameData[currentCaseIdx].items.push({ name: "Новый предмет", price: 100, img: "https://via.placeholder.com/150", rarity: "consumer" });
+            gameData[currentCaseIdx].items.push({ name: "Новый предмет", price: 100, img: PLACEHOLDER_IMG, rarity: "consumer" });
             renderItems(gameData[currentCaseIdx].items);
             save();
         }
@@ -482,7 +362,7 @@
                 name: "Новый Кейс", 
                 price: 100, 
                 category: "default", 
-                img: "https://via.placeholder.com/150", 
+                img: PLACEHOLDER_IMG, 
                 chances: { consumer: 50, common: 30, rare: 15, epic: 4, legendary: 0.92, mythical: 0.08 },
                 items: [] 
             });

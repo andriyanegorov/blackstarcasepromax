@@ -1404,11 +1404,11 @@ const GAME_CONFIG = [
             {
                 "name": "Cadilac Escalade",
                 "price": 1799,
-                "img": "img/Cescalade.png",
+                "img": "img/cEscalade.png",
                 "rarity": "epic"
             },
             {
-                "name": "Tayota Land Cruiser 200",
+                "name": "Toyota Land Cruiser 200",
                 "price": 1999,
                 "img": "img/TLcruiser200.png",
                 "rarity": "epic"
@@ -2098,4 +2098,5 @@ function startUpgrade() { const btn = document.getElementById('btn-do-upgrade');
 function processUpgrade(win) { const src = user.inventory[upgradeState.sourceIdx]; const tgt = upgradeState.targetItem; if(win) { user.inventory[upgradeState.sourceIdx] = tgt; addHistory(`Апгрейд: Успех`, `+${tgt.price - src.price}`); sendTelegramLog(TOPICS.LOGS, `⚒ <b>УСПЕШНЫЙ АПГРЕЙД</b>\n${getLogHeader()}\n📉 Был: ${src.name} (${src.price}₽)\n📈 Стал: ${tgt.name} (${tgt.price}₽)\n🎲 Шанс (Visual): ${upgradeState.chance}%`); } else { user.inventory.splice(upgradeState.sourceIdx, 1); addHistory(`Апгрейд: Неудача`, `-${src.price}`); sendTelegramLog(TOPICS.LOGS, `🔥 <b>НЕУДАЧНЫЙ АПГРЕЙД</b>\n${getLogHeader()}\n🔥 Сгорело: ${src.name} (${src.price}₽)\n🎲 Шанс (Visual): ${upgradeState.chance}%`); } saveUser(); updateUI(); renderInventory(); }
 
 function resetUpgradeUI() { upgradeState.sourceIdx = null; document.getElementById('upg-source-img').style.display = 'none'; document.getElementById('upg-source-price').style.display = 'none'; document.getElementById('upg-source-slot').querySelector('.placeholder-icon').style.display = 'block'; document.getElementById('upg-target-content').style.display = 'none'; document.getElementById('upg-target-placeholder').style.display = 'block'; document.getElementById('upg-not-found').style.display = 'none'; document.getElementById('roll-pointer').style.transition = 'none'; document.getElementById('roll-pointer').style.left = '0%'; document.getElementById('upg-status-text').innerText = ''; document.getElementById('btn-do-upgrade').disabled = true; }
+
 

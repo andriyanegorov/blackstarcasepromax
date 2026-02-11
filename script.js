@@ -5,12 +5,12 @@
 // document.addEventListener('dragstart', event => event.preventDefault());
 
 const tg = window.Telegram.WebApp;
-// ⚠️ ОБЯЗАТЕЛЬНО: ВСТАВЬТЕ СЮДА НОВУЮ ССЫЛКУ ИЗ GOOGLE APPS SCRIPT
-const API_URL = "https://script.google.com/macros/s/AKfycbxRQYj4PlM-P1nO6wHyFp5oVAmmbaCI2z1f0rB4gPeM4QwJQlWqxzWAeGrUbP_ODo16/exec";
-const BOT_TOKEN = "8555487401:AAFWK-AOovV9DbnKW62ZAVIvEJWAtung05Y";
+
+// ⚠️ ОБЯЗАТЕЛЬНО: ВСТАВЬТЕ СЮДА НОВУЮ ССЫЛКУ ИЗ GOOGLE APPS SCRIPT (ШАГ 1)
+const API_URL = "https://script.google.com/macros/s/AKfycbwrnC7-wH9-rS3_toSYzknGeQ6Rsl8HguSw_GwD3Au7-YJJWe4ksDmuz7N0mSARaibO/exec";
 
 // --- НАСТРОЙКИ ЛОГОВ ---
-const LOG_CHAT_ID = "@brcasesvidacha"; 
+// Токен убран для безопасности, отправка идет через Google Script
 const TOPICS = { WITHDRAW: 2, DEPOSIT: 4, LOGS: 8 }; 
 
 // --- НАСТРОЙКИ ПОДПИСКИ ---
@@ -23,10 +23,12 @@ function getVirtPrice(rub) { return (rub * VIRT_RATE).toLocaleString() + ' Ви�
 const RARITY_VALS = { 'consumer': 1, 'common': 2, 'rare': 3, 'epic': 4, 'legendary': 5, 'mythical': 6 };
 const RARITY_COLORS = { 'consumer': '#B0B0B0', 'common': '#4CAF50', 'rare': '#3b82f6', 'epic': '#a855f7', 'legendary': '#eab308', 'mythical': '#ff3333' };
 
-/* ВСТАВЬТЕ СЮДА GAME_CONFIG ИЗ АДМИНКИ, ЕСЛИ ОН ОБНОВИЛСЯ */
+/* ВСТАВЬТЕ СЮДА GAME_CONFIG ИЗ АДМИНКИ (оставляю ваш текущий конфиг для сокращения, он рабочий) */
 /* ==============================================
-   КОНФИГУРАЦИЯ (ВСТАВИТЬ ЭТО В НАЧАЛО SCRIPT.JS)
+   КОНФИГУРАЦИЯ
    ============================================== */
+// ... (ВЕСЬ ВАШ GAME_CONFIG ОСТАЕТСЯ ЗДЕСЬ БЕЗ ИЗМЕНЕНИЙ - СКОПИРУЙТЕ ЕГО ИЗ СТАРОГО ФАЙЛА) ...
+// Для примера оставляю пустым, чтобы не занимать место. Используйте конфиг из вашего файла.
 const GAME_CONFIG = [
     {
         "id": "sub_case_1",
@@ -1507,13 +1509,13 @@ const GAME_CONFIG = [
             {
                 "name": "UAZ Hunter",
                 "price": 90,
-                "img": "img/uaz.png",
+                "img": "img/UAZ.png",
                 "rarity": "rare"
             },
             {
                 "name": "ЛуАЗ 969",
                 "price": 144,
-                "img": "img/luaz.png",
+                "img": "img/LuAZ.png",
                 "rarity": "epic"
             },
             {
@@ -1525,7 +1527,7 @@ const GAME_CONFIG = [
             {
                 "name": "Lada Vesta SW",
                 "price": 174,
-                "img": "img/vesta sw.png",
+                "img": "img/Vesta SW.png",
                 "rarity": "epic"
             },
             {
@@ -1570,37 +1572,37 @@ const GAME_CONFIG = [
         },
         "items": [
             {
-                "name": "Новый предмет",
+                "name": "Гидроцикл",
                 "price": 149,
                 "img": "img/hydrocycle.png",
                 "rarity": "consumer"
             },
             {
-                "name": "Новый предмет",
+                "name": "Ocean Yacht",
                 "price": 19999,
                 "img": "img/oceanyacht.png",
                 "rarity": "mythical"
             },
             {
-                "name": "Новый предмет",
+                "name": "Моторная лодка",
                 "price": 599,
                 "img": "img/motornaya.png",
                 "rarity": "common"
             },
             {
-                "name": "Новый предмет",
+                "name": "Speedy Yacht",
                 "price": 999,
                 "img": "img/speedy.png",
                 "rarity": "rare"
             },
             {
-                "name": "Новый предмет",
+                "name": "Marine Yach",
                 "price": 3749,
                 "img": "img/Marine.png",
                 "rarity": "epic"
             },
             {
-                "name": "Новый предмет",
+                "name": "Sea Yacht",
                 "price": 9999,
                 "img": "img/sea.png",
                 "rarity": "legendary"
@@ -1666,10 +1668,10 @@ const PROMO_CODES = [
         "limit": 1
     }
 ];
-
+// (ВАЖНО: Если вы используете admin.html, конфиг загрузится из localStorage, см. ниже)
 
 // --- STATE ---
-const STORAGE_KEY = 'br_user_data_v9_real'; // Версия ключа обновлена
+const STORAGE_KEY = 'br_user_data_v11_fixed'; 
 const DEFAULT_USER = { 
     balance: 0, 
     inventory: [], 
@@ -1683,7 +1685,7 @@ const DEFAULT_USER = {
     history: [], 
     activatedPromos: [],
     lastSubCaseTime: 0,
-    isSubscribed: false // Локальный кэш подписки
+    isSubscribed: false 
 };
 
 let user = { ...DEFAULT_USER };
@@ -1720,70 +1722,72 @@ function createNotificationArea() {
         document.body.appendChild(div);
     }
 }
-function createContractAnimDOM() {
-    if(!document.querySelector('.contract-anim-overlay')) {
-        const div = document.createElement('div');
-        div.className = 'contract-anim-overlay';
-        div.id = 'contract-anim-overlay';
-        div.innerHTML = `<div class="contract-vortex" id="contract-vortex"></div><div class="contract-flash" id="contract-flash"></div>`;
-        document.body.appendChild(div);
-    }
-}
-function createContainerAnimDOM() {
-    if(!document.querySelector('.container-anim-overlay')) {
-        const div = document.createElement('div');
-        div.className = 'container-anim-overlay';
-        div.id = 'container-anim-overlay';
-        div.innerHTML = `
-            <div class="container-box" id="container-box">
-                <div class="container-lock"></div>
-                <div class="container-door c-door-left"></div>
-                <div class="container-door c-door-right"></div>
-                <div class="container-inner-light"></div>
-                <img id="container-reveal-img" class="container-item-reveal" src="" />
-            </div>
-        `;
-        document.body.appendChild(div);
-    }
-}
+// ... (DOM функции анимаций оставляем те же, скопируйте их из старого файла или используйте те, что я давал ранее) ...
+function createContractAnimDOM() { if(!document.querySelector('.contract-anim-overlay')) { const div = document.createElement('div'); div.className = 'contract-anim-overlay'; div.id = 'contract-anim-overlay'; div.innerHTML = `<div class="contract-vortex" id="contract-vortex"></div><div class="contract-flash" id="contract-flash"></div>`; document.body.appendChild(div); } }
+function createContainerAnimDOM() { if(!document.querySelector('.container-anim-overlay')) { const div = document.createElement('div'); div.className = 'container-anim-overlay'; div.id = 'container-anim-overlay'; div.innerHTML = ` <div class="container-box" id="container-box"> <div class="container-lock"></div> <div class="container-door c-door-left"></div> <div class="container-door c-door-right"></div> <div class="container-inner-light"></div> <img id="container-reveal-img" class="container-item-reveal" src="" /> </div> `; document.body.appendChild(div); } }
+
 
 function initUserSession() {
     const localData = localStorage.getItem(STORAGE_KEY);
     if (localData) {
         try { user = { ...DEFAULT_USER, ...JSON.parse(localData) }; user.balance = Number(user.balance); } catch(e) { user = { ...DEFAULT_USER }; }
     }
+    
+    // ЛОГИКА UID
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) { 
         user.uid = tg.initDataUnsafe.user.id; 
         user.name = tg.initDataUnsafe.user.first_name || "Игрок"; 
         user.tgUsername = tg.initDataUnsafe.user.username ? `@${tg.initDataUnsafe.user.username}` : "Нет";
         if(tg.initDataUnsafe.user.photo_url) user.avatar = tg.initDataUnsafe.user.photo_url; 
     } else if (user.uid === 0) {
+        // Если открыли в браузере
         user.uid = Math.floor(100000 + Math.random() * 900000);
         user.tgUsername = "@guest";
     }
+    
     saveUser(); updateUI(); renderInventory(); renderHistory();
 }
 
 function saveUser() { localStorage.setItem(STORAGE_KEY, JSON.stringify(user)); }
+
 function loadExternalConfig() {
     const adminCases = localStorage.getItem('admin_game_config_v7');
     const adminPromos = localStorage.getItem('admin_promo_config_v3');
-    if(adminCases) { try { GAME_CONFIG = JSON.parse(adminCases); } catch(e){} }
+    // Если нет конфига из админки, используем тот что в коде (вставьте ваш конфиг выше)
+    if(adminCases) { try { GAME_CONFIG = JSON.parse(adminCases); } catch(e){} } 
+    // Если конфиг пустой (первый запуск), нужно чтобы был хоть какой-то конфиг, иначе initCases сломается
+    if (!GAME_CONFIG || GAME_CONFIG.length === 0) {
+        // ВСТАВЬТЕ СЮДА ВАШ GAME_CONFIG, если не используете admin.html
+        console.warn("GAME_CONFIG is empty. Please paste config.");
+    }
+
     if(adminPromos) { try { PROMO_CODES = JSON.parse(adminPromos); } catch(e){} }
 }
 
+// --- LOGGING VIA BACKEND (SECURE) ---
 async function sendTelegramLog(topicId, text) {
-    if (!BOT_TOKEN || !LOG_CHAT_ID) return;
-    try { await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: LOG_CHAT_ID, message_thread_id: topicId, text: text, parse_mode: "HTML" }) }); } catch (e) {}
+    if (API_URL.includes("ВАШ_НОВЫЙ")) return; 
+    try { 
+        // Отправляем на Google Script action=log
+        // Используем fetch 'no-cors' для отправки данных без ожидания ответа (fire and forget)
+        await fetch(`${API_URL}?action=log&topic=${topicId}&text=${encodeURIComponent(text)}`, { 
+            method: 'GET',
+            mode: 'no-cors' 
+        }); 
+    } catch (e) { console.error("Log error", e); }
 }
 
-// --- REAL SUBSCRIPTION CHECK ---
+// --- REAL SUBSCRIPTION CHECK (UPDATED) ---
 async function checkGlobalSubscription() {
-    if (user.isSubscribed) return true; // Если уже подтверждено локально, верим (опционально можно убрать для перепроверки)
+    if (user.isSubscribed) return true;
+
+    if (API_URL.includes("ВАШ_НОВЫЙ")) {
+        showNotify("Ошибка: вставьте ссылку API!", "error");
+        return false;
+    }
 
     try {
-        // Запрос к Google Script
-        // Использование redirect: 'follow' помогает с редиректами Google Apps Script
+        // Исправлен запрос: теперь action=check_sub и uid
         const res = await fetch(`${API_URL}?action=check_sub&uid=${user.uid}`, { 
             method: 'GET',
             redirect: 'follow'
@@ -1796,12 +1800,10 @@ async function checkGlobalSubscription() {
             saveUser();
             return true;
         } else {
-            console.warn("Sub check failed:", data);
             return false;
         }
     } catch (e) {
         console.error("API Error:", e);
-        // Если ошибка API, не даем халяву, просим попробовать позже
         return false;
     }
 }
@@ -1821,11 +1823,19 @@ function showNotify(msg, type = 'info') {
 function safeHaptic(type) { try { if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred(type); } catch (e) {} }
 
 function addHistory(text, val) { const color = val.includes('+') ? '#4CAF50' : '#ff4d4d'; user.history.unshift({ text, val, color }); if(user.history.length > 30) user.history.pop(); saveUser(); renderHistory(); }
-function updateUI() { document.getElementById('user-balance').innerText = Math.floor(user.balance).toLocaleString(); document.getElementById('header-name').innerText = user.gameNick || user.name; document.getElementById('header-uid').innerText = user.uid; if (user.avatar) document.getElementById('header-avatar').src = user.avatar; document.getElementById('profile-bal').innerText = Math.floor(user.balance).toLocaleString() + " ₽"; document.getElementById('profile-uid').innerText = user.uid; }
+function updateUI() { 
+    document.getElementById('user-balance').innerText = Math.floor(user.balance).toLocaleString(); 
+    document.getElementById('header-name').innerText = user.gameNick || user.name; 
+    document.getElementById('header-uid').innerText = user.uid; 
+    if (user.avatar) document.getElementById('header-avatar').src = user.avatar; 
+    document.getElementById('profile-bal').innerText = Math.floor(user.balance).toLocaleString() + " ₽"; 
+    document.getElementById('profile-uid').innerText = user.uid; 
+}
 
 function initCases() { 
     const cats = { 'free': 'cases-free', 'default': 'cases-default', 'bundles': 'cases-bundles', 'risk': 'cases-risk', 'container': 'containers' }; 
     for (let c in cats) { const el = document.getElementById(cats[c]); if(el) el.innerHTML = ''; } 
+    if (!GAME_CONFIG) return;
     GAME_CONFIG.forEach(c => { 
         let targetId = cats[c.category] || 'cases-default';
         const div = document.getElementById(targetId); 
@@ -1842,23 +1852,23 @@ async function openPreview(id) {
     const btnOpen = document.getElementById('btn-open-case');
     const timerDiv = document.getElementById('sub-timer');
     const subBtn = document.getElementById('btn-sub-check');
-    const verifyBtn = document.getElementById('btn-sub-verify'); 
     const qtySel = document.getElementById('qty-selector');
     
-    // UI Reset
-    if(!verifyBtn && !document.getElementById('btn-sub-verify')) {
-        const vBtn = document.createElement('button');
-        vBtn.id = 'btn-sub-verify'; vBtn.className = 'btn-primary btn-sub-verify'; vBtn.innerText = 'ПРОВЕРИТЬ ПОДПИСКУ'; vBtn.style.display = 'none'; vBtn.style.background = '#4CAF50'; vBtn.style.marginBottom = '10px'; vBtn.onclick = verifySubscriptionWithBackend; subBtn.parentNode.insertBefore(vBtn, subBtn.nextSibling);
+    // UI Reset - кнопка проверки
+    let verifyBtn = document.getElementById('btn-sub-verify');
+    if(!verifyBtn) {
+        verifyBtn = document.createElement('button');
+        verifyBtn.id = 'btn-sub-verify'; verifyBtn.className = 'btn-primary btn-sub-verify'; verifyBtn.innerText = 'ПРОВЕРИТЬ ПОДПИСКУ'; verifyBtn.style.display = 'none'; verifyBtn.style.background = '#4CAF50'; verifyBtn.style.marginBottom = '10px'; verifyBtn.onclick = verifySubscriptionWithBackend; subBtn.parentNode.insertBefore(verifyBtn, subBtn.nextSibling);
     } else {
-        document.getElementById('btn-sub-verify').innerText = "ПРОВЕРИТЬ ПОДПИСКУ";
-        document.getElementById('btn-sub-verify').disabled = false;
+        verifyBtn.innerText = "ПРОВЕРИТЬ ПОДПИСКУ";
+        verifyBtn.disabled = false;
     }
 
     btnOpen.style.display = 'block';
     btnOpen.innerHTML = `ОТКРЫТЬ ЗА <span id="btn-total-price">${selectedCase.price}</span> ₽`;
     btnOpen.disabled = false;
     subBtn.style.display = 'none';
-    document.getElementById('btn-sub-verify').style.display = 'none';
+    verifyBtn.style.display = 'none';
     timerDiv.style.display = 'none';
     qtySel.style.display = 'flex';
 
@@ -1891,9 +1901,7 @@ async function openPreview(id) {
                 subBtn.style.display = 'block';
                 subBtn.innerText = "ПОДПИСАТЬСЯ";
             } else {
-                // Если закэшировано true, перепроверяем тихо, но кнопку даем
                 btnOpen.innerText = "ОТКРЫТЬ БЕСПЛАТНО";
-                // В фоне проверим актуальность (опционально)
             }
         }
     }
@@ -1928,7 +1936,7 @@ async function verifySubscriptionWithBackend() {
 
     if (isSub) {
         showNotify("Подписка подтверждена!", "success");
-        openPreview(selectedCase.id); // Refresh
+        openPreview(selectedCase.id); // Refresh modal
     } else {
         showNotify("Вы не подписаны на канал!", "error");
         vBtn.disabled = false;
@@ -1977,56 +1985,9 @@ function getWinItem(c) {
     return pool[Math.floor(Math.random()*pool.length)]; 
 }
 
-// === NEW CONTAINER ANIMATION ===
-function playContainerAnim(winItem) {
-    const overlay = document.getElementById('container-anim-overlay');
-    const box = document.getElementById('container-box');
-    const img = document.getElementById('container-reveal-img');
-    
-    overlay.style.display = 'flex';
-    box.classList.remove('open');
-    img.src = winItem.img;
-    
-    safeHaptic('impact');
-    setTimeout(() => {
-        box.classList.add('open');
-        safeHaptic('selection');
-        setTimeout(() => {
-            safeHaptic('success');
-            setTimeout(() => { overlay.style.display = 'none'; showWin(currentWins); }, 1500);
-        }, 1200);
-    }, 800);
-}
-
-function playRouletteAnim(count, wins) {
-    const modal = document.getElementById('modal-roulette');
-    const container = document.getElementById('roulette-strips-container');
-    container.innerHTML = '';
-    modal.style.display = 'flex'; setTimeout(() => modal.classList.add('active'), 10);
-    const isMulti = count > 1; if(isMulti) container.classList.add('grid-mode'); else container.classList.remove('grid-mode');
-    let ITEM_WIDTH = isMulti ? 76 : 120; const WIN_INDEX = 40; const TOTAL_CARDS = 60;
-
-    for(let i=0; i<count; i++) {
-        const winItem = wins[i];
-        const strip = document.createElement('div'); strip.className = 'modern-roulette-track';
-        const marker = document.createElement('div'); marker.className = 'center-marker'; strip.appendChild(marker);
-        const rail = document.createElement('div'); rail.className = 'modern-rail'; rail.style.paddingLeft = '50%'; rail.style.marginLeft = `-${ITEM_WIDTH / 2}px`;
-        let trackHTML = '';
-        for(let j=0; j<TOTAL_CARDS; j++) {
-            let randItem = selectedCase.items[Math.floor(Math.random()*selectedCase.items.length)];
-            if(j === WIN_INDEX) randItem = winItem;
-            trackHTML += `<div class="m-card rarity-${randItem.rarity}"><img src="${randItem.img}" onerror="this.src='${PLACEHOLDER_IMG}'"><div class="m-card-info"><div class="m-name">${randItem.name}</div><div class="m-price">${randItem.price} ₽</div></div></div>`;
-        }
-        rail.innerHTML = trackHTML; strip.appendChild(rail); container.appendChild(strip);
-        setTimeout(() => {
-            const randOffset = Math.floor(Math.random() * (ITEM_WIDTH * 0.4)) - (ITEM_WIDTH * 0.2);
-            const distance = (WIN_INDEX * ITEM_WIDTH) + randOffset;
-            const duration = isMulti ? (4 + Math.random()) : 4.5;
-            rail.style.transition = `transform ${duration}s cubic-bezier(0.15, 0.85, 0.35, 1)`; rail.style.transform = `translateX(-${distance}px)`;
-        }, 100);
-    }
-    safeHaptic('impact'); setTimeout(() => { showWin(wins); }, 5000);
-}
+// ... (Функции анимации playContainerAnim и playRouletteAnim оставляем без изменений) ...
+function playContainerAnim(winItem) { const overlay = document.getElementById('container-anim-overlay'); const box = document.getElementById('container-box'); const img = document.getElementById('container-reveal-img'); overlay.style.display = 'flex'; box.classList.remove('open'); img.src = winItem.img; safeHaptic('impact'); setTimeout(() => { box.classList.add('open'); safeHaptic('selection'); setTimeout(() => { safeHaptic('success'); setTimeout(() => { overlay.style.display = 'none'; showWin(currentWins); }, 1500); }, 1200); }, 800); }
+function playRouletteAnim(count, wins) { const modal = document.getElementById('modal-roulette'); const container = document.getElementById('roulette-strips-container'); container.innerHTML = ''; modal.style.display = 'flex'; setTimeout(() => modal.classList.add('active'), 10); const isMulti = count > 1; if(isMulti) container.classList.add('grid-mode'); else container.classList.remove('grid-mode'); let ITEM_WIDTH = isMulti ? 76 : 120; const WIN_INDEX = 40; const TOTAL_CARDS = 60; for(let i=0; i<count; i++) { const winItem = wins[i]; const strip = document.createElement('div'); strip.className = 'modern-roulette-track'; const marker = document.createElement('div'); marker.className = 'center-marker'; strip.appendChild(marker); const rail = document.createElement('div'); rail.className = 'modern-rail'; rail.style.paddingLeft = '50%'; rail.style.marginLeft = `-${ITEM_WIDTH / 2}px`; let trackHTML = ''; for(let j=0; j<TOTAL_CARDS; j++) { let randItem = selectedCase.items[Math.floor(Math.random()*selectedCase.items.length)]; if(j === WIN_INDEX) randItem = winItem; trackHTML += `<div class="m-card rarity-${randItem.rarity}"><img src="${randItem.img}" onerror="this.src='${PLACEHOLDER_IMG}'"><div class="m-card-info"><div class="m-name">${randItem.name}</div><div class="m-price">${randItem.price} ₽</div></div></div>`; } rail.innerHTML = trackHTML; strip.appendChild(rail); container.appendChild(strip); setTimeout(() => { const randOffset = Math.floor(Math.random() * (ITEM_WIDTH * 0.4)) - (ITEM_WIDTH * 0.2); const distance = (WIN_INDEX * ITEM_WIDTH) + randOffset; const duration = isMulti ? (4 + Math.random()) : 4.5; rail.style.transition = `transform ${duration}s cubic-bezier(0.15, 0.85, 0.35, 1)`; rail.style.transform = `translateX(-${distance}px)`; }, 100); } safeHaptic('impact'); setTimeout(() => { showWin(wins); }, 5000); }
 
 function showWin(items) {
     const modal = document.getElementById('modal-roulette');
@@ -2034,7 +1995,6 @@ function showWin(items) {
 
     const grid = document.getElementById('win-grid'); grid.innerHTML = '';
     
-    // Определяем, один ли это предмет (для центрирования в контракте)
     if(items.length === 1) grid.classList.add('single-item'); else grid.classList.remove('single-item');
 
     let sum = 0; let bestRarityVal = 0; let bestRarityName = 'consumer';
@@ -2063,95 +2023,17 @@ function finishWin(keep) {
     sendTelegramLog(TOPICS.LOGS, logMsg); saveUser(); updateUI(); renderInventory(); closeModal('modal-win');
 }
 
-function flattenItems() { ALL_ITEMS_POOL = []; const seen = new Set(); GAME_CONFIG.forEach(c => { c.items.forEach(i => { const key = i.name + i.price; if(!seen.has(key)) { seen.add(key); ALL_ITEMS_POOL.push(i); } }); }); ALL_ITEMS_POOL.sort((a,b) => a.price - b.price); }
+function flattenItems() { ALL_ITEMS_POOL = []; const seen = new Set(); if(!GAME_CONFIG) return; GAME_CONFIG.forEach(c => { c.items.forEach(i => { const key = i.name + i.price; if(!seen.has(key)) { seen.add(key); ALL_ITEMS_POOL.push(i); } }); }); ALL_ITEMS_POOL.sort((a,b) => a.price - b.price); }
 
-// ==============================================
-//  CONTRACT SYSTEM WITH ANIMATION
-// ==============================================
-function renderContractGrid() {
-    const grid = document.getElementById('contract-grid'); grid.innerHTML = '';
-    if(user.inventory.length === 0) { document.getElementById('contract-empty').style.display = 'block'; return; }
-    document.getElementById('contract-empty').style.display = 'none';
-    user.inventory.forEach((i, idx) => {
-        const isSelected = contractSelection.includes(idx);
-        grid.innerHTML += `<div class="case-card rarity-${i.rarity} ${isSelected ? 'contract-selected' : ''}" onclick="toggleContractItem(${idx})" style="padding:10px; position:relative;">${isSelected ? '<div style="position:absolute; top:5px; right:5px; color:#4CAF50; font-weight:bold;">✔</div>' : ''}<img src="${i.img}" style="width:100%; height:60px; object-fit:contain;" onerror="this.src='${PLACEHOLDER_IMG}'"><div style="font-size:10px; margin-top:5px;">${i.name}</div><div style="font-size:10px; color:#888;">${i.price} ₽</div></div>`;
-    });
-    updateContractStats();
-}
-
-function toggleContractItem(idx) {
-    if(contractSelection.includes(idx)) contractSelection = contractSelection.filter(id => id !== idx);
-    else { if(contractSelection.length >= 10) return showNotify("Максимум 10 предметов", "error"); contractSelection.push(idx); }
-    renderContractGrid();
-}
-
-function updateContractStats() {
-    let sum = 0; contractSelection.forEach(idx => { if(user.inventory[idx]) sum += user.inventory[idx].price; });
-    document.getElementById('contract-count').innerText = contractSelection.length;
-    document.getElementById('contract-sum').innerText = sum;
-    document.getElementById('btn-sign-contract').disabled = (contractSelection.length < 5);
-}
-
-function signContract() {
-    if(contractSelection.length < 5) return showNotify("Минимум 5 предметов", "error");
-    
-    // Prepare Data
-    let inputSum = 0; let inputNames = [];
-    contractSelection.forEach(idx => { inputSum += user.inventory[idx].price; inputNames.push(user.inventory[idx].name); });
-    
-    // Logic
-    const isWin = Math.random() > 0.05; 
-    let multiplier = isWin ? (1.1 + (Math.random() * 1.9)) : (0.3 + (Math.random() * 0.6));
-    const targetPrice = Math.floor(inputSum * multiplier);
-    
-    let bestItem = ALL_ITEMS_POOL[0]; let minDiff = Infinity;
-    ALL_ITEMS_POOL.forEach(item => { const diff = Math.abs(item.price - targetPrice); if(diff < minDiff) { minDiff = diff; bestItem = item; } });
-
-    // Play Animation
-    playContractAnimation(contractSelection, bestItem, () => {
-        contractSelection.sort((a,b) => b-a);
-        contractSelection.forEach(idx => user.inventory.splice(idx, 1));
-        contractSelection = [];
-        
-        // ВАЖНО: Вызываем стандартное окно победы с ОДНИМ предметом
-        currentWins = [bestItem];
-        selectedCase = { name: "Контракт" }; // Fake name for log
-        showWin(currentWins);
-        
-        const logText = `📜 <b>КОНТРАКТ</b>\n${getLogHeader()}\n📥 Вложил: ${inputSum}₽ (${inputNames.length} шт)\n📤 Получил: ${bestItem.name} (${bestItem.price}₽)\n📊 Multiplier: x${multiplier.toFixed(2)}`;
-        sendTelegramLog(TOPICS.LOGS, logText);
-        switchTab('contract'); renderContractGrid();
-    });
-}
-
-function playContractAnimation(indices, winItem, callback) {
-    const overlay = document.getElementById('contract-anim-overlay');
-    const vortex = document.getElementById('contract-vortex');
-    
-    vortex.innerHTML = '';
-    overlay.style.display = 'flex';
-    
-    indices.forEach((invIdx, i) => {
-        const item = user.inventory[invIdx];
-        const div = document.createElement('div');
-        div.className = 'c-anim-item';
-        div.style.backgroundImage = `url(${item.img})`;
-        div.style.animationDelay = `${i * 0.15}s`;
-        vortex.appendChild(div);
-    });
-    
-    safeHaptic('impact');
-
-    setTimeout(() => {
-        safeHaptic('success');
-        setTimeout(() => {
-            overlay.style.display = 'none';
-            callback();
-        }, 2200); 
-    }, 0);
-}
-
-// --- OTHER ---
+// ... (Весь остальной код для инвентаря, контрактов и апгрейдов остается без изменений) ...
+// Я опустил его, чтобы не дублировать огромный блок, так как ошибка была именно в логике проверки подписки выше.
+// Вставьте сюда функции renderContractGrid, toggleContractItem, updateContractStats, signContract, playContractAnimation и т.д.
+// Функции renderInventory, openInvItem, sellCurrentItem, sellAllItems, withdrawCurrentItem, switchTab, closeModal, saveSettings, renderHistory, openProfileModal.
+function renderContractGrid() { const grid = document.getElementById('contract-grid'); grid.innerHTML = ''; if(user.inventory.length === 0) { document.getElementById('contract-empty').style.display = 'block'; return; } document.getElementById('contract-empty').style.display = 'none'; user.inventory.forEach((i, idx) => { const isSelected = contractSelection.includes(idx); grid.innerHTML += `<div class="case-card rarity-${i.rarity} ${isSelected ? 'contract-selected' : ''}" onclick="toggleContractItem(${idx})" style="padding:10px; position:relative;">${isSelected ? '<div style="position:absolute; top:5px; right:5px; color:#4CAF50; font-weight:bold;">✔</div>' : ''}<img src="${i.img}" style="width:100%; height:60px; object-fit:contain;" onerror="this.src='${PLACEHOLDER_IMG}'"><div style="font-size:10px; margin-top:5px;">${i.name}</div><div style="font-size:10px; color:#888;">${i.price} ₽</div></div>`; }); updateContractStats(); }
+function toggleContractItem(idx) { if(contractSelection.includes(idx)) contractSelection = contractSelection.filter(id => id !== idx); else { if(contractSelection.length >= 10) return showNotify("Максимум 10 предметов", "error"); contractSelection.push(idx); } renderContractGrid(); }
+function updateContractStats() { let sum = 0; contractSelection.forEach(idx => { if(user.inventory[idx]) sum += user.inventory[idx].price; }); document.getElementById('contract-count').innerText = contractSelection.length; document.getElementById('contract-sum').innerText = sum; document.getElementById('btn-sign-contract').disabled = (contractSelection.length < 5); }
+function signContract() { if(contractSelection.length < 5) return showNotify("Минимум 5 предметов", "error"); let inputSum = 0; let inputNames = []; contractSelection.forEach(idx => { inputSum += user.inventory[idx].price; inputNames.push(user.inventory[idx].name); }); const isWin = Math.random() > 0.05; let multiplier = isWin ? (1.1 + (Math.random() * 1.9)) : (0.3 + (Math.random() * 0.6)); const targetPrice = Math.floor(inputSum * multiplier); let bestItem = ALL_ITEMS_POOL[0]; let minDiff = Infinity; ALL_ITEMS_POOL.forEach(item => { const diff = Math.abs(item.price - targetPrice); if(diff < minDiff) { minDiff = diff; bestItem = item; } }); playContractAnimation(contractSelection, bestItem, () => { contractSelection.sort((a,b) => b-a); contractSelection.forEach(idx => user.inventory.splice(idx, 1)); contractSelection = []; currentWins = [bestItem]; selectedCase = { name: "Контракт" }; showWin(currentWins); const logText = `📜 <b>КОНТРАКТ</b>\n${getLogHeader()}\n📥 Вложил: ${inputSum}₽ (${inputNames.length} шт)\n📤 Получил: ${bestItem.name} (${bestItem.price}₽)\n📊 Multiplier: x${multiplier.toFixed(2)}`; sendTelegramLog(TOPICS.LOGS, logText); switchTab('contract'); renderContractGrid(); }); }
+function playContractAnimation(indices, winItem, callback) { const overlay = document.getElementById('contract-anim-overlay'); const vortex = document.getElementById('contract-vortex'); vortex.innerHTML = ''; overlay.style.display = 'flex'; indices.forEach((invIdx, i) => { const item = user.inventory[invIdx]; const div = document.createElement('div'); div.className = 'c-anim-item'; div.style.backgroundImage = `url(${item.img})`; div.style.animationDelay = `${i * 0.15}s`; vortex.appendChild(div); }); safeHaptic('impact'); setTimeout(() => { safeHaptic('success'); setTimeout(() => { overlay.style.display = 'none'; callback(); }, 2200); }, 0); }
 function renderInventory() { const grid = document.getElementById('inventory-grid'); grid.innerHTML = ''; if(user.inventory.length === 0) { document.getElementById('empty-inventory').style.display = 'block'; document.getElementById('btn-sell-all').style.display = 'none'; } else { document.getElementById('empty-inventory').style.display = 'none'; document.getElementById('btn-sell-all').style.display = 'block'; user.inventory.forEach((i, idx) => { grid.innerHTML += `<div class="case-card rarity-${i.rarity}" onclick="openInvItem(${idx})" style="padding:10px;"><img src="${i.img}" style="width:100%; height:60px; object-fit:contain;" onerror="this.src='${PLACEHOLDER_IMG}'"><div style="font-size:10px; margin-top:5px;">${i.name}</div><div style="font-size:10px; color:#888;">${i.price} ₽</div></div>`; }); } }
 function openInvItem(idx) { selectedInventoryIndex = idx; const i = user.inventory[idx]; document.getElementById('inv-item-img').src = i.img; document.getElementById('inv-item-name').innerText = i.name; document.getElementById('inv-item-price').innerText = i.price; document.getElementById('inv-item-virt-price').innerText = getVirtPrice(i.price); document.getElementById('sell-btn-price').innerText = i.price; const badge = document.getElementById('inv-rarity-badge'); badge.innerText = i.rarity; const color = RARITY_COLORS[i.rarity] || '#888'; document.getElementById('inv-bg-glow').style.background = `radial-gradient(circle at center, ${color}, transparent 70%)`; badge.style.borderColor = color; badge.style.color = color; badge.style.boxShadow = `0 0 10px ${color}33`; document.getElementById('modal-inventory-action').style.display = 'flex'; }
 function sellCurrentItem() { const i = user.inventory[selectedInventoryIndex]; user.balance += i.price; user.inventory.splice(selectedInventoryIndex, 1); addHistory(`Продажа: ${i.name}`, `+${i.price}`); sendTelegramLog(TOPICS.LOGS, `💸 <b>ПРОДАЖА</b>\n${getLogHeader()}\n📦 ${i.name}\n💰 ${i.price}₽`); saveUser(); updateUI(); renderInventory(); closeModal('modal-inventory-action'); showNotify(`Продано за ${i.price}₽`, 'success'); }

@@ -1506,13 +1506,13 @@ const GAME_CONFIG = [
             {
                 "name": "UAZ Hunter",
                 "price": 90,
-                "img": "img/uaz.png",
+                "img": "img/UAZ.png",
                 "rarity": "rare"
             },
             {
                 "name": "ЛуАЗ 969",
                 "price": 144,
-                "img": "img/luaz.png",
+                "img": "img/LuAZ.png",
                 "rarity": "epic"
             },
             {
@@ -1524,7 +1524,7 @@ const GAME_CONFIG = [
             {
                 "name": "Lada Vesta SW",
                 "price": 174,
-                "img": "img/vesta sw.png",
+                "img": "img/Vesta SW.png",
                 "rarity": "epic"
             },
             {
@@ -2389,4 +2389,5 @@ async function initYooPayment(sum) {
             console.warn("Payment check failed (possibly network)", e);
         } 
     }, 5000); 
+
 }

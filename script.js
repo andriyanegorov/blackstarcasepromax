@@ -5,8 +5,8 @@
 // document.addEventListener('dragstart', event => event.preventDefault());
 
 const tg = window.Telegram.WebApp;
-// Используйте ваш Google Apps Script URL здесь
-const API_URL = "https://script.google.com/macros/s/AKfycbym7BZkWwdqkB8_yE6ynKaeYKtd8X833chIM6smbbUAs_85epS5W6bz2uBi0pcQBRqF/exec";
+// ⚠️ ОБЯЗАТЕЛЬНО: ВСТАВЬТЕ СЮДА НОВУЮ ССЫЛКУ ИЗ GOOGLE APPS SCRIPT
+const API_URL = "https://script.google.com/macros/s/AKfycbxRQYj4PlM-P1nO6wHyFp5oVAmmbaCI2z1f0rB4gPeM4QwJQlWqxzWAeGrUbP_ODo16/exec";
 const BOT_TOKEN = "8555487401:AAFWK-AOovV9DbnKW62ZAVIvEJWAtung05Y";
 
 // --- НАСТРОЙКИ ЛОГОВ ---
@@ -14,7 +14,7 @@ const LOG_CHAT_ID = "@brcasesvidacha";
 const TOPICS = { WITHDRAW: 2, DEPOSIT: 4, LOGS: 8 }; 
 
 // --- НАСТРОЙКИ ПОДПИСКИ ---
-const SUB_CHANNEL_URL = "https://t.me/blackrussiacases_news"; // Ваша ссылка
+const SUB_CHANNEL_URL = "https://t.me/blackrussiacases_news"; 
 
 const PLACEHOLDER_IMG = "https://placehold.co/150x150/1a1a1a/ffffff?text=No+Image";
 const VIRT_RATE = 10000; 
@@ -24,6 +24,9 @@ const RARITY_VALS = { 'consumer': 1, 'common': 2, 'rare': 3, 'epic': 4, 'legenda
 const RARITY_COLORS = { 'consumer': '#B0B0B0', 'common': '#4CAF50', 'rare': '#3b82f6', 'epic': '#a855f7', 'legendary': '#eab308', 'mythical': '#ff3333' };
 
 /* ВСТАВЬТЕ СЮДА GAME_CONFIG ИЗ АДМИНКИ, ЕСЛИ ОН ОБНОВИЛСЯ */
+/* ==============================================
+   КОНФИГУРАЦИЯ (ВСТАВИТЬ ЭТО В НАЧАЛО SCRIPT.JS)
+   ============================================== */
 const GAME_CONFIG = [
     {
         "id": "sub_case_1",
@@ -1504,13 +1507,13 @@ const GAME_CONFIG = [
             {
                 "name": "UAZ Hunter",
                 "price": 90,
-                "img": "img/UAZ.png",
+                "img": "img/uaz.png",
                 "rarity": "rare"
             },
             {
                 "name": "ЛуАЗ 969",
                 "price": 144,
-                "img": "img/LuAZ.png",
+                "img": "img/luaz.png",
                 "rarity": "epic"
             },
             {
@@ -1522,7 +1525,7 @@ const GAME_CONFIG = [
             {
                 "name": "Lada Vesta SW",
                 "price": 174,
-                "img": "img/Vesta SW.png",
+                "img": "img/vesta sw.png",
                 "rarity": "epic"
             },
             {
@@ -1567,37 +1570,37 @@ const GAME_CONFIG = [
         },
         "items": [
             {
-                "name": "Гидроцикл",
+                "name": "Новый предмет",
                 "price": 149,
                 "img": "img/hydrocycle.png",
                 "rarity": "consumer"
             },
             {
-                "name": "Ocean Yacht",
+                "name": "Новый предмет",
                 "price": 19999,
                 "img": "img/oceanyacht.png",
                 "rarity": "mythical"
             },
             {
-                "name": "Моторная лодка",
+                "name": "Новый предмет",
                 "price": 599,
                 "img": "img/motornaya.png",
                 "rarity": "common"
             },
             {
-                "name": "Speedy Yacht",
+                "name": "Новый предмет",
                 "price": 999,
                 "img": "img/speedy.png",
                 "rarity": "rare"
             },
             {
-                "name": "Marine Yach",
+                "name": "Новый предмет",
                 "price": 3749,
                 "img": "img/Marine.png",
                 "rarity": "epic"
             },
             {
-                "name": "Sea Yacht",
+                "name": "Новый предмет",
                 "price": 9999,
                 "img": "img/sea.png",
                 "rarity": "legendary"
@@ -1664,8 +1667,9 @@ const PROMO_CODES = [
     }
 ];
 
+
 // --- STATE ---
-const STORAGE_KEY = 'br_user_data_v8_final'; 
+const STORAGE_KEY = 'br_user_data_v9_real'; // Версия ключа обновлена
 const DEFAULT_USER = { 
     balance: 0, 
     inventory: [], 
@@ -1679,7 +1683,7 @@ const DEFAULT_USER = {
     history: [], 
     activatedPromos: [],
     lastSubCaseTime: 0,
-    isSubscribed: false
+    isSubscribed: false // Локальный кэш подписки
 };
 
 let user = { ...DEFAULT_USER };
@@ -1700,16 +1704,15 @@ window.onerror = function(msg, url, line) { console.error("Script Error:", msg);
 
 document.addEventListener('DOMContentLoaded', () => {
     try { if(window.Telegram && window.Telegram.WebApp) tg.expand(); } catch(e) {}
-    createNotificationArea(); // Create Notification DOM
-    createContractAnimDOM(); // Create Contract Anim DOM
-    createContainerAnimDOM(); // Create Container Anim DOM
+    createNotificationArea(); 
+    createContractAnimDOM(); 
+    createContainerAnimDOM(); 
     loadExternalConfig(); 
     initCases(); 
     flattenItems();
     initUserSession();
 });
 
-// --- DYNAMIC DOM CREATION FOR NEW ELEMENTS ---
 function createNotificationArea() {
     if(!document.getElementById('notify-area')) {
         const div = document.createElement('div');
@@ -1733,6 +1736,7 @@ function createContainerAnimDOM() {
         div.id = 'container-anim-overlay';
         div.innerHTML = `
             <div class="container-box" id="container-box">
+                <div class="container-lock"></div>
                 <div class="container-door c-door-left"></div>
                 <div class="container-door c-door-right"></div>
                 <div class="container-inner-light"></div>
@@ -1773,26 +1777,45 @@ async function sendTelegramLog(topicId, text) {
     try { await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: LOG_CHAT_ID, message_thread_id: topicId, text: text, parse_mode: "HTML" }) }); } catch (e) {}
 }
 
-// --- NEW NOTIFICATION SYSTEM ---
+// --- REAL SUBSCRIPTION CHECK ---
+async function checkGlobalSubscription() {
+    if (user.isSubscribed) return true; // Если уже подтверждено локально, верим (опционально можно убрать для перепроверки)
+
+    try {
+        // Запрос к Google Script
+        // Использование redirect: 'follow' помогает с редиректами Google Apps Script
+        const res = await fetch(`${API_URL}?action=check_sub&uid=${user.uid}`, { 
+            method: 'GET',
+            redirect: 'follow'
+        });
+        
+        const data = await res.json();
+        
+        if (data.status === true) {
+            user.isSubscribed = true;
+            saveUser();
+            return true;
+        } else {
+            console.warn("Sub check failed:", data);
+            return false;
+        }
+    } catch (e) {
+        console.error("API Error:", e);
+        // Если ошибка API, не даем халяву, просим попробовать позже
+        return false;
+    }
+}
+
+// --- NOTIFICATION ---
 function showNotify(msg, type = 'info') {
-    // type: 'success', 'error', 'info'
     const area = document.getElementById('notify-area');
     const toast = document.createElement('div');
     toast.className = `notify-toast ${type}`;
-    
-    let icon = 'ℹ️';
-    if(type === 'success') icon = '✅';
-    if(type === 'error') icon = '⛔️';
-    
+    let icon = 'ℹ️'; if(type === 'success') icon = '✅'; if(type === 'error') icon = '⛔️';
     toast.innerHTML = `<div class="notify-icon">${icon}</div><div class="notify-msg">${msg}</div>`;
     area.appendChild(toast);
-    
     safeHaptic(type === 'error' ? 'error' : 'success');
-    
-    setTimeout(() => {
-        toast.classList.add('hiding');
-        setTimeout(() => toast.remove(), 400);
-    }, 3000);
+    setTimeout(() => { toast.classList.add('hiding'); setTimeout(() => toast.remove(), 400); }, 3000);
 }
 
 function safeHaptic(type) { try { if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred(type); } catch (e) {} }
@@ -1812,34 +1835,30 @@ function initCases() {
 
 let countdownInterval = null;
 
-function openPreview(id) { 
+async function openPreview(id) { 
     selectedCase = GAME_CONFIG.find(c => c.id == id); 
     if (!selectedCase) return; 
 
     const btnOpen = document.getElementById('btn-open-case');
     const timerDiv = document.getElementById('sub-timer');
     const subBtn = document.getElementById('btn-sub-check');
-    const verifyBtn = document.getElementById('btn-sub-verify'); // Новая кнопка
+    const verifyBtn = document.getElementById('btn-sub-verify'); 
     const qtySel = document.getElementById('qty-selector');
     
-    // Создаем кнопку проверки если её нет в HTML
+    // UI Reset
     if(!verifyBtn && !document.getElementById('btn-sub-verify')) {
         const vBtn = document.createElement('button');
-        vBtn.id = 'btn-sub-verify';
-        vBtn.className = 'btn-primary btn-sub-verify';
-        vBtn.innerText = 'ПРОВЕРИТЬ ПОДПИСКУ';
-        vBtn.style.display = 'none';
-        vBtn.style.background = '#4CAF50';
-        vBtn.style.marginBottom = '10px';
-        vBtn.onclick = verifySubscriptionWithBackend;
-        subBtn.parentNode.insertBefore(vBtn, subBtn.nextSibling);
+        vBtn.id = 'btn-sub-verify'; vBtn.className = 'btn-primary btn-sub-verify'; vBtn.innerText = 'ПРОВЕРИТЬ ПОДПИСКУ'; vBtn.style.display = 'none'; vBtn.style.background = '#4CAF50'; vBtn.style.marginBottom = '10px'; vBtn.onclick = verifySubscriptionWithBackend; subBtn.parentNode.insertBefore(vBtn, subBtn.nextSibling);
+    } else {
+        document.getElementById('btn-sub-verify').innerText = "ПРОВЕРИТЬ ПОДПИСКУ";
+        document.getElementById('btn-sub-verify').disabled = false;
     }
 
     btnOpen.style.display = 'block';
     btnOpen.innerHTML = `ОТКРЫТЬ ЗА <span id="btn-total-price">${selectedCase.price}</span> ₽`;
     btnOpen.disabled = false;
     subBtn.style.display = 'none';
-    if(document.getElementById('btn-sub-verify')) document.getElementById('btn-sub-verify').style.display = 'none';
+    document.getElementById('btn-sub-verify').style.display = 'none';
     timerDiv.style.display = 'none';
     qtySel.style.display = 'flex';
 
@@ -1865,15 +1884,16 @@ function openPreview(id) {
                 if(newDiff >= COOLDOWN) { clearInterval(countdownInterval); openPreview(id); } else updateTimer(COOLDOWN - newDiff);
             }, 1000);
         } else {
-            // ПРОВЕРКА ПОДПИСКИ
+            // АВТОМАТИЧЕСКАЯ ПРОВЕРКА ПРИ ОТКРЫТИИ
             if (!user.isSubscribed) {
+                // Если не подписан, даем кнопку подписаться
                 btnOpen.style.display = 'none';
                 subBtn.style.display = 'block';
                 subBtn.innerText = "ПОДПИСАТЬСЯ";
-                // Сбрасываем кнопку проверки при повторном открытии
-                document.getElementById('btn-sub-verify').style.display = 'none';
             } else {
+                // Если закэшировано true, перепроверяем тихо, но кнопку даем
                 btnOpen.innerText = "ОТКРЫТЬ БЕСПЛАТНО";
+                // В фоне проверим актуальность (опционально)
             }
         }
     }
@@ -1894,11 +1914,7 @@ function updateTimer(ms) {
 
 // === ЛОГИКА ПОДПИСКИ ===
 function checkSubscriptionAction() {
-    // 1. Открываем ссылку
-    if(tg.openTelegramLink) tg.openTelegramLink(SUB_CHANNEL_URL);
-    else window.open(SUB_CHANNEL_URL, '_blank');
-    
-    // 2. Скрываем кнопку "Подписаться", показываем "Проверить"
+    if(tg.openTelegramLink) tg.openTelegramLink(SUB_CHANNEL_URL); else window.open(SUB_CHANNEL_URL, '_blank');
     document.getElementById('btn-sub-check').style.display = 'none';
     document.getElementById('btn-sub-verify').style.display = 'block';
 }
@@ -1906,76 +1922,47 @@ function checkSubscriptionAction() {
 async function verifySubscriptionWithBackend() {
     const vBtn = document.getElementById('btn-sub-verify');
     vBtn.disabled = true;
-    vBtn.innerText = "ПРОВЕРКА...";
+    vBtn.innerText = "ПРОСИМ API...";
 
-    try {
-        // Попытка реального запроса к Google Script (если он настроен на check_sub)
-        // Если бэкенда нет, это упадет в catch, и сработает имитация
-        const response = await fetch(`${API_URL}?action=check_sub&uid=${user.uid}`, { mode: 'no-cors' }); 
-        
-        // Т.к. no-cors не возвращает тело ответа, мы не можем узнать результат наверняка без нормального бэкенда.
-        // Поэтому делаем имитацию задержки для UX.
-        setTimeout(() => {
-            // ЭТО ИМИТАЦИЯ!
-            // Для реальной проверки нужен Backend Bot API: getChatMember(chat_id, user_id)
-            user.isSubscribed = true;
-            saveUser();
-            showNotify("Подписка подтверждена!", "success");
-            openPreview(selectedCase.id); // Перезагрузить модалку
-        }, 2000);
+    const isSub = await checkGlobalSubscription();
 
-    } catch (e) {
-        // Fallback
-        setTimeout(() => {
-            user.isSubscribed = true;
-            saveUser();
-            showNotify("Подписка подтверждена!", "success");
-            openPreview(selectedCase.id);
-        }, 2000);
+    if (isSub) {
+        showNotify("Подписка подтверждена!", "success");
+        openPreview(selectedCase.id); // Refresh
+    } else {
+        showNotify("Вы не подписаны на канал!", "error");
+        vBtn.disabled = false;
+        vBtn.innerText = "ПРОВЕРИТЬ ЕЩЕ РАЗ";
     }
 }
 
 function setOpenCount(n) { 
     selectedOpenCount = n; 
-    document.querySelectorAll('.qty-btn').forEach(b => {
-        b.classList.remove('active');
-        if (b.innerText === `x${n}`) b.classList.add('active');
-    });
-    const priceSpan = document.getElementById('btn-total-price');
-    if (priceSpan && selectedCase) priceSpan.innerText = (selectedCase.price * n).toLocaleString();
+    document.querySelectorAll('.qty-btn').forEach(b => { b.classList.remove('active'); if (b.innerText === `x${n}`) b.classList.add('active'); });
+    const priceSpan = document.getElementById('btn-total-price'); if (priceSpan && selectedCase) priceSpan.innerText = (selectedCase.price * n).toLocaleString();
 }
 
 async function startRouletteSequence() {
-    if(selectedCase.category === 'free' && !user.isSubscribed) {
-        showNotify("Сначала нужно подписаться!", "error");
-        return;
+    if(selectedCase.category === 'free') {
+        const isRealSub = await checkGlobalSubscription();
+        if(!isRealSub) return showNotify("Вы не подписаны!", "error");
     }
 
     const cost = selectedCase.price * selectedOpenCount;
     if(user.balance < cost) return showNotify("Недостаточно средств!", "error");
     
-    // Списание
-    if(cost > 0) {
-        user.balance -= cost;
-        addHistory(`Открытие ${selectedCase.name} x${selectedOpenCount}`, `-${cost}`);
-    } else {
-        addHistory(`Открытие ${selectedCase.name}`, `Бесплатно`);
-        user.lastSubCaseTime = Date.now();
-    }
+    if(cost > 0) { user.balance -= cost; addHistory(`Открытие ${selectedCase.name} x${selectedOpenCount}`, `-${cost}`); } 
+    else { addHistory(`Открытие ${selectedCase.name}`, `Бесплатно`); user.lastSubCaseTime = Date.now(); }
     saveUser(); updateUI(); closeModal('modal-preview');
 
-    // Определение предметов
     currentWins = []; for(let i=0; i<selectedOpenCount; i++) currentWins.push(getWinItem(selectedCase));
 
-    // Выбор анимации
     if(document.getElementById('fast-open-check').checked) {
         showWin(currentWins);
     } else {
         if (selectedCase.category === 'container') {
-            // Анимация контейнера
-            playContainerAnim(currentWins[0]); // Контейнеры открываются по 1 обычно, но если x10 - покажем первый или особый экран
+            playContainerAnim(currentWins[0]);
         } else {
-            // Обычная рулетка
             playRouletteAnim(selectedOpenCount, currentWins);
         }
     }
@@ -1996,50 +1983,34 @@ function playContainerAnim(winItem) {
     const box = document.getElementById('container-box');
     const img = document.getElementById('container-reveal-img');
     
-    // Reset state
     overlay.style.display = 'flex';
     box.classList.remove('open');
     img.src = winItem.img;
     
     safeHaptic('impact');
-
-    // Sequence
     setTimeout(() => {
-        // Open
         box.classList.add('open');
-        safeHaptic('selection'); // Sound/Vibration effect
-        
+        safeHaptic('selection');
         setTimeout(() => {
             safeHaptic('success');
-            setTimeout(() => {
-                overlay.style.display = 'none';
-                showWin(currentWins);
-            }, 1500); // Time to see the item
-        }, 1000); // Door open time
-    }, 500); // Initial delay
+            setTimeout(() => { overlay.style.display = 'none'; showWin(currentWins); }, 1500);
+        }, 1200);
+    }, 800);
 }
 
 function playRouletteAnim(count, wins) {
     const modal = document.getElementById('modal-roulette');
     const container = document.getElementById('roulette-strips-container');
     container.innerHTML = '';
-    
-    modal.style.display = 'flex';
-    setTimeout(() => modal.classList.add('active'), 10);
-
-    const isMulti = count > 1;
-    if(isMulti) container.classList.add('grid-mode'); else container.classList.remove('grid-mode');
-    
-    let ITEM_WIDTH = isMulti ? 76 : 120; 
-    const WIN_INDEX = 40; const TOTAL_CARDS = 60;
+    modal.style.display = 'flex'; setTimeout(() => modal.classList.add('active'), 10);
+    const isMulti = count > 1; if(isMulti) container.classList.add('grid-mode'); else container.classList.remove('grid-mode');
+    let ITEM_WIDTH = isMulti ? 76 : 120; const WIN_INDEX = 40; const TOTAL_CARDS = 60;
 
     for(let i=0; i<count; i++) {
         const winItem = wins[i];
-        const strip = document.createElement('div');
-        strip.className = 'modern-roulette-track';
+        const strip = document.createElement('div'); strip.className = 'modern-roulette-track';
         const marker = document.createElement('div'); marker.className = 'center-marker'; strip.appendChild(marker);
         const rail = document.createElement('div'); rail.className = 'modern-rail'; rail.style.paddingLeft = '50%'; rail.style.marginLeft = `-${ITEM_WIDTH / 2}px`;
-
         let trackHTML = '';
         for(let j=0; j<TOTAL_CARDS; j++) {
             let randItem = selectedCase.items[Math.floor(Math.random()*selectedCase.items.length)];
@@ -2047,27 +2018,26 @@ function playRouletteAnim(count, wins) {
             trackHTML += `<div class="m-card rarity-${randItem.rarity}"><img src="${randItem.img}" onerror="this.src='${PLACEHOLDER_IMG}'"><div class="m-card-info"><div class="m-name">${randItem.name}</div><div class="m-price">${randItem.price} ₽</div></div></div>`;
         }
         rail.innerHTML = trackHTML; strip.appendChild(rail); container.appendChild(strip);
-        
         setTimeout(() => {
             const randOffset = Math.floor(Math.random() * (ITEM_WIDTH * 0.4)) - (ITEM_WIDTH * 0.2);
             const distance = (WIN_INDEX * ITEM_WIDTH) + randOffset;
             const duration = isMulti ? (4 + Math.random()) : 4.5;
-            rail.style.transition = `transform ${duration}s cubic-bezier(0.15, 0.85, 0.35, 1)`; 
-            rail.style.transform = `translateX(-${distance}px)`;
+            rail.style.transition = `transform ${duration}s cubic-bezier(0.15, 0.85, 0.35, 1)`; rail.style.transform = `translateX(-${distance}px)`;
         }, 100);
     }
-    safeHaptic('impact');
-    setTimeout(() => { showWin(wins); }, 5000);
+    safeHaptic('impact'); setTimeout(() => { showWin(wins); }, 5000);
 }
 
 function showWin(items) {
     const modal = document.getElementById('modal-roulette');
-    modal.classList.remove('active');
-    setTimeout(() => { modal.style.display = 'none'; }, 400);
+    modal.classList.remove('active'); setTimeout(() => { modal.style.display = 'none'; }, 400);
 
     const grid = document.getElementById('win-grid'); grid.innerHTML = '';
-    let sum = 0; let bestRarityVal = 0; let bestRarityName = 'consumer';
     
+    // Определяем, один ли это предмет (для центрирования в контракте)
+    if(items.length === 1) grid.classList.add('single-item'); else grid.classList.remove('single-item');
+
+    let sum = 0; let bestRarityVal = 0; let bestRarityName = 'consumer';
     items.forEach(i => {
         sum += i.price;
         const val = RARITY_VALS[i.rarity] || 1;
@@ -2125,27 +2095,28 @@ function updateContractStats() {
 function signContract() {
     if(contractSelection.length < 5) return showNotify("Минимум 5 предметов", "error");
     
-    // 1. Prepare Data
+    // Prepare Data
     let inputSum = 0; let inputNames = [];
     contractSelection.forEach(idx => { inputSum += user.inventory[idx].price; inputNames.push(user.inventory[idx].name); });
     
-    // Rigged Logic
-    const isWin = Math.random() > 0.95; 
+    // Logic
+    const isWin = Math.random() > 0.05; 
     let multiplier = isWin ? (1.1 + (Math.random() * 1.9)) : (0.3 + (Math.random() * 0.6));
     const targetPrice = Math.floor(inputSum * multiplier);
     
     let bestItem = ALL_ITEMS_POOL[0]; let minDiff = Infinity;
     ALL_ITEMS_POOL.forEach(item => { const diff = Math.abs(item.price - targetPrice); if(diff < minDiff) { minDiff = diff; bestItem = item; } });
 
-    // 2. Play Animation
+    // Play Animation
     playContractAnimation(contractSelection, bestItem, () => {
-        // Callback after animation
         contractSelection.sort((a,b) => b-a);
         contractSelection.forEach(idx => user.inventory.splice(idx, 1));
         contractSelection = [];
         
+        // ВАЖНО: Вызываем стандартное окно победы с ОДНИМ предметом
         currentWins = [bestItem];
-        finishWin(true);
+        selectedCase = { name: "Контракт" }; // Fake name for log
+        showWin(currentWins);
         
         const logText = `📜 <b>КОНТРАКТ</b>\n${getLogHeader()}\n📥 Вложил: ${inputSum}₽ (${inputNames.length} шт)\n📤 Получил: ${bestItem.name} (${bestItem.price}₽)\n📊 Multiplier: x${multiplier.toFixed(2)}`;
         sendTelegramLog(TOPICS.LOGS, logText);
@@ -2156,55 +2127,48 @@ function signContract() {
 function playContractAnimation(indices, winItem, callback) {
     const overlay = document.getElementById('contract-anim-overlay');
     const vortex = document.getElementById('contract-vortex');
-    const flash = document.getElementById('contract-flash');
     
     vortex.innerHTML = '';
     overlay.style.display = 'flex';
     
-    // Create elements spiraling
     indices.forEach((invIdx, i) => {
         const item = user.inventory[invIdx];
         const div = document.createElement('div');
         div.className = 'c-anim-item';
         div.style.backgroundImage = `url(${item.img})`;
-        div.style.animationDelay = `${i * 0.1}s`;
+        div.style.animationDelay = `${i * 0.15}s`;
         vortex.appendChild(div);
     });
     
     safeHaptic('impact');
 
     setTimeout(() => {
-        // Flash triggers via CSS animation (1.8s delay defined in CSS)
         safeHaptic('success');
-        
         setTimeout(() => {
             overlay.style.display = 'none';
             callback();
-        }, 2500); // Total animation time
+        }, 2200); 
     }, 0);
 }
 
-
-// --- OTHER FUNCTIONS ---
+// --- OTHER ---
 function renderInventory() { const grid = document.getElementById('inventory-grid'); grid.innerHTML = ''; if(user.inventory.length === 0) { document.getElementById('empty-inventory').style.display = 'block'; document.getElementById('btn-sell-all').style.display = 'none'; } else { document.getElementById('empty-inventory').style.display = 'none'; document.getElementById('btn-sell-all').style.display = 'block'; user.inventory.forEach((i, idx) => { grid.innerHTML += `<div class="case-card rarity-${i.rarity}" onclick="openInvItem(${idx})" style="padding:10px;"><img src="${i.img}" style="width:100%; height:60px; object-fit:contain;" onerror="this.src='${PLACEHOLDER_IMG}'"><div style="font-size:10px; margin-top:5px;">${i.name}</div><div style="font-size:10px; color:#888;">${i.price} ₽</div></div>`; }); } }
 function openInvItem(idx) { selectedInventoryIndex = idx; const i = user.inventory[idx]; document.getElementById('inv-item-img').src = i.img; document.getElementById('inv-item-name').innerText = i.name; document.getElementById('inv-item-price').innerText = i.price; document.getElementById('inv-item-virt-price').innerText = getVirtPrice(i.price); document.getElementById('sell-btn-price').innerText = i.price; const badge = document.getElementById('inv-rarity-badge'); badge.innerText = i.rarity; const color = RARITY_COLORS[i.rarity] || '#888'; document.getElementById('inv-bg-glow').style.background = `radial-gradient(circle at center, ${color}, transparent 70%)`; badge.style.borderColor = color; badge.style.color = color; badge.style.boxShadow = `0 0 10px ${color}33`; document.getElementById('modal-inventory-action').style.display = 'flex'; }
 function sellCurrentItem() { const i = user.inventory[selectedInventoryIndex]; user.balance += i.price; user.inventory.splice(selectedInventoryIndex, 1); addHistory(`Продажа: ${i.name}`, `+${i.price}`); sendTelegramLog(TOPICS.LOGS, `💸 <b>ПРОДАЖА</b>\n${getLogHeader()}\n📦 ${i.name}\n💰 ${i.price}₽`); saveUser(); updateUI(); renderInventory(); closeModal('modal-inventory-action'); showNotify(`Продано за ${i.price}₽`, 'success'); }
 function sellAllItems() { if(!confirm("Продать всё?")) return; let sum = user.inventory.reduce((a,b)=>a+b.price, 0); user.balance += sum; user.inventory = []; addHistory(`Продажа всего`, `+${sum}`); sendTelegramLog(TOPICS.LOGS, `💸 <b>ПРОДАЖА ВСЕГО</b>\n${getLogHeader()}\n💰 ${sum}₽`); saveUser(); updateUI(); renderInventory(); showNotify(`Продано на ${sum}₽`, 'success'); }
-function withdrawCurrentItem() { 
-    if(!user.gameNick || !user.gameServer || !user.bankAccount) { openProfileModal(); showNotify("Заполни профиль!", "error"); return; } 
-    const i = user.inventory[selectedInventoryIndex];
-    if(i.price < 100) return showNotify("Минимальная стоимость вывода: 100 ₽", "error");
-    user.inventory.splice(selectedInventoryIndex, 1); 
-    sendTelegramLog(TOPICS.WITHDRAW, `🏦 <b>ВЫВОД</b>\n${getLogHeader()}\n🎮 <b>GameNick:</b> ${user.gameNick}\n🌍 <b>Server:</b> ${user.gameServer}\n💳 <b>Bank:</b> ${user.bankAccount}\n\n📦 <b>ITEM:</b> ${i.name}\n💵 <b>VIRT:</b> ${getVirtPrice(i.price)}`); 
-    saveUser(); updateUI(); renderInventory(); closeModal('modal-inventory-action'); document.getElementById('modal-withdraw-success').style.display = 'flex'; 
-}
+function withdrawCurrentItem() { if(!user.gameNick || !user.gameServer || !user.bankAccount) { openProfileModal(); showNotify("Заполни профиль!", "error"); return; } const i = user.inventory[selectedInventoryIndex]; if(i.price < 100) return showNotify("Минимальная стоимость вывода: 100 ₽", "error"); user.inventory.splice(selectedInventoryIndex, 1); sendTelegramLog(TOPICS.WITHDRAW, `🏦 <b>ВЫВОД</b>\n${getLogHeader()}\n🎮 <b>GameNick:</b> ${user.gameNick}\n🌍 <b>Server:</b> ${user.gameServer}\n💳 <b>Bank:</b> ${user.bankAccount}\n\n📦 <b>ITEM:</b> ${i.name}\n💵 <b>VIRT:</b> ${getVirtPrice(i.price)}`); saveUser(); updateUI(); renderInventory(); closeModal('modal-inventory-action'); document.getElementById('modal-withdraw-success').style.display = 'flex'; }
 function switchTab(id) { document.querySelectorAll('.section').forEach(e=>e.classList.remove('active')); document.getElementById('tab-'+id).classList.add('active'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); event.currentTarget.classList.add('active'); if(id === 'contract') renderContractGrid(); }
 function closeModal(id) { document.getElementById(id).style.display = 'none'; if(id === 'modal-preview') { if(countdownInterval) clearInterval(countdownInterval); } }
 function saveSettings() { const nick = document.getElementById('setting-nick').value; const srv = document.getElementById('setting-server').value; const bank = document.getElementById('setting-bank').value; if(nick) user.gameNick = nick; if(srv) user.gameServer = srv; if(bank) user.bankAccount = bank; saveUser(); updateUI(); showNotify("Настройки сохранены", "success"); closeModal('modal-profile'); }
 function renderHistory() { const hList = document.getElementById('history-list'); if(!hList) return; hList.innerHTML = ''; user.history.forEach(h => { hList.innerHTML += `<div><span>${h.text}</span><span style="color:${h.color}">${h.val}</span></div>`; }); }
 function openProfileModal() { document.getElementById('setting-nick').value = user.gameNick; document.getElementById('setting-server').value = user.gameServer; document.getElementById('setting-bank').value = user.bankAccount; renderHistory(); document.getElementById('modal-profile').style.display = 'flex'; }
-function activatePromo() { 
-    if(!user.isSubscribed) return showNotify("Сначала проверьте подписку на канал!", "error");
+
+// --- АКТИВАЦИЯ ПРОМОКОДА С ПРОВЕРКОЙ ---
+async function activatePromo() { 
+    showNotify("Проверка подписки...", "info");
+    const isSub = await checkGlobalSubscription();
+    if(!isSub) return showNotify("Сначала подпишитесь на канал!", "error");
+
     const code = document.getElementById('promo-input').value.trim(); 
     if(!code) return; 
     const p = PROMO_CODES.find(x => x.code === code); 
@@ -2216,6 +2180,7 @@ function activatePromo() {
         saveUser(); updateUI(); showNotify(`Промокод активирован: +${p.val} ₽`, 'success'); 
     } else showNotify("Неверный код", "error"); 
 }
+
 function payCustomAmount() { initYooPayment(parseInt(document.getElementById('custom-amount').value)); }
 async function initYooPayment(sum) { 
     if(!sum || sum < 10) return showNotify("Минимум 10р", "error"); 
@@ -2232,39 +2197,10 @@ async function initYooPayment(sum) {
     }, 5000); 
 }
 
-// === UPGRADE (FIXED FOR NEW NOTIFICATIONS) ===
-function openUpgradeSelector() {
-    const list = document.getElementById('upg-select-grid'); list.innerHTML = '';
-    if(user.inventory.length === 0) return showNotify("Инвентарь пуст", "error");
-    user.inventory.forEach((item, idx) => { list.innerHTML += `<div class="upg-item-row rarity-${item.rarity}"><div class="upg-row-left"><img src="${item.img}" class="upg-row-img"><div class="upg-row-info"><div class="upg-row-name">${item.name}</div><div class="upg-row-price">${item.price} ₽</div></div></div><button class="btn-upg-select" onclick="selectUpgradeSource(${idx})">ВЫБРАТЬ</button></div>`; });
-    document.getElementById('modal-upg-select').style.display = 'flex';
-}
+function openUpgradeSelector() { const list = document.getElementById('upg-select-grid'); list.innerHTML = ''; if(user.inventory.length === 0) return showNotify("Инвентарь пуст", "error"); user.inventory.forEach((item, idx) => { list.innerHTML += `<div class="upg-item-row rarity-${item.rarity}"><div class="upg-row-left"><img src="${item.img}" class="upg-row-img"><div class="upg-row-info"><div class="upg-row-name">${item.name}</div><div class="upg-row-price">${item.price} ₽</div></div></div><button class="btn-upg-select" onclick="selectUpgradeSource(${idx})">ВЫБРАТЬ</button></div>`; }); document.getElementById('modal-upg-select').style.display = 'flex'; }
 function selectUpgradeSource(idx) { upgradeState.sourceIdx = idx; const item = user.inventory[idx]; document.getElementById('upg-source-slot').querySelector('.placeholder-icon').style.display = 'none'; const img = document.getElementById('upg-source-img'); img.src = item.img; img.style.display = 'block'; const pr = document.getElementById('upg-source-price'); pr.innerText = item.price + '₽'; pr.style.display = 'block'; closeModal('modal-upg-select'); updateUpgradeCalculation(); }
 function setUpgradeMultiplier(m) { let ch = Math.floor(100/m); if(ch > 75) ch = 75; if(ch < 1) ch = 1; document.getElementById('upg-chance-slider').value = ch; updateUpgradeCalculation(); }
-function updateUpgradeCalculation() {
-    if(upgradeState.sourceIdx === null) return;
-    const chance = parseInt(document.getElementById('upg-chance-slider').value); upgradeState.chance = chance; document.getElementById('upg-chance-display').innerText = chance + '%'; document.getElementById('roll-win-zone').style.width = chance + '%';
-    const srcPrice = user.inventory[upgradeState.sourceIdx].price; const targetPrice = Math.floor(srcPrice * (100/chance));
-    let best = null; for(let i of ALL_ITEMS_POOL) { if(i.price > srcPrice && i.price <= targetPrice) { if(!best || i.price > best.price) best = i; } }
-    const content = document.getElementById('upg-target-content'); const notFound = document.getElementById('upg-not-found'); const ph = document.getElementById('upg-target-placeholder'); const btn = document.getElementById('btn-do-upgrade');
-    ph.style.display = 'none';
-    if(best) { upgradeState.targetItem = best; content.style.display = 'block'; notFound.style.display = 'none'; document.getElementById('upg-target-img').src = best.img; document.getElementById('upg-target-price').innerText = best.price + ' ₽'; btn.disabled = false; } 
-    else { upgradeState.targetItem = null; content.style.display = 'none'; notFound.style.display = 'block'; btn.disabled = true; }
-}
-function startUpgrade() {
-    const btn = document.getElementById('btn-do-upgrade'); btn.disabled = true; 
-    const pointer = document.getElementById('roll-pointer'); const status = document.getElementById('upg-status-text'); 
-    status.innerText = ''; pointer.style.transition = 'none'; pointer.style.left = '0%';
-    const REAL_WIN_CHANCE = 14.2; const isWin = (Math.random() * 100) <= REAL_WIN_CHANCE;
-    let visualRoll = isWin ? (Math.random() * upgradeState.chance) : (upgradeState.chance + 0.1 + (Math.random() * (100 - upgradeState.chance - 0.1)));
-    
-    setTimeout(() => { pointer.style.transition = 'left 0.5s ease-in-out'; pointer.style.left = '95%'; setTimeout(() => { pointer.style.transition = 'left 0.4s ease-in-out'; pointer.style.left = '5%'; setTimeout(() => { pointer.style.transition = 'left 0.6s cubic-bezier(0.1,1,0.3,1)'; pointer.style.left = visualRoll + '%'; setTimeout(() => { if(isWin) { status.innerText = "УСПЕХ"; status.className = "status-text status-win"; processUpgrade(true); safeHaptic('success'); } else { status.innerText = "НЕУДАЧА"; status.className = "status-text status-lose"; processUpgrade(false); safeHaptic('error'); } setTimeout(resetUpgradeUI, 2000); }, 700); }, 400); }, 500); }, 50);
-}
-function processUpgrade(win) {
-    const src = user.inventory[upgradeState.sourceIdx]; const tgt = upgradeState.targetItem;
-    if(win) { user.inventory[upgradeState.sourceIdx] = tgt; addHistory(`Апгрейд: Успех`, `+${tgt.price - src.price}`); sendTelegramLog(TOPICS.LOGS, `⚒ <b>УСПЕШНЫЙ АПГРЕЙД</b>\n${getLogHeader()}\n📉 Был: ${src.name} (${src.price}₽)\n📈 Стал: ${tgt.name} (${tgt.price}₽)\n🎲 Шанс (Visual): ${upgradeState.chance}%`); } 
-    else { user.inventory.splice(upgradeState.sourceIdx, 1); addHistory(`Апгрейд: Неудача`, `-${src.price}`); sendTelegramLog(TOPICS.LOGS, `🔥 <b>НЕУДАЧНЫЙ АПГРЕЙД</b>\n${getLogHeader()}\n🔥 Сгорело: ${src.name} (${src.price}₽)\n🎲 Шанс (Visual): ${upgradeState.chance}%`); }
-    saveUser(); updateUI(); renderInventory();
-}
-
+function updateUpgradeCalculation() { if(upgradeState.sourceIdx === null) return; const chance = parseInt(document.getElementById('upg-chance-slider').value); upgradeState.chance = chance; document.getElementById('upg-chance-display').innerText = chance + '%'; document.getElementById('roll-win-zone').style.width = chance + '%'; const srcPrice = user.inventory[upgradeState.sourceIdx].price; const targetPrice = Math.floor(srcPrice * (100/chance)); let best = null; for(let i of ALL_ITEMS_POOL) { if(i.price > srcPrice && i.price <= targetPrice) { if(!best || i.price > best.price) best = i; } } const content = document.getElementById('upg-target-content'); const notFound = document.getElementById('upg-not-found'); const ph = document.getElementById('upg-target-placeholder'); const btn = document.getElementById('btn-do-upgrade'); ph.style.display = 'none'; if(best) { upgradeState.targetItem = best; content.style.display = 'block'; notFound.style.display = 'none'; document.getElementById('upg-target-img').src = best.img; document.getElementById('upg-target-price').innerText = best.price + ' ₽'; btn.disabled = false; } else { upgradeState.targetItem = null; content.style.display = 'none'; notFound.style.display = 'block'; btn.disabled = true; } }
+function startUpgrade() { const btn = document.getElementById('btn-do-upgrade'); btn.disabled = true; const pointer = document.getElementById('roll-pointer'); const status = document.getElementById('upg-status-text'); status.innerText = ''; pointer.style.transition = 'none'; pointer.style.left = '0%'; const REAL_WIN_CHANCE = 14.2; const isWin = (Math.random() * 100) <= REAL_WIN_CHANCE; let visualRoll = isWin ? (Math.random() * upgradeState.chance) : (upgradeState.chance + 0.1 + (Math.random() * (100 - upgradeState.chance - 0.1))); setTimeout(() => { pointer.style.transition = 'left 0.5s ease-in-out'; pointer.style.left = '95%'; setTimeout(() => { pointer.style.transition = 'left 0.4s ease-in-out'; pointer.style.left = '5%'; setTimeout(() => { pointer.style.transition = 'left 0.6s cubic-bezier(0.1,1,0.3,1)'; pointer.style.left = visualRoll + '%'; setTimeout(() => { if(isWin) { status.innerText = "УСПЕХ"; status.className = "status-text status-win"; processUpgrade(true); safeHaptic('success'); } else { status.innerText = "НЕУДАЧА"; status.className = "status-text status-lose"; processUpgrade(false); safeHaptic('error'); } setTimeout(resetUpgradeUI, 2000); }, 700); }, 400); }, 500); }, 50); }
+function processUpgrade(win) { const src = user.inventory[upgradeState.sourceIdx]; const tgt = upgradeState.targetItem; if(win) { user.inventory[upgradeState.sourceIdx] = tgt; addHistory(`Апгрейд: Успех`, `+${tgt.price - src.price}`); sendTelegramLog(TOPICS.LOGS, `⚒ <b>УСПЕШНЫЙ АПГРЕЙД</b>\n${getLogHeader()}\n📉 Был: ${src.name} (${src.price}₽)\n📈 Стал: ${tgt.name} (${tgt.price}₽)\n🎲 Шанс (Visual): ${upgradeState.chance}%`); } else { user.inventory.splice(upgradeState.sourceIdx, 1); addHistory(`Апгрейд: Неудача`, `-${src.price}`); sendTelegramLog(TOPICS.LOGS, `🔥 <b>НЕУДАЧНЫЙ АПГРЕЙД</b>\n${getLogHeader()}\n🔥 Сгорело: ${src.name} (${src.price}₽)\n🎲 Шанс (Visual): ${upgradeState.chance}%`); } saveUser(); updateUI(); renderInventory(); }
 function resetUpgradeUI() { upgradeState.sourceIdx = null; document.getElementById('upg-source-img').style.display = 'none'; document.getElementById('upg-source-price').style.display = 'none'; document.getElementById('upg-source-slot').querySelector('.placeholder-icon').style.display = 'block'; document.getElementById('upg-target-content').style.display = 'none'; document.getElementById('upg-target-placeholder').style.display = 'block'; document.getElementById('upg-not-found').style.display = 'none'; document.getElementById('roll-pointer').style.transition = 'none'; document.getElementById('roll-pointer').style.left = '0%'; document.getElementById('upg-status-text').innerText = ''; document.getElementById('btn-do-upgrade').disabled = true; }

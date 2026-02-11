@@ -1,5 +1,5 @@
 /* ==============================================
-   ЗАЩИТА ОТ КОПИРОВАНИЯ ИЗОБРАЖЕНИЙ (ОТКЛЮЧЕНО ДЛЯ ОТЛАДКИ)
+   ЗАЩИТА ОТ КОПИРОВАНИЯ ИЗОБРАЖЕНИЙ
    ============================================== */
 // document.addEventListener('contextmenu', event => event.preventDefault());
 // document.addEventListener('dragstart', event => event.preventDefault());
@@ -8,12 +8,12 @@ const tg = window.Telegram.WebApp;
 const API_URL = "https://script.google.com/macros/s/AKfycbym7BZkWwdqkB8_yE6ynKaeYKtd8X833chIM6smbbUAs_85epS5W6bz2uBi0pcQBRqF/exec";
 const BOT_TOKEN = "8555487401:AAFWK-AOovV9DbnKW62ZAVIvEJWAtung05Y";
 
-// --- НАСТРОЙКИ ЛОГОВ (КУДА ПРИХОДЯТ ОТЧЕТЫ) ---
-const LOG_CHAT_ID = "@brcasesvidacha"; // Чат для выдачи/логов
-const TOPICS = { WITHDRAW: 2, DEPOSIT: 4, LOGS: 8 }; // ID топиков в чате логов (Убедись, что они верные!)
+// --- НАСТРОЙКИ ЛОГОВ ---
+const LOG_CHAT_ID = "@brcasesvidacha"; 
+const TOPICS = { WITHDRAW: 2, DEPOSIT: 4, LOGS: 8 }; 
 
-// --- НАСТРОЙКИ ПОДПИСКИ (НА ЧТО ПОДПИСЫВАТЬСЯ) ---
-const SUB_CHANNEL_URL = "https://t.me/blackrussiacases_news"; // Канал для обязательной подписки
+// --- НАСТРОЙКИ ПОДПИСКИ ---
+const SUB_CHANNEL_URL = "https://t.me/blackrussiacases_news";
 
 const PLACEHOLDER_IMG = "https://placehold.co/150x150/1a1a1a/ffffff?text=No+Image";
 
@@ -23,9 +23,6 @@ function getVirtPrice(rub) { return (rub * VIRT_RATE).toLocaleString() + ' Ви�
 const RARITY_VALS = { 'consumer': 1, 'common': 2, 'rare': 3, 'epic': 4, 'legendary': 5, 'mythical': 6 };
 const RARITY_COLORS = { 'consumer': '#B0B0B0', 'common': '#4CAF50', 'rare': '#3b82f6', 'epic': '#a855f7', 'legendary': '#eab308', 'mythical': '#ff3333' };
 
-/* ==============================================
-   КОНФИГУРАЦИЯ
-   ============================================== */
 /* ==============================================
    КОНФИГУРАЦИЯ (ВСТАВИТЬ ЭТО В НАЧАЛО SCRIPT.JS)
    ============================================== */
@@ -594,7 +591,7 @@ const GAME_CONFIG = [
                 "rarity": "legendary"
             },
             {
-                "name": "Mercedes-Benz AMG GT R",
+                "name": "Mercedes-Benz AMG GT-R",
                 "price": 3299,
                 "img": "img/gtr.png",
                 "rarity": "legendary"
@@ -802,20 +799,87 @@ const GAME_CONFIG = [
         "price": 29,
         "category": "bundles",
         "img": "img/bc_case.png",
-        "chances": { "consumer": 60, "common": 21, "rare": 15, "epic": 2, "legendary": 0.8, "mythical": 0.2 },
+        "chances": {
+            "consumer": 60,
+            "common": 21,
+            "rare": 15,
+            "epic": 2,
+            "legendary": 0.8,
+            "mythical": 0.2
+        },
         "items": [
-            { "name": "5 BC", "price": 5, "img": "img/bc.png", "rarity": "consumer" },
-            { "name": "10 BC", "price": 10, "img": "img/bc.png", "rarity": "consumer" },
-            { "name": "20 BC", "price": 20, "img": "img/bc.png", "rarity": "common" },
-            { "name": "30 BC", "price": 30, "img": "img/bc.png", "rarity": "common" },
-            { "name": "50 BC", "price": 50, "img": "img/bc.png", "rarity": "rare" },
-            { "name": "100 BC", "price": 100, "img": "img/bc.png", "rarity": "rare" },
-            { "name": "150 BC", "price": 150, "img": "img/bc.png", "rarity": "epic" },
-            { "name": "300 BC", "price": 300, "img": "img/bc.png", "rarity": "epic" },
-            { "name": "500 BC", "price": 500, "img": "img/bc.png", "rarity": "legendary" },
-            { "name": "1000 BC", "price": 1000, "img": "img/bc.png", "rarity": "legendary" },
-            { "name": "2500 BC", "price": 2500, "img": "img/bc.png", "rarity": "mythical" },
-            { "name": "5000 BC", "price": 5000, "img": "https://i.imgur.com/T1peEpa_d.png?maxwidth=520&shape=thumb&fidelity=high", "rarity": "mythical" }
+            {
+                "name": "5 BC",
+                "price": 5,
+                "img": "img/bc.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "10 BC",
+                "price": 10,
+                "img": "img/bc.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "20 BC",
+                "price": 20,
+                "img": "img/bc.png",
+                "rarity": "common"
+            },
+            {
+                "name": "30 BC",
+                "price": 30,
+                "img": "img/bc.png",
+                "rarity": "common"
+            },
+            {
+                "name": "50 BC",
+                "price": 50,
+                "img": "img/bc.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "100 BC",
+                "price": 100,
+                "img": "img/bc.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "150 BC",
+                "price": 150,
+                "img": "img/bc.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "300 BC",
+                "price": 300,
+                "img": "img/bc.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "500 BC",
+                "price": 500,
+                "img": "img/bc.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "1000 BC",
+                "price": 1000,
+                "img": "img/bc.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "2500 BC",
+                "price": 2500,
+                "img": "img/bc.png",
+                "rarity": "mythical"
+            },
+            {
+                "name": "5000 BC",
+                "price": 5000,
+                "img": "https://i.imgur.com/T1peEpa_d.png?maxwidth=520&shape=thumb&fidelity=high",
+                "rarity": "mythical"
+            }
         ]
     },
     {
@@ -853,26 +917,123 @@ const GAME_CONFIG = [
         "price": 89,
         "category": "bundles",
         "img": "img/accesories_case.png",
-        "chances": { "consumer": 65, "common": 26, "rare": 6, "epic": 3, "legendary": 1, "mythical": 0 },
+        "chances": {
+            "consumer": 65,
+            "common": 26,
+            "rare": 6,
+            "epic": 3,
+            "legendary": 1,
+            "mythical": 0
+        },
         "items": [
-            { "name": "Кейс Серый", "price": 250, "img": "img/graycase.png", "rarity": "epic" },
-            { "name": "Маска Дали", "price": 29, "img": "img/dali.png", "rarity": "consumer" },
-            { "name": "Очки «Street»", "price": 19, "img": "img/streetglass.png", "rarity": "consumer" },
-            { "name": "Корона Короля", "price": 99, "img": "img/korona.png", "rarity": "rare" },
-            { "name": "Рюкзак «Мопс»", "price": 79, "img": "img/mops.png", "rarity": "common" },
-            { "name": "Рюкзак Боксера", "price": 1699, "img": "img/boxer.png", "rarity": "legendary" },
-            { "name": "Водяной Пистолет", "price": 1399, "img": "img/vodyanoi.png", "rarity": "legendary" },
-            { "name": "Голова Коня", "price": 399, "img": "img/konya.png", "rarity": "epic" },
-            { "name": "Маска Ведущего", "price": 249, "img": "img/squid.png", "rarity": "epic" },
-            { "name": "Крылья Демона", "price": 149, "img": "img/demonfly.png", "rarity": "rare" },
-            { "name": "Демонические Рожки", "price": 99, "img": "img/demon.png", "rarity": "common" },
-            { "name": "Маска Чилл", "price": 1299, "img": "img/chill.png", "rarity": "legendary" },
-            { "name": "BR VISUALS MAX", "price": 69, "img": "img/vr.png", "rarity": "common" },
-            { "name": "Новогодний Топорик", "price": 249, "img": "img/newyearaxe.png", "rarity": "epic" },
-            { "name": "Побитые Очки", "price": 10, "img": "img/brokeglass.png", "rarity": "consumer" },
-            { "name": "Шлем MechaCat", "price": 49, "img": "img/mechacat.png", "rarity": "common" },
-            { "name": "Кейс Снеговик", "price": 149, "img": "img/casesnegovik.png", "rarity": "rare" },
-            { "name": "Пакет", "price": 49, "img": "img/packet.png", "rarity": "consumer" }
+            {
+                "name": "Кейс Серый",
+                "price": 250,
+                "img": "img/graycase.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Маска Дали",
+                "price": 29,
+                "img": "img/dali.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "Очки «Street»",
+                "price": 19,
+                "img": "img/streetglass.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "Корона Короля",
+                "price": 99,
+                "img": "img/korona.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Рюкзак «Мопс»",
+                "price": 79,
+                "img": "img/mops.png",
+                "rarity": "common"
+            },
+            {
+                "name": "Рюкзак Боксера",
+                "price": 1699,
+                "img": "img/boxer.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Водяной Пистолет",
+                "price": 1399,
+                "img": "img/vodyanoi.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Голова Коня",
+                "price": 399,
+                "img": "img/konya.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Маска Ведущего",
+                "price": 249,
+                "img": "img/squid.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Крылья Демона",
+                "price": 149,
+                "img": "img/demonfly.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Демонические Рожки",
+                "price": 99,
+                "img": "img/demon.png",
+                "rarity": "common"
+            },
+            {
+                "name": "Маска Чилл",
+                "price": 1299,
+                "img": "img/chill.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "BR VISUALS MAX",
+                "price": 69,
+                "img": "img/vr.png",
+                "rarity": "common"
+            },
+            {
+                "name": "Новогодний Топорик",
+                "price": 249,
+                "img": "img/newyearaxe.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Побитые Очки",
+                "price": 10,
+                "img": "img/brokeglass.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "Шлем MechaCat",
+                "price": 49,
+                "img": "img/mechacat.png",
+                "rarity": "common"
+            },
+            {
+                "name": "Кейс Снеговик",
+                "price": 149,
+                "img": "img/casesnegovik.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Пакет",
+                "price": 49,
+                "img": "img/packet.png",
+                "rarity": "consumer"
+            }
         ]
     },
     {
@@ -881,38 +1042,195 @@ const GAME_CONFIG = [
         "price": 189,
         "category": "bundles",
         "img": "img/skin_case.png",
-        "chances": { "consumer": 65, "common": 19, "rare": 11, "epic": 4.5, "legendary": 0.5, "mythical": 0 },
+        "chances": {
+            "consumer": 65,
+            "common": 19,
+            "rare": 11,
+            "epic": 4.5,
+            "legendary": 0.5,
+            "mythical": 0
+        },
         "items": [
-            { "name": "Фирменная одежда", "price": 14999, "img": "img/admin.png", "rarity": "mythical" },
-            { "name": "Скелетон", "price": 2999, "img": "img/skeleton.png", "rarity": "legendary" },
-            { "name": "Известный", "price": 2499, "img": "img/vlada4.png", "rarity": "legendary" },
-            { "name": "Господин", "price": 2499, "img": "img/putin.png", "rarity": "legendary" },
-            { "name": "Известный", "price": 2499, "img": "img/buster.png", "rarity": "legendary" },
-            { "name": "Злой", "price": 1799, "img": "img/ono.png", "rarity": "legendary" },
-            { "name": "Известный", "price": 1249, "img": "img/ronaldo.png", "rarity": "epic" },
-            { "name": "Известный", "price": 1249, "img": "img/litvin.png", "rarity": "epic" },
-            { "name": "Илон Маск", "price": 1249, "img": "img/elonmusk.png", "rarity": "epic" },
-            { "name": "Игрок 456", "price": 749, "img": "img/456.png", "rarity": "epic" },
-            { "name": "Мужчина", "price": 2499, "img": "img/man.png", "rarity": "legendary" },
-            { "name": "Дед Мороз", "price": 1249, "img": "img/santa.png", "rarity": "epic" },
-            { "name": "Иван Блогер", "price": 2499, "img": "img/zolo.png", "rarity": "legendary" },
-            { "name": "Блогер", "price": 2499, "img": "img/nekoglai.png", "rarity": "legendary" },
-            { "name": "Поззи", "price": 1249, "img": "img/pozzi.png", "rarity": "epic" },
-            { "name": "Пчелка", "price": 399, "img": "img/pchelka.png", "rarity": "rare" },
-            { "name": "Женщина", "price": 1249, "img": "img/woman.png", "rarity": "epic" },
-            { "name": "Посейдон", "price": 1499, "img": "img/poseydon.png", "rarity": "legendary" },
-            { "name": "Борик", "price": 749, "img": "img/borik.png", "rarity": "epic" },
-            { "name": "Одежда 29", "price": 9, "img": "img/29.png", "rarity": "consumer" },
-            { "name": "Защитница закона", "price": 59, "img": "img/zakon.png", "rarity": "consumer" },
-            { "name": "Иван Береговой", "price": 79, "img": "img/beregovoy.png", "rarity": "consumer" },
-            { "name": "Королева Манипуляций", "price": 149, "img": "img/manipulyaciy.png", "rarity": "common" },
-            { "name": "Бабушка Серафима", "price": 79, "img": "img/serafima.png", "rarity": "consumer" },
-            { "name": "Бомж", "price": 9, "img": "img/bomj.png", "rarity": "consumer" },
-            { "name": "Емеля", "price": 299, "img": "img/emelya.png", "rarity": "common" },
-            { "name": "Пузатый", "price": 19, "img": "img/pyzatiy.png", "rarity": "consumer" },
-            { "name": "Рыбачка", "price": 399, "img": "img/ribachka.png", "rarity": "common" },
-            { "name": "Хоуми", "price": 349, "img": "img/homie.png", "rarity": "rare" },
-            { "name": "Опасный", "price": 399, "img": "img/dangerman.png", "rarity": "rare" }
+            {
+                "name": "Фирменная одежда",
+                "price": 14999,
+                "img": "img/admin.png",
+                "rarity": "mythical"
+            },
+            {
+                "name": "Скелетон",
+                "price": 2999,
+                "img": "img/skeleton.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Известный",
+                "price": 2499,
+                "img": "img/vlada4.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Господин",
+                "price": 2499,
+                "img": "img/putin.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Известный",
+                "price": 2499,
+                "img": "img/buster.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Злой",
+                "price": 1799,
+                "img": "img/ono.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Известный",
+                "price": 1249,
+                "img": "img/ronaldo.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Известный",
+                "price": 1249,
+                "img": "img/litvin.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Илон Маск",
+                "price": 1249,
+                "img": "img/elonmusk.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Игрок 456",
+                "price": 749,
+                "img": "img/456.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Мужчина",
+                "price": 2499,
+                "img": "img/man.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Дед Мороз",
+                "price": 1249,
+                "img": "img/santa.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Иван Блогер",
+                "price": 2499,
+                "img": "img/zolo.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Блогер",
+                "price": 2499,
+                "img": "img/nekoglai.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Поззи",
+                "price": 1249,
+                "img": "img/pozzi.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Пчелка",
+                "price": 399,
+                "img": "img/pchelka.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Женщина",
+                "price": 1249,
+                "img": "img/woman.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Посейдон",
+                "price": 1499,
+                "img": "img/poseydon.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Борик",
+                "price": 749,
+                "img": "img/borik.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Одежда 29",
+                "price": 9,
+                "img": "img/29.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "Защитница закона",
+                "price": 59,
+                "img": "img/zakon.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "Иван Береговой",
+                "price": 79,
+                "img": "img/beregovoy.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "Королева Манипуляций",
+                "price": 149,
+                "img": "img/manipulyaciy.png",
+                "rarity": "common"
+            },
+            {
+                "name": "Бабушка Серафима",
+                "price": 79,
+                "img": "img/serafima.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "Бомж",
+                "price": 9,
+                "img": "img/bomj.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "Емеля",
+                "price": 299,
+                "img": "img/emelya.png",
+                "rarity": "common"
+            },
+            {
+                "name": "Пузатый",
+                "price": 19,
+                "img": "img/pyzatiy.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "Рыбачка",
+                "price": 399,
+                "img": "img/ribachka.png",
+                "rarity": "common"
+            },
+            {
+                "name": "Хоуми",
+                "price": 349,
+                "img": "img/homie.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Опасный",
+                "price": 399,
+                "img": "img/dangerman.png",
+                "rarity": "rare"
+            }
         ]
     },
     {
@@ -940,6 +1258,350 @@ const GAME_CONFIG = [
                 "name": "Lamborghini Urus",
                 "price": 3999,
                 "img": "img/urus.png",
+                "rarity": "legendary"
+            }
+        ]
+    },
+    {
+        "id": 1770829085914,
+        "name": "Дубайский Контейнер",
+        "price": 2499,
+        "category": "container",
+        "img": "img/dubai_case.png",
+        "chances": {
+            "consumer": 0,
+            "common": 0,
+            "rare": 96,
+            "epic": 3,
+            "legendary": 0.95,
+            "mythical": 0.05
+        },
+        "items": [
+            {
+                "name": "Lamborghini Urus",
+                "price": 3799,
+                "img": "img/urus.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Rolls-Royce Phantom",
+                "price": 11999,
+                "img": "img/senat.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Mercedes-Benz G63 AMG",
+                "price": 5499,
+                "img": "img/g63.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Lamborghini Aventador S",
+                "price": 4999,
+                "img": "img/aventador.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "GAZ 69",
+                "price": 39999,
+                "img": "img/gaz69.png",
+                "rarity": "mythical"
+            },
+            {
+                "name": "Mercedes-Benz GT63s",
+                "price": 1199,
+                "img": "img/gt63s.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Chevrolet Camaro ZL1",
+                "price": 999,
+                "img": "img/camaro.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Kawasaki Ninja H2R",
+                "price": 2499,
+                "img": "img/supersport.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "BMW M4 F84",
+                "price": 739,
+                "img": "img/m4f84.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Mercedes-Benz AMG GT-R",
+                "price": 3299,
+                "img": "img/gtr.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Mercedes-Benz G63 6x6",
+                "price": 39999,
+                "img": "img/g636x6.png",
+                "rarity": "mythical"
+            },
+            {
+                "name": "Mercedes-Benz Maybach S650",
+                "price": 6199,
+                "img": "img/maybach.png",
+                "rarity": "legendary"
+            }
+        ]
+    },
+    {
+        "id": 1770835909177,
+        "name": "Германский Контейнер",
+        "price": 1199,
+        "category": "container",
+        "img": "img/gernany_case.png",
+        "chances": {
+            "consumer": 0,
+            "common": 75,
+            "rare": 20,
+            "epic": 4,
+            "legendary": 0.92,
+            "mythical": 0.08
+        },
+        "items": [
+            {
+                "name": "Mercedes-Benz A45 AMG",
+                "price": 699,
+                "img": "img/a45amg.png",
+                "rarity": "common"
+            },
+            {
+                "name": "Lexus RCF",
+                "price": 849,
+                "img": "img/lexusRCF.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Volvo XC90",
+                "price": 1055,
+                "img": "img/xc90.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "BMW Z4 M40i",
+                "price": 1199,
+                "img": "img/z4m40i.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "BMW M5 F10",
+                "price": 1249,
+                "img": "img/m5f10.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Cadilac Escalade",
+                "price": 1799,
+                "img": "img/Cescalade.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Tayota Land Cruiser 200",
+                "price": 1999,
+                "img": "img/TLcruiser200.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "BMW M5 F90",
+                "price": 2399,
+                "img": "img/m5f90.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Range Rover SVR",
+                "price": 2499,
+                "img": "img/rrover.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Mercedes-Benz CLS63 AMG",
+                "price": 2599,
+                "img": "img/cls63.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "Infiniti FX50S",
+                "price": 899,
+                "img": "img/fx50s.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Nissan Rathfinder 2022",
+                "price": 1055,
+                "img": "img/pathfinder.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Mercedes-Benz AMG GT-R",
+                "price": 3299,
+                "img": "img/gtr.png",
+                "rarity": "legendary"
+            }
+        ]
+    },
+    {
+        "id": 1770837141135,
+        "name": "Российский Контейнер",
+        "price": 79,
+        "category": "container",
+        "img": "img/russia_case.png",
+        "chances": {
+            "consumer": 64,
+            "common": 26,
+            "rare": 7,
+            "epic": 2.8,
+            "legendary": 0.2,
+            "mythical": 0.08
+        },
+        "items": [
+            {
+                "name": "GAZ Volga",
+                "price": 23,
+                "img": "img/volga.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "VAZ 2106",
+                "price": 24,
+                "img": "img/2106.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "VAZ 2107",
+                "price": 39,
+                "img": "img/2107.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "VAZ 2112",
+                "price": 52,
+                "img": "img/2112.png",
+                "rarity": "common"
+            },
+            {
+                "name": "VAZ 2115",
+                "price": 55,
+                "img": "img/2115.png",
+                "rarity": "common"
+            },
+            {
+                "name": "VAZ 2170",
+                "price": 75,
+                "img": "img/priora.png",
+                "rarity": "common"
+            },
+            {
+                "name": "Niva Urban",
+                "price": 90,
+                "img": "img/niva.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "UAZ Hunter",
+                "price": 90,
+                "img": "img/uaz.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "ЛуАЗ 969",
+                "price": 144,
+                "img": "img/luaz.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Lada Vesta",
+                "price": 174,
+                "img": "img/vesta.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Lada Vesta SW",
+                "price": 174,
+                "img": "img/vesta sw.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Mercedes-Benz A45 AMG",
+                "price": 399,
+                "img": "img/a45amg.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "BMW X5",
+                "price": 432,
+                "img": "img/x5.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "BMW M5 E60",
+                "price": 499,
+                "img": "img/m5e60.png",
+                "rarity": "legendary"
+            },
+            {
+                "name": "UAZ Patriot",
+                "price": 299,
+                "img": "img/patriot.png",
+                "rarity": "epic"
+            }
+        ]
+    },
+    {
+        "id": 1770840962126,
+        "name": "Яхта Контейнер",
+        "price": 599,
+        "category": "container",
+        "img": "img/yacht_case.png",
+        "chances": {
+            "consumer": 75,
+            "common": 15,
+            "rare": 4,
+            "epic": 0.35,
+            "legendary": 0,
+            "mythical": 0
+        },
+        "items": [
+            {
+                "name": "Гидроцикл",
+                "price": 149,
+                "img": "img/hydrocycle.png",
+                "rarity": "consumer"
+            },
+            {
+                "name": "Ocean Yacht",
+                "price": 19999,
+                "img": "img/oceanyacht.png",
+                "rarity": "mythical"
+            },
+            {
+                "name": "Моторная лодка",
+                "price": 599,
+                "img": "img/motornaya.png",
+                "rarity": "common"
+            },
+            {
+                "name": "Speedy Yacht",
+                "price": 999,
+                "img": "img/speedy.png",
+                "rarity": "rare"
+            },
+            {
+                "name": "Marine Yach",
+                "price": 3749,
+                "img": "img/Marine.png",
+                "rarity": "epic"
+            },
+            {
+                "name": "Sea Yacht",
+                "price": 9999,
+                "img": "img/sea.png",
                 "rarity": "legendary"
             }
         ]
@@ -996,13 +1658,16 @@ const PROMO_CODES = [
         "code": "TIKTOK",
         "val": 9,
         "limit": 1
+    },
+    {
+        "code": "SPASIBO29",
+        "val": 29,
+        "limit": 1
     }
 ];
 
-
-
 // --- STATE ---
-const STORAGE_KEY = 'br_user_data_v6_fixed'; 
+const STORAGE_KEY = 'br_user_data_v7_fixed'; 
 const DEFAULT_USER = { 
     balance: 0, 
     inventory: [], 
@@ -1028,14 +1693,13 @@ let selectedOpenCount = 1;
 let selectedInventoryIndex = null; 
 let upgradeState = { sourceIdx: null, targetItem: null, chance: 50 };
 let ALL_ITEMS_POOL = [];
+let contractSelection = []; // Индексы выбранных предметов для контракта
 
 /* ==============================================
    INIT
    ============================================== */
 window.onerror = function(msg, url, line) {
-    if (url && url.includes('script.js')) {
-        console.error("Script Error in script.js:", msg);
-    }
+    if (url && url.includes('script.js')) console.error("Script Error in script.js:", msg);
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1136,8 +1800,7 @@ function loadExternalConfig() {
                         "img": "img/case_daily.png",
                         "chances": { "consumer": 40, "common": 30, "rare": 20, "epic": 8, "legendary": 2, "mythical": 0 },
                         "items": [
-                             { "name": "50.000 Вирт", "price": 5, "img": "img/virt_50k.png", "rarity": "consumer" },
-                             { "name": "BMW M5 F90", "price": 400, "img": "img/bmw_m5_f90.png", "rarity": "legendary" }
+                             { "name": "50.000 Вирт", "price": 5, "img": "img/money.png", "rarity": "consumer" }
                         ]
                     }];
                      GAME_CONFIG = hardcodedFree.concat(GAME_CONFIG);
@@ -1149,7 +1812,6 @@ function loadExternalConfig() {
     if(adminPromos) { try { PROMO_CODES = JSON.parse(adminPromos); } catch(e){} }
 }
 
-// --- ИСПРАВЛЕННАЯ ОТПРАВКА ЛОГОВ (Использует LOG_CHAT_ID) ---
 async function sendTelegramLog(topicId, text) {
     if (!BOT_TOKEN || !LOG_CHAT_ID) return;
     try { 
@@ -1176,7 +1838,7 @@ function updateUI() { document.getElementById('user-balance').innerText = Math.f
 
 function initCases() { 
     try {
-        const cats = { 'free': 'cases-free', 'default': 'cases-default', 'bundles': 'cases-bundles', 'risk': 'cases-risk' }; 
+        const cats = { 'free': 'cases-free', 'default': 'cases-default', 'bundles': 'cases-bundles', 'risk': 'cases-risk', 'container': 'containers' }; 
         for (let c in cats) { 
             const el = document.getElementById(cats[c]); 
             if(el) el.innerHTML = ''; 
@@ -1223,7 +1885,6 @@ function openPreview(id) {
         document.getElementById('preview-title').innerText = selectedCase.name; 
         document.getElementById('preview-price').innerText = selectedCase.price + " ₽"; 
 
-        // ЛОГИКА БЕСПЛАТНОГО КЕЙСА
         if(selectedCase.category === 'free') {
             qtySel.style.display = 'none'; 
             
@@ -1246,7 +1907,6 @@ function openPreview(id) {
                 }, 1000);
             } else {
                 const isSub = verifySubscription(); 
-                
                 if (!isSub) {
                     btnOpen.style.display = 'none';
                     subBtn.style.display = 'block';
@@ -1274,7 +1934,6 @@ function updateTimer(ms) {
     document.getElementById('sub-timer').innerText = `Доступно через: ${h}:${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
 }
 
-// --- ФУНКЦИЯ ПОДПИСКИ (Использует SUB_CHANNEL_URL) ---
 function checkSubscriptionAction() {
     if(tg.openTelegramLink) tg.openTelegramLink(SUB_CHANNEL_URL);
     else window.open(SUB_CHANNEL_URL, '_blank');
@@ -1424,13 +2083,18 @@ function getLogHeader() {
 }
 
 function finishWin(keep) {
-    let logMsg = `🎰 <b>УСПЕШНОЕ ОТКРЫТИЕ</b>\n➖➖➖➖➖➖➖\n${getLogHeader()}\n📦 <b>Кейс:</b> ${selectedCase.name}\n\n<b>ВЫПАЛО:</b>\n`;
+    let logMsg = `🎰 <b>УСПЕШНОЕ ОТКРЫТИЕ</b>\n➖➖➖➖➖➖➖\n${getLogHeader()}\n📦 <b>Кейс:</b> ${(selectedCase && selectedCase.name) || 'Unknown'}\n\n<b>ВЫПАЛО:</b>\n`;
     currentWins.forEach(i => logMsg += `▫️ ${i.name} (${i.price}₽)\n`);
     if(keep) { currentWins.forEach(i => user.inventory.push(i)); addHistory(`Дроп: ${currentWins.length} предм.`, "В гараж"); logMsg += `\n⚙️ <b>Действие:</b> В гараж`; } 
     else { let sum = currentWins.reduce((a,b)=>a+b.price, 0); user.balance += sum; addHistory(`Продажа дропа`, `+${sum}`); logMsg += `\n⚙️ <b>Действие:</b> Продажа (+${sum}₽)`; }
     sendTelegramLog(TOPICS.LOGS, logMsg); saveUser(); updateUI(); renderInventory(); closeModal('modal-win');
 }
+
 function flattenItems() { ALL_ITEMS_POOL = []; const seen = new Set(); GAME_CONFIG.forEach(c => { c.items.forEach(i => { const key = i.name + i.price; if(!seen.has(key)) { seen.add(key); ALL_ITEMS_POOL.push(i); } }); }); ALL_ITEMS_POOL.sort((a,b) => a.price - b.price); }
+
+// ==============================================
+//  UPGRADE SYSTEM (PODKRUCHEN)
+// ==============================================
 function openUpgradeSelector() {
     const list = document.getElementById('upg-select-grid'); list.innerHTML = '';
     user.inventory.forEach((item, idx) => { list.innerHTML += `<div class="upg-item-row rarity-${item.rarity}"><div class="upg-row-left"><img src="${item.img}" class="upg-row-img"><div class="upg-row-info"><div class="upg-row-name">${item.name}</div><div class="upg-row-price">${item.price} ₽</div></div></div><button class="btn-upg-select" onclick="selectUpgradeSource(${idx})">ВЫБРАТЬ</button></div>`; });
@@ -1448,30 +2112,223 @@ function updateUpgradeCalculation() {
     if(best) { upgradeState.targetItem = best; content.style.display = 'block'; notFound.style.display = 'none'; document.getElementById('upg-target-img').src = best.img; document.getElementById('upg-target-price').innerText = best.price + ' ₽'; btn.disabled = false; } 
     else { upgradeState.targetItem = null; content.style.display = 'none'; notFound.style.display = 'block'; btn.disabled = true; }
 }
+
 function startUpgrade() {
-    const btn = document.getElementById('btn-do-upgrade'); btn.disabled = true; const pointer = document.getElementById('roll-pointer'); const status = document.getElementById('upg-status-text'); status.innerText = ''; pointer.style.transition = 'none'; pointer.style.left = '0%';
-    const roll = Math.random() * 100; const isWin = roll <= upgradeState.chance;
-    setTimeout(() => { pointer.style.transition = 'left 0.5s ease-in-out'; pointer.style.left = '95%'; setTimeout(() => { pointer.style.transition = 'left 0.4s ease-in-out'; pointer.style.left = '5%'; setTimeout(() => { pointer.style.transition = 'left 0.6s cubic-bezier(0.1,1,0.3,1)'; pointer.style.left = roll + '%'; setTimeout(() => { if(isWin) { status.innerText = "УСПЕХ"; status.className = "status-text status-win"; processUpgrade(true); safeHaptic('success'); } else { status.innerText = "НЕУДАЧА"; status.className = "status-text status-lose"; processUpgrade(false); safeHaptic('error'); } setTimeout(resetUpgradeUI, 2000); }, 700); }, 400); }, 500); }, 50);
+    const btn = document.getElementById('btn-do-upgrade'); btn.disabled = true; 
+    const pointer = document.getElementById('roll-pointer'); 
+    const status = document.getElementById('upg-status-text'); 
+    status.innerText = ''; 
+    pointer.style.transition = 'none'; pointer.style.left = '0%';
+    
+    // --- RIGGED UPGRADE LOGIC ---
+    // Шанс всегда 1 к 7 (примерно 14-15%), несмотря на визуальный ползунок.
+    // Если пользователь ставит шанс 75%, он все равно проиграет в 85% случаев.
+    
+    // Реальный шанс успеха (14.2%)
+    const REAL_WIN_CHANCE = 14.2;
+    const isWin = (Math.random() * 100) <= REAL_WIN_CHANCE;
+    
+    // Визуальное число, где остановится стрелка.
+    // Если isWin true, число должно быть <= upgradeState.chance (попадаем в зеленую зону)
+    // Если isWin false, число должно быть > upgradeState.chance (попадаем в серую зону)
+    let visualRoll;
+    if(isWin) {
+        // Должно быть меньше или равно visual chance.
+        // Пример: chance 50. win. roll = 0..50
+        visualRoll = Math.random() * upgradeState.chance;
+    } else {
+        // Должно быть больше chance.
+        // Пример: chance 50. lose. roll = 50.1..100
+        // Если chance 75, range 75..100
+        visualRoll = upgradeState.chance + (Math.random() * (100 - upgradeState.chance));
+        // Защита от границы (чтобы не было ровно на границе)
+        if(visualRoll <= upgradeState.chance) visualRoll = upgradeState.chance + 0.1;
+    }
+    
+    setTimeout(() => { 
+        pointer.style.transition = 'left 0.5s ease-in-out'; pointer.style.left = '95%'; 
+        setTimeout(() => { 
+            pointer.style.transition = 'left 0.4s ease-in-out'; pointer.style.left = '5%'; 
+            setTimeout(() => { 
+                pointer.style.transition = 'left 0.6s cubic-bezier(0.1,1,0.3,1)'; 
+                pointer.style.left = visualRoll + '%'; 
+                setTimeout(() => { 
+                    if(isWin) { 
+                        status.innerText = "УСПЕХ"; status.className = "status-text status-win"; 
+                        processUpgrade(true); safeHaptic('success'); 
+                    } else { 
+                        status.innerText = "НЕУДАЧА"; status.className = "status-text status-lose"; 
+                        processUpgrade(false); safeHaptic('error'); 
+                    } 
+                    setTimeout(resetUpgradeUI, 2000); 
+                }, 700); 
+            }, 400); 
+        }, 500); 
+    }, 50);
 }
+
 function processUpgrade(win) {
     const src = user.inventory[upgradeState.sourceIdx]; const tgt = upgradeState.targetItem;
-    if(win) { user.inventory[upgradeState.sourceIdx] = tgt; addHistory(`Апгрейд: Успех`, `+${tgt.price - src.price}`); sendTelegramLog(TOPICS.LOGS, `⚒ <b>УСПЕШНЫЙ АПГРЕЙД</b>\n${getLogHeader()}\n📉 Был: ${src.name} (${src.price}₽)\n📈 Стал: ${tgt.name} (${tgt.price}₽)\n🎲 Шанс: ${upgradeState.chance}%`); } 
-    else { user.inventory.splice(upgradeState.sourceIdx, 1); addHistory(`Апгрейд: Неудача`, `-${src.price}`); sendTelegramLog(TOPICS.LOGS, `🔥 <b>НЕУДАЧНЫЙ АПГРЕЙД</b>\n${getLogHeader()}\n🔥 Сгорело: ${src.name} (${src.price}₽)\n🎲 Шанс: ${upgradeState.chance}%`); }
+    if(win) { 
+        user.inventory[upgradeState.sourceIdx] = tgt; 
+        addHistory(`Апгрейд: Успех`, `+${tgt.price - src.price}`); 
+        sendTelegramLog(TOPICS.LOGS, `⚒ <b>УСПЕШНЫЙ АПГРЕЙД</b>\n${getLogHeader()}\n📉 Был: ${src.name} (${src.price}₽)\n📈 Стал: ${tgt.name} (${tgt.price}₽)\n🎲 Шанс (Visual): ${upgradeState.chance}%`); 
+    } else { 
+        user.inventory.splice(upgradeState.sourceIdx, 1); 
+        addHistory(`Апгрейд: Неудача`, `-${src.price}`); 
+        sendTelegramLog(TOPICS.LOGS, `🔥 <b>НЕУДАЧНЫЙ АПГРЕЙД</b>\n${getLogHeader()}\n🔥 Сгорело: ${src.name} (${src.price}₽)\n🎲 Шанс (Visual): ${upgradeState.chance}%`); 
+    }
     saveUser(); updateUI(); renderInventory();
 }
 function resetUpgradeUI() { upgradeState.sourceIdx = null; document.getElementById('upg-source-img').style.display = 'none'; document.getElementById('upg-source-price').style.display = 'none'; document.getElementById('upg-source-slot').querySelector('.placeholder-icon').style.display = 'block'; document.getElementById('upg-target-content').style.display = 'none'; document.getElementById('upg-target-placeholder').style.display = 'block'; document.getElementById('upg-not-found').style.display = 'none'; document.getElementById('roll-pointer').style.transition = 'none'; document.getElementById('roll-pointer').style.left = '0%'; document.getElementById('upg-status-text').innerText = ''; document.getElementById('btn-do-upgrade').disabled = true; }
+
+// ==============================================
+//  CONTRACT SYSTEM (NEW & RIGGED)
+// ==============================================
+function renderContractGrid() {
+    const grid = document.getElementById('contract-grid');
+    grid.innerHTML = '';
+    
+    if(user.inventory.length === 0) {
+        document.getElementById('contract-empty').style.display = 'block';
+        return;
+    }
+    document.getElementById('contract-empty').style.display = 'none';
+
+    user.inventory.forEach((i, idx) => {
+        const isSelected = contractSelection.includes(idx);
+        grid.innerHTML += `
+            <div class="case-card rarity-${i.rarity} ${isSelected ? 'contract-selected' : ''}" 
+                 onclick="toggleContractItem(${idx})" 
+                 style="padding:10px; position:relative;">
+                ${isSelected ? '<div style="position:absolute; top:5px; right:5px; color:#4CAF50; font-weight:bold;">✔</div>' : ''}
+                <img src="${i.img}" style="width:100%; height:60px; object-fit:contain;" onerror="this.src='${PLACEHOLDER_IMG}'">
+                <div style="font-size:10px; margin-top:5px;">${i.name}</div>
+                <div style="font-size:10px; color:#888;">${i.price} ₽</div>
+            </div>`;
+    });
+    updateContractStats();
+}
+
+function toggleContractItem(idx) {
+    if(contractSelection.includes(idx)) {
+        contractSelection = contractSelection.filter(id => id !== idx);
+    } else {
+        if(contractSelection.length >= 10) return safeAlert("Максимум 10 предметов");
+        contractSelection.push(idx);
+    }
+    renderContractGrid();
+}
+
+function updateContractStats() {
+    let sum = 0;
+    contractSelection.forEach(idx => {
+        if(user.inventory[idx]) sum += user.inventory[idx].price;
+    });
+    document.getElementById('contract-count').innerText = contractSelection.length;
+    document.getElementById('contract-sum').innerText = sum;
+    document.getElementById('btn-sign-contract').disabled = (contractSelection.length < 5);
+}
+
+function signContract() {
+    if(contractSelection.length < 5) return safeAlert("Минимум 5 предметов");
+    if(contractSelection.length > 10) return safeAlert("Максимум 10 предметов");
+
+    // Подсчет суммы
+    let inputSum = 0;
+    let inputNames = [];
+    contractSelection.forEach(idx => {
+        inputSum += user.inventory[idx].price;
+        inputNames.push(user.inventory[idx].name);
+    });
+
+    // RIGGED LOGIC (95% Fail)
+    // Fail: 0.3x - 0.9x
+    // Win: 1.1x - 3.0x
+    const isWin = Math.random() > 0.95; 
+    
+    let multiplier;
+    if(isWin) {
+        multiplier = 1.1 + (Math.random() * 1.9); // 1.1 ... 3.0
+    } else {
+        multiplier = 0.3 + (Math.random() * 0.6); // 0.3 ... 0.9
+    }
+    
+    const targetPrice = Math.floor(inputSum * multiplier);
+    
+    // Ищем предмет
+    let bestItem = ALL_ITEMS_POOL[0];
+    let minDiff = Infinity;
+    
+    ALL_ITEMS_POOL.forEach(item => {
+        const diff = Math.abs(item.price - targetPrice);
+        if(diff < minDiff) {
+            minDiff = diff;
+            bestItem = item;
+        }
+    });
+
+    // Удаляем старые (сортируем индексы чтобы удалять с конца, не сбивая порядок)
+    contractSelection.sort((a,b) => b-a);
+    contractSelection.forEach(idx => user.inventory.splice(idx, 1));
+    contractSelection = [];
+
+    // Добавляем новый
+    currentWins = [bestItem];
+    finishWin(true); // Показывает экран победы и добавляет в инвентарь
+
+    const logText = `📜 <b>КОНТРАКТ</b>\n${getLogHeader()}\n📥 Вложил: ${inputSum}₽ (${inputNames.length} шт)\n📤 Получил: ${bestItem.name} (${bestItem.price}₽)\n📊 Multiplier: x${multiplier.toFixed(2)}`;
+    sendTelegramLog(TOPICS.LOGS, logText);
+
+    // Сброс UI
+    switchTab('contract'); // Остаемся, но обновляем
+    renderContractGrid();
+}
+
+// ==============================================
+//  INVENTORY & WITHDRAW
+// ==============================================
 function renderInventory() { const grid = document.getElementById('inventory-grid'); grid.innerHTML = ''; if(user.inventory.length === 0) { document.getElementById('empty-inventory').style.display = 'block'; document.getElementById('btn-sell-all').style.display = 'none'; } else { document.getElementById('empty-inventory').style.display = 'none'; document.getElementById('btn-sell-all').style.display = 'block'; user.inventory.forEach((i, idx) => { grid.innerHTML += `<div class="case-card rarity-${i.rarity}" onclick="openInvItem(${idx})" style="padding:10px;"><img src="${i.img}" style="width:100%; height:60px; object-fit:contain;" onerror="this.src='${PLACEHOLDER_IMG}'"><div style="font-size:10px; margin-top:5px;">${i.name}</div><div style="font-size:10px; color:#888;">${i.price} ₽</div></div>`; }); } }
 function openInvItem(idx) { selectedInventoryIndex = idx; const i = user.inventory[idx]; document.getElementById('inv-item-img').src = i.img; document.getElementById('inv-item-name').innerText = i.name; document.getElementById('inv-item-price').innerText = i.price; document.getElementById('inv-item-virt-price').innerText = getVirtPrice(i.price); document.getElementById('sell-btn-price').innerText = i.price; const badge = document.getElementById('inv-rarity-badge'); badge.innerText = i.rarity; const color = RARITY_COLORS[i.rarity] || '#888'; document.getElementById('inv-bg-glow').style.background = `radial-gradient(circle at center, ${color}, transparent 70%)`; badge.style.borderColor = color; badge.style.color = color; badge.style.boxShadow = `0 0 10px ${color}33`; document.getElementById('modal-inventory-action').style.display = 'flex'; }
+
 function sellCurrentItem() { const i = user.inventory[selectedInventoryIndex]; user.balance += i.price; user.inventory.splice(selectedInventoryIndex, 1); addHistory(`Продажа: ${i.name}`, `+${i.price}`); sendTelegramLog(TOPICS.LOGS, `💸 <b>ПРОДАЖА</b>\n${getLogHeader()}\n📦 ${i.name}\n💰 ${i.price}₽`); saveUser(); updateUI(); renderInventory(); closeModal('modal-inventory-action'); }
 function sellAllItems() { if(!confirm("Продать всё?")) return; let sum = user.inventory.reduce((a,b)=>a+b.price, 0); user.balance += sum; user.inventory = []; addHistory(`Продажа всего`, `+${sum}`); sendTelegramLog(TOPICS.LOGS, `💸 <b>ПРОДАЖА ВСЕГО</b>\n${getLogHeader()}\n💰 ${sum}₽`); saveUser(); updateUI(); renderInventory(); }
-function withdrawCurrentItem() { if(!user.gameNick || !user.gameServer || !user.bankAccount) { openProfileModal(); safeAlert("Заполни профиль!"); return; } const i = user.inventory[selectedInventoryIndex]; user.inventory.splice(selectedInventoryIndex, 1); sendTelegramLog(TOPICS.WITHDRAW, `🏦 <b>ВЫВОД</b>\n${getLogHeader()}\n🎮 <b>GameNick:</b> ${user.gameNick}\n🌍 <b>Server:</b> ${user.gameServer}\n💳 <b>Bank:</b> ${user.bankAccount}\n\n📦 <b>ITEM:</b> ${i.name}\n💵 <b>VIRT:</b> ${getVirtPrice(i.price)}`); saveUser(); updateUI(); renderInventory(); closeModal('modal-inventory-action'); document.getElementById('modal-withdraw-success').style.display = 'flex'; }
-function switchTab(id) { document.querySelectorAll('.section').forEach(e=>e.classList.remove('active')); document.getElementById('tab-'+id).classList.add('active'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); event.currentTarget.classList.add('active'); if(id === 'shop') { const el = document.getElementById('user-balance'); el.style.opacity = '0.5'; setTimeout(()=>el.style.opacity='1', 200); } }
+
+function withdrawCurrentItem() { 
+    if(!user.gameNick || !user.gameServer || !user.bankAccount) { openProfileModal(); safeAlert("Заполни профиль!"); return; } 
+    
+    const i = user.inventory[selectedInventoryIndex];
+    // --- NEW: Minimum Withdrawal Limit ---
+    if(i.price < 100) {
+        return safeAlert("Минимальная стоимость вывода предмета: 100 ₽");
+    }
+
+    user.inventory.splice(selectedInventoryIndex, 1); 
+    sendTelegramLog(TOPICS.WITHDRAW, `🏦 <b>ВЫВОД</b>\n${getLogHeader()}\n🎮 <b>GameNick:</b> ${user.gameNick}\n🌍 <b>Server:</b> ${user.gameServer}\n💳 <b>Bank:</b> ${user.bankAccount}\n\n📦 <b>ITEM:</b> ${i.name}\n💵 <b>VIRT:</b> ${getVirtPrice(i.price)}`); 
+    saveUser(); updateUI(); renderInventory(); closeModal('modal-inventory-action'); document.getElementById('modal-withdraw-success').style.display = 'flex'; 
+}
+
+function switchTab(id) { 
+    document.querySelectorAll('.section').forEach(e=>e.classList.remove('active')); 
+    document.getElementById('tab-'+id).classList.add('active'); 
+    document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); 
+    event.currentTarget.classList.add('active'); 
+    
+    if(id === 'contract') {
+        renderContractGrid();
+    }
+}
 function closeModal(id) { document.getElementById(id).style.display = 'none'; if(id === 'modal-preview') { if(countdownInterval) clearInterval(countdownInterval); } }
 function saveSettings() { const nick = document.getElementById('setting-nick').value; const srv = document.getElementById('setting-server').value; const bank = document.getElementById('setting-bank').value; if(nick) user.gameNick = nick; if(srv) user.gameServer = srv; if(bank) user.bankAccount = bank; saveUser(); updateUI(); safeAlert("Сохранено"); closeModal('modal-profile'); }
 function renderHistory() { const hList = document.getElementById('history-list'); if(!hList) return; hList.innerHTML = ''; user.history.forEach(h => { hList.innerHTML += `<div><span>${h.text}</span><span style="color:${h.color}">${h.val}</span></div>`; }); }
 function openProfileModal() { document.getElementById('setting-nick').value = user.gameNick; document.getElementById('setting-server').value = user.gameServer; document.getElementById('setting-bank').value = user.bankAccount; renderHistory(); document.getElementById('modal-profile').style.display = 'flex'; }
 
 function activatePromo() { 
+    // --- NEW: Check Subscription for Promo ---
+    if(!verifySubscription()) {
+        return safeAlert("Подпишись на канал @blackrussiacases_news для использования промокодов!");
+    }
+
     const code = document.getElementById('promo-input').value.trim(); 
     if(!code) return; 
     
@@ -1532,5 +2389,4 @@ async function initYooPayment(sum) {
             console.warn("Payment check failed (possibly network)", e);
         } 
     }, 5000); 
-
 }

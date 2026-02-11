@@ -136,6 +136,11 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px;
 .status-win { color: #4CAF50; text-shadow: 0 0 10px rgba(76,175,80,0.5); }
 .status-lose { color: #ef4444; text-shadow: 0 0 10px rgba(239,68,68,0.5); }
 
+/* CONTRACTS */
+.contract-stats { padding: 15px; display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; margin-bottom: 20px; }
+.contract-selected { opacity: 0.6; filter: grayscale(0.5); border: 2px solid var(--primary) !important; }
+.contract-footer { margin-top: 20px; }
+
 /* BUTTONS */
 .btn-primary { background: var(--primary); color: #000; border: none; width: 100%; padding: 14px; border-radius: 12px; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; position: relative; overflow: hidden; }
 .btn-primary:disabled { background: #333; color: #666; cursor: not-allowed; }

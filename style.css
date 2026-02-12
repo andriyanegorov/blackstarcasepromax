@@ -396,3 +396,86 @@ input:checked + .toggle-track::after { transform: translateX(14px); background: 
 .payment-info { display: flex; flex-direction: column; }
 .p-title { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 2px; }
 .p-desc { font-size: 11px; color: var(--primary); }
+
+/* --- СТИЛИ ДЛЯ ДРОПА ДНЯ --- */
+.daily-drop-card {
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #FFD700;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.1);
+    background: linear-gradient(135deg, rgba(0,0,0,0.4), rgba(20,20,20,0.8));
+    animation: fadeIn 0.5s ease;
+}
+
+.dd-glow {
+    position: absolute;
+    top: -50px; left: -50px; width: 150px; height: 150px;
+    background: #FFD700;
+    filter: blur(60px);
+    opacity: 0.2;
+    z-index: 0;
+}
+
+.dd-header {
+    background: linear-gradient(90deg, rgba(255, 215, 0, 0.1), transparent);
+    padding: 8px 15px;
+    font-size: 10px;
+    font-weight: 900;
+    color: #FFD700;
+    letter-spacing: 2px;
+    position: relative;
+    z-index: 1;
+}
+
+.dd-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px 20px 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.dd-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.dd-label {
+    font-size: 9px;
+    color: #888;
+    margin-bottom: 2px;
+}
+
+.dd-user {
+    font-size: 14px;
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 5px;
+}
+
+.dd-item-name {
+    font-size: 11px;
+    color: #ccc;
+}
+
+.dd-price {
+    font-size: 14px;
+    color: #FFD700;
+    font-weight: 900;
+    margin-top: 5px;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+}
+
+.dd-img {
+    width: 80px;
+    height: 50px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+    transition: transform 0.3s;
+}
+
+.daily-drop-card:hover .dd-img {
+    transform: scale(1.1) rotate(-2deg);
+}

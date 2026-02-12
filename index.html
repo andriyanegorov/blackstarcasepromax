@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -7,12 +6,41 @@
     <title>Black Russia Cases</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
 
     <div class="bg-glow bg-glow-1"></div>
     <div class="bg-glow bg-glow-2"></div>
+
+    <div class="live-feed-strip">
+        <div class="live-feed-overlay"></div> <div class="live-feed-track" id="live-feed-track">
+            <div class="live-item-placeholder">
+                <span class="loader-dot"></span> Ожидание дропов...
+            </div>
+        </div>
+        <div class="live-fade-left"></div>
+        <div class="live-fade-right"></div>
+    </div>
+
+    <div id="loading-screen" style="position:fixed; inset:0; background:#09090b; z-index:9999; display:flex; align-items:center; justify-content:center; flex-direction:column;">
+        <div class="payment-loader"></div>
+        <div style="margin-top:15px; color:#FFD700; font-weight:bold;">ЗАГРУЗКА ПРОФИЛЯ...</div>
+    </div>
+
+    <div id="modal-banned" class="modal-overlay center-modal" style="display:none; z-index: 10000; background: #000;">
+        <div class="modal-glass center-modal" style="border-color: #ff4d4d; text-align: center;">
+            <div style="font-size: 50px; margin-bottom: 10px;">⛔️</div>
+            <h2 style="color: #ff4d4d; margin: 0;">ВЫ ЗАБАНЕНЫ</h2>
+            <p style="color: #ccc; font-size: 13px; margin: 15px 0;">Доступ к приложению ограничен администрацией.</p>
+            <div style="background: rgba(255,77,77,0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,77,77,0.3);">
+                <div style="font-size: 10px; color: #ff4d4d; font-weight: bold; text-transform: uppercase;">Причина:</div>
+                <div id="ban-reason-text" style="font-size: 14px; color: #fff; font-weight: bold;">Нарушение правил</div>
+            </div>
+            <button class="btn-secondary" onclick="tg.close()" style="margin-top: 20px;">Закрыть</button>
+        </div>
+    </div>
 
     <div id="blur-container">
         <header>
@@ -34,9 +62,6 @@
                     <img id="header-avatar" src="img/avatar_placeholder.png" alt="Profile" onerror="this.src='https://placehold.co/100x100/1a1a1a/ffffff?text=User'">
                 </div>
             </div>
-
-            <span id="header-name" style="display:none;"></span>
-            <span id="header-uid" style="display:none;"></span>
         </header>
 
         <main>
@@ -71,7 +96,7 @@
             </div>
 
             <div id="tab-upgrade" class="section">
-                <div class="hero-section small">
+                 <div class="hero-section small">
                     <h1>Апгрейд</h1>
                     <p>Повышай ставки</p>
                 </div>
@@ -277,6 +302,7 @@
             
             <div id="sub-timer" class="sub-timer" style="display:none;"></div>
             <button id="btn-sub-check" class="btn-primary btn-sub-check" style="display:none;" onclick="checkSubscriptionAction()">ПОДПИСАТЬСЯ</button>
+            <button id="btn-sub-verify" class="btn-primary btn-sub-verify" style="display:none; background:#4CAF50; margin-bottom:10px;" onclick="verifySubscriptionWithBackend()">ПРОВЕРИТЬ ПОДПИСКУ</button>
 
             <div class="qty-selector" id="qty-selector">
                 <button class="qty-btn active" onclick="setOpenCount(1)">x1</button>
@@ -337,6 +363,11 @@
             <button class="btn-close" onclick="closeModal('modal-profile')">✕</button>
             <h3>Профиль</h3>
             <div class="profile-scroll-area">
+                <div class="profile-stats">
+                    <div class="stat-line"><span>ID:</span> <span id="profile-uid">...</span></div>
+                    <div class="stat-line"><span>Баланс:</span> <span id="profile-bal" class="gold-text">0</span></div>
+                </div>
+
                 <div class="settings-form">
                     <div class="input-group"><label>Никнейм</label><input type="text" id="setting-nick" placeholder="Ivan_Ivanov"></div>
                     <div class="row-group">
@@ -376,8 +407,35 @@
                     </div>
                     <button class="btn-primary" onclick="saveSettings()">Сохранить</button>
                 </div>
-                <div class="profile-stats"><div class="stat-line"><span>ID:</span> <span id="profile-uid">...</span></div><div class="stat-line"><span>Баланс:</span> <span id="profile-bal" class="gold-text">0</span></div></div>
-                <div class="history-block"><h4>История операций</h4><div class="history-scroll-container"><div id="history-list"></div></div></div>
+
+                <div class="section-divider"><span>ПАРТНЕРСКАЯ ПРОГРАММА</span></div>
+                
+                <div class="ref-card glass-panel" style="margin-bottom: 10px;">
+                    <div class="ref-header">Твой заработок</div>
+                    <div class="ref-balance"><span id="ref-earn-display">0</span> ₽</div>
+                    <div class="ref-stats-row">
+                        <div class="ref-stat">
+                            <div class="rs-val" id="ref-count-display">0</div>
+                            <div class="rs-label">Друзей</div>
+                        </div>
+                        <div class="ref-stat">
+                            <div class="rs-val">10 ₽</div>
+                            <div class="rs-label">За друга</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ref-link-box glass-panel" style="padding: 10px;">
+                    <div style="font-size: 11px; color: #888; margin-bottom: 5px;">Твоя ссылка для приглашения:</div>
+                    <div class="ref-link-row">
+                        <input type="text" id="ref-link-input" readonly value="Загрузка...">
+                        <button onclick="copyRefLink()">COPY</button>
+                    </div>
+                </div>
+                <div class="history-block" style="margin-top:20px;">
+                    <h4>История операций</h4>
+                    <div class="history-scroll-container"><div id="history-list"></div></div>
+                </div>
             </div>
         </div>
     </div>
@@ -411,5 +469,4 @@
 
     <script src="script.js"></script>
 </body>
-
 </html>

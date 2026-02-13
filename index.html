@@ -198,59 +198,6 @@
                 </div>
             </div>
 
-            <div id="tab-shop" class="section">
-                <div class="hero-section small">
-                    <h1>Магазин</h1>
-                    <p>Пополнение баланса</p>
-                </div>
-                
-                <div class="promo-box glass-panel">
-                    <input type="text" id="promo-input" placeholder="Промокод">
-                    <button onclick="activatePromo()">→</button>
-                </div>
-                 <div style="font-size:10px; color:#666; text-align:center; margin-top:-15px; margin-bottom:15px;">Промокоды: BONUS, FREE</div>
-
-                <div class="info-card warning" style="margin-bottom: 20px;">
-                    <div class="info-icon">⚠️</div>
-                    <div class="info-text">
-                        Внимание! Из-за комиссии платежной системы на баланс зачисляется <b>99%</b> от суммы пополнения.
-                    </div>
-                </div>
-
-                <div class="shop-grid">
-                    <div class="shop-item glass-panel" onclick="initYooPayment(50)">
-                        <div class="shop-val">50 ₽</div>
-                        <div class="shop-desc">Начинающий</div>
-                    </div>
-                    <div class="shop-item glass-panel hit" onclick="initYooPayment(500)">
-                        <div class="badge-hit">HIT</div>
-                        <div class="shop-val">500 ₽</div>
-                        <div class="shop-desc">Популярное</div>
-                    </div>
-                    <div class="shop-item glass-panel gold" onclick="initYooPayment(1000)">
-                        <div class="shop-val">1000 ₽</div>
-                        <div class="shop-desc">Обычный</div>
-                    </div>
-                    <div class="shop-item glass-panel" onclick="initYooPayment(5000)">
-                        <div class="shop-val">5000 ₽</div>
-                        <div class="shop-desc">Элитный</div>
-                    </div>
-                </div>
-
-                <div class="custom-pay glass-panel">
-                    <input type="number" id="custom-amount" placeholder="Другая сумма... (мин. 10 руб)">
-                    <button onclick="payCustomAmount()">Оплатить</button>
-                </div>
-
-                <div id="payment-status-box" class="payment-status-box" style="display:none;">
-                    <div class="payment-loader"></div>
-                    <div class="payment-info">
-                        <span class="p-title">Ожидание оплаты...</span>
-                        <span class="p-desc">Перейдите по ссылке для оплаты</span>
-                    </div>
-                </div>
-            </div>
-
             <div id="tab-inventory" class="section">
                 <div class="inventory-header">
                     <h2>Гараж</h2>
@@ -469,4 +416,5 @@
 
     <script src="script.js"></script>
 </body>
+
 </html>

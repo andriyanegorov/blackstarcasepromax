@@ -65,46 +65,52 @@
 
                 <div class="section-divider"><span>ПАКЕТЫ ПОПОЛНЕНИЯ</span></div>
                 
-                <div class="shop-grid">
-                    <button class="shop-btn" onclick="buyPack(20)">
-                        <div class="sb-price">20 ₽</div>
-                        <div class="sb-desc">Старт</div>
-                    </button>
-                    <button class="shop-btn" onclick="buyPack(50)">
-                        <div class="sb-price">50 ₽</div>
-                        <div class="sb-desc">Новичок</div>
-                    </button>
-                    <button class="shop-btn popular" onclick="buyPack(100)">
-                        <div class="sb-badge">ХИТ</div>
-                        <div class="sb-price">100 ₽</div>
-                        <div class="sb-desc">Базовый</div>
-                    </button>
-                    <button class="shop-btn" onclick="buyPack(200)">
-                        <div class="sb-price">200 ₽</div>
-                        <div class="sb-desc">Продвинутый</div>
-                    </button>
-                    <button class="shop-btn gold" onclick="buyPack(500)">
-                        <div class="sb-price">500 ₽</div>
-                        <div class="sb-desc">Элита</div>
-                    </button>
-                    <button class="shop-btn gold" onclick="buyPack(1000)">
-                        <div class="sb-price">1000 ₽</div>
-                        <div class="sb-desc">Мажор</div>
-                    </button>
-                    <button class="shop-btn myth" onclick="buyPack(5000)">
-                        <div class="sb-price">5000 ₽</div>
-                        <div class="sb-desc">Олигарх</div>
-                    </button>
-                    <button class="shop-btn myth" onclick="buyPack(10000)">
-                        <div class="sb-price">10000 ₽</div>
-                        <div class="sb-desc">Владелец</div>
-                    </button>
-                </div>
+<div class="shop-grid">
+    <button class="shop-btn" onclick="window.open('https://funpay.com/lots/offer?id=64078084', '_blank')">
+        <div class="sb-price">20 ₽</div>
+        <div class="sb-desc">Старт</div>
+    </button>
+
+    <button class="shop-btn" onclick="window.open('https://funpay.com/lots/offer?id=64078147', '_blank')">
+        <div class="sb-price">50 ₽</div>
+        <div class="sb-desc">Новичок</div>
+    </button>
+
+    <button class="shop-btn popular" onclick="window.open('https://funpay.com/lots/offer?id=64078181', '_blank')">
+        <div class="sb-badge">ХИТ</div>
+        <div class="sb-price">100 ₽</div>
+        <div class="sb-desc">Базовый</div>
+    </button>
+
+    <button class="shop-btn" onclick="window.open('https://funpay.com/lots/offer?id=64078217', '_blank')">
+        <div class="sb-price">200 ₽</div>
+        <div class="sb-desc">Продвинутый</div>
+    </button>
+
+    <button class="shop-btn gold" onclick="window.open('https://funpay.com/lots/offer?id=64078258', '_blank')">
+        <div class="sb-price">500 ₽</div>
+        <div class="sb-desc">Элита</div>
+    </button>
+
+    <button class="shop-btn gold" onclick="window.open('https://funpay.com/lots/offer?id=64078292', '_blank')">
+        <div class="sb-price">1000 ₽</div>
+        <div class="sb-desc">Мажор</div>
+    </button>
+
+    <button class="shop-btn myth" onclick="window.open('https://funpay.com/lots/offer?id=64078331', '_blank')">
+        <div class="sb-price">5000 ₽</div>
+        <div class="sb-desc">Олигарх</div>
+    </button>
+
+    <button class="shop-btn myth" onclick="window.open('https://funpay.com/lots/offer?id=64078369', '_blank')">
+        <div class="sb-price">10000 ₽</div>
+        <div class="sb-desc">Владелец</div>
+    </button>
+</div>
 
 <div class="glass-panel custom-pay-box">
-    <div class="custom-pay-label">Своя сумма:</div>
-    <input type="number" id="custom-amount" class="custom-amount-input" placeholder="Например: 12345">
-    <button class="btn-primary" onclick="payCustomAmount()">ОПЛАТИТЬ</button>
+    <div class="custom-pay-label">Нужна другая сумма?</div>
+    <button class="btn-primary" onclick="payCustomAmount()">КУПИТЬ НА FUNPAY</button>
 </div>
             </div>
 
@@ -313,3 +319,4 @@
     <script src="script.js"></script>
 </body>
 </html>
+

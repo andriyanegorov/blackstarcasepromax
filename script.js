@@ -1756,8 +1756,11 @@ function buyPack(amount) {
 }
 
 function payCustomAmount() {
-    const val = parseInt(document.getElementById('custom-amount').value);
-    buyPack(val);
+    // Вставь сюда прямую ссылку на свой лот или профиль
+    const url = "https://funpay.com/lots/offer?id=64078468"; 
+    
+    // Открываем в новой вкладке
+    window.open(url, '_blank');
 }
 
 // --- PROMO CODE LOGIC ---
@@ -2024,3 +2027,4 @@ function copyRefLink() {
     const link = `https://t.me/blackrussiacases_bot/app?startapp=ref_${user.uid}`;
     navigator.clipboard.writeText(link); showNotify("Скопировано!", "success");
 }
+

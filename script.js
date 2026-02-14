@@ -573,6 +573,25 @@ async function initUserSessionSupabase() {
         const newUser = { telegram_id: uid, username: username, first_name: first_name, balance: 0, inventory: [], history: [], referrer_id: refId };
         await sb.from('users').insert([newUser]);
         user = { ...DEFAULT_USER, ...newUser, uid: uid, avatar: photo_url };
+// --- ДОБАВЛЕНО: Начисление бонуса рефоводу ---
+        if (refId && refId !== uid) {
+            const REWARD_AMOUNT = 50; // Сумма бонуса в рублях за приглашенного друга
+            
+            // Получаем текущие данные пригласившего
+            const { data: refUser } = await sb.from('users')
+                .select('balance, referrals_count, referral_earnings')
+                .eq('telegram_id', refId)
+                .maybeSingle();
+            
+            // Если рефовод найден, обновляем его статистику и баланс
+            if (refUser) {
+                await sb.from('users').update({
+                    balance: Number(refUser.balance || 0) + REWARD_AMOUNT,
+                    referrals_count: Number(refUser.referrals_count || 0) + 1,
+                    referral_earnings: Number(refUser.referral_earnings || 0) + REWARD_AMOUNT
+                }).eq('telegram_id', refId);
+            }
+        }
     }
     document.getElementById('loading-screen').style.display = 'none';
     updateUI(); renderInventory(); renderHistory();
@@ -1031,3 +1050,4 @@ function fallbackCopyTextToClipboard(text) {
     document.body.removeChild(textArea);
 
 }
+

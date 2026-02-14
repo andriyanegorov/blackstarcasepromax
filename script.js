@@ -1,10 +1,9 @@
 /* ==============================================
-   SCRIPT.JS - FINAL VERSION (SHOP + PROMOS)
+   SCRIPT.JS - FINAL VERSION (SUPABASE PROMOS)
    ============================================== */
 
 // 1. КОНФИГУРАЦИЯ SUPABASE
 const SUPABASE_URL = 'https://itqlqsixknkqoggvubrp.supabase.co'; 
-// Используем твой Anon Key (публичный)
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml0cWxxc2l4a25rcW9nZ3Z1YnJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MjE3MDIsImV4cCI6MjA4NjQ5NzcwMn0.mV0As50_W8MBC3kpLYm_mLbExqRRyf8JaJi1eNOtAj4'; 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -26,16 +25,13 @@ const SUB_CHANNEL_URL = "https://t.me/blackrussiacases_news";
 const PLACEHOLDER_IMG = "https://placehold.co/150x150/1a1a1a/ffffff?text=No+Image";
 const VIRT_RATE = 10000; 
 
-// ЗАГЛУШКА ДЛЯ ОПЛАТЫ (Сюда потом вставишь реальную ссылку платежки)
-// Например: "https://donatepay.ru/don/..." или ссылка на Lava
 const PAYMENT_BASE_URL = "https://example.com/pay"; 
 
 const RARITY_VALS = { 'consumer': 1, 'common': 2, 'rare': 3, 'epic': 4, 'legendary': 5, 'mythical': 6 };
 const RARITY_COLORS = { 'consumer': '#B0B0B0', 'common': '#4CAF50', 'rare': '#3b82f6', 'epic': '#a855f7', 'legendary': '#eab308', 'mythical': '#ff3333' };
 
-// === ПОЛНЫЙ СПИСОК КЕЙСОВ ===
 /* ==============================================
-   КОНФИГУРАЦИЯ (ВСТАВИТЬ ЭТО В НАЧАЛО SCRIPT.JS)
+   КОНФИГУРАЦИЯ КЕЙСОВ
    ============================================== */
 const GAME_CONFIG = [
     {
@@ -44,51 +40,14 @@ const GAME_CONFIG = [
         "price": 0,
         "category": "free",
         "img": "img/free_case.png",
-        "chances": {
-            "consumer": 40,
-            "common": 30,
-            "rare": 20,
-            "epic": 8,
-            "legendary": 2,
-            "mythical": 0
-        },
+        "chances": { "consumer": 40, "common": 30, "rare": 20, "epic": 8, "legendary": 2, "mythical": 0 },
         "items": [
-            {
-                "name": "50.000 Вирт",
-                "price": 5,
-                "img": "img/money.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "100.000 Вирт",
-                "price": 10,
-                "img": "img/money.png",
-                "rarity": "common"
-            },
-            {
-                "name": "BMW M5 F90",
-                "price": 400,
-                "img": "img/m5f90.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Маска Демона",
-                "price": 150,
-                "img": "img/demon.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Аптечка",
-                "price": 7,
-                "img": "img/aptechka.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "10 BC",
-                "price": 10,
-                "img": "img/bc.png",
-                "rarity": "common"
-            }
+            { "name": "50.000 Вирт", "price": 5, "img": "img/money.png", "rarity": "consumer" },
+            { "name": "100.000 Вирт", "price": 10, "img": "img/money.png", "rarity": "common" },
+            { "name": "BMW M5 F90", "price": 400, "img": "img/m5f90.png", "rarity": "legendary" },
+            { "name": "Маска Демона", "price": 150, "img": "img/demon.png", "rarity": "epic" },
+            { "name": "Аптечка", "price": 7, "img": "img/aptechka.png", "rarity": "consumer" },
+            { "name": "10 BC", "price": 10, "img": "img/bc.png", "rarity": "common" }
         ]
     },
     {
@@ -97,159 +56,32 @@ const GAME_CONFIG = [
         "price": 29,
         "category": "default",
         "img": "img/bomj_case.png",
-        "chances": {
-            "consumer": 50,
-            "common": 38,
-            "rare": 8,
-            "epic": 3,
-            "legendary": 1,
-            "mythical": 1
-        },
+        "chances": { "consumer": 50, "common": 38, "rare": 8, "epic": 3, "legendary": 1, "mythical": 1 },
         "items": [
-            {
-                "name": "50.000 Вирт",
-                "price": 5,
-                "img": "img/money.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "150.000 Вирт",
-                "price": 15,
-                "img": "img/money.png",
-                "rarity": "common"
-            },
-            {
-                "name": "400.000 Вирт",
-                "price": 40,
-                "img": "img/money.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "5.000.000 Вирт",
-                "price": 500,
-                "img": "img/money.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Очки «Сердечки»",
-                "price": 500,
-                "img": "img/heartglass.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Серый кейс",
-                "price": 500,
-                "img": "img/graycase.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Маска Дали",
-                "price": 70,
-                "img": "img/dali.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Очки «Street»",
-                "price": 19,
-                "img": "img/streetglass.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "Скин «Емеля»",
-                "price": 300,
-                "img": "img/emelya.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Скин «Пузатый»",
-                "price": 10,
-                "img": "img/pyzatiy.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "Набор «Сельчанин»",
-                "price": 70,
-                "img": "img/pack_selchanin.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Набор «Бандит»",
-                "price": 650,
-                "img": "img/pack_bandit.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "ZAZ",
-                "price": 15,
-                "img": "img/zaz.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "VAZ 2107",
-                "price": 30,
-                "img": "img/2107.png",
-                "rarity": "common"
-            },
-            {
-                "name": "LADA NIVA",
-                "price": 80,
-                "img": "img/niva.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "LADA VESTA",
-                "price": 175,
-                "img": "img/vesta.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Mercedes-Benz W210",
-                "price": 300,
-                "img": "img/w210.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "10 BC",
-                "price": 10,
-                "img": "img/bc.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "25 BC",
-                "price": 25,
-                "img": "img/bc.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "50 BC",
-                "price": 50,
-                "img": "img/bc.png",
-                "rarity": "common"
-            },
-            {
-                "name": "500 BC",
-                "price": 500,
-                "img": "img/bc.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Аптечка",
-                "price": 7,
-                "img": "img/aptechka.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "Ремонтный набор",
-                "price": 7,
-                "img": "img/remka.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "Скутер",
-                "price": 15,
-                "img": "img/skuter.png",
-                "rarity": "common"
-            }
+            { "name": "50.000 Вирт", "price": 5, "img": "img/money.png", "rarity": "consumer" },
+            { "name": "150.000 Вирт", "price": 15, "img": "img/money.png", "rarity": "common" },
+            { "name": "400.000 Вирт", "price": 40, "img": "img/money.png", "rarity": "epic" },
+            { "name": "5.000.000 Вирт", "price": 500, "img": "img/money.png", "rarity": "legendary" },
+            { "name": "Очки «Сердечки»", "price": 500, "img": "img/heartglass.png", "rarity": "legendary" },
+            { "name": "Серый кейс", "price": 500, "img": "img/graycase.png", "rarity": "legendary" },
+            { "name": "Маска Дали", "price": 70, "img": "img/dali.png", "rarity": "rare" },
+            { "name": "Очки «Street»", "price": 19, "img": "img/streetglass.png", "rarity": "consumer" },
+            { "name": "Скин «Емеля»", "price": 300, "img": "img/emelya.png", "rarity": "epic" },
+            { "name": "Скин «Пузатый»", "price": 10, "img": "img/pyzatiy.png", "rarity": "consumer" },
+            { "name": "Набор «Сельчанин»", "price": 70, "img": "img/pack_selchanin.png", "rarity": "rare" },
+            { "name": "Набор «Бандит»", "price": 650, "img": "img/pack_bandit.png", "rarity": "legendary" },
+            { "name": "ZAZ", "price": 15, "img": "img/zaz.png", "rarity": "consumer" },
+            { "name": "VAZ 2107", "price": 30, "img": "img/2107.png", "rarity": "common" },
+            { "name": "LADA NIVA", "price": 80, "img": "img/niva.png", "rarity": "rare" },
+            { "name": "LADA VESTA", "price": 175, "img": "img/vesta.png", "rarity": "epic" },
+            { "name": "Mercedes-Benz W210", "price": 300, "img": "img/w210.png", "rarity": "legendary" },
+            { "name": "10 BC", "price": 10, "img": "img/bc.png", "rarity": "consumer" },
+            { "name": "25 BC", "price": 25, "img": "img/bc.png", "rarity": "consumer" },
+            { "name": "50 BC", "price": 50, "img": "img/bc.png", "rarity": "common" },
+            { "name": "500 BC", "price": 500, "img": "img/bc.png", "rarity": "legendary" },
+            { "name": "Аптечка", "price": 7, "img": "img/aptechka.png", "rarity": "consumer" },
+            { "name": "Ремонтный набор", "price": 7, "img": "img/remka.png", "rarity": "consumer" },
+            { "name": "Скутер", "price": 15, "img": "img/skuter.png", "rarity": "common" }
         ]
     },
     {
@@ -258,117 +90,25 @@ const GAME_CONFIG = [
         "price": 199,
         "category": "default",
         "img": "img/standart_case.png",
-        "chances": {
-            "consumer": 0,
-            "common": 60,
-            "rare": 34,
-            "epic": 5,
-            "legendary": 1,
-            "mythical": 0
-        },
+        "chances": { "consumer": 0, "common": 60, "rare": 34, "epic": 5, "legendary": 1, "mythical": 0 },
         "items": [
-            {
-                "name": "Скин «Хоуми»",
-                "price": 59,
-                "img": "img/homie.png",
-                "rarity": "common"
-            },
-            {
-                "name": "Скин «Опасный мужчина»",
-                "price": 69,
-                "img": "img/dangerman.png",
-                "rarity": "common"
-            },
-            {
-                "name": "Скин «Рыбчка»",
-                "price": 89,
-                "img": "img/ribachka.png",
-                "rarity": "common"
-            },
-            {
-                "name": "Рюкзак «Мопс»",
-                "price": 79,
-                "img": "img/mops.png",
-                "rarity": "common"
-            },
-            {
-                "name": "Корона короля",
-                "price": 249,
-                "img": "img/korona.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Маска «Иноске»",
-                "price": 129,
-                "img": "img/inoske.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Volkswagel Golf GTi",
-                "price": 99,
-                "img": "img/golf.png",
-                "rarity": "common"
-            },
-            {
-                "name": "BMW X5",
-                "price": 219,
-                "img": "img/x5.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Nissan Qashqai",
-                "price": 199,
-                "img": "img/qashqai.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Audi A4",
-                "price": 199,
-                "img": "img/a4.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Acura TSX",
-                "price": 199,
-                "img": "img/tsx.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Chevrolet Camaro ZL1",
-                "price": 999,
-                "img": "img/camaro.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Ducati SuperSport",
-                "price": 799,
-                "img": "img/supersport.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Lamborghini Aventador S",
-                "price": 2999,
-                "img": "img/aventador.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Mercedes AMG GT-R",
-                "price": 1999,
-                "img": "img/gtr.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "100 BC",
-                "price": 100,
-                "img": "img/bc.png",
-                "rarity": "common"
-            },
-            {
-                "name": "200 BC",
-                "price": 200,
-                "img": "img/bc.png",
-                "rarity": "rare"
-            }
+            { "name": "Скин «Хоуми»", "price": 59, "img": "img/homie.png", "rarity": "common" },
+            { "name": "Скин «Опасный мужчина»", "price": 69, "img": "img/dangerman.png", "rarity": "common" },
+            { "name": "Скин «Рыбчка»", "price": 89, "img": "img/ribachka.png", "rarity": "common" },
+            { "name": "Рюкзак «Мопс»", "price": 79, "img": "img/mops.png", "rarity": "common" },
+            { "name": "Корона короля", "price": 249, "img": "img/korona.png", "rarity": "epic" },
+            { "name": "Маска «Иноске»", "price": 129, "img": "img/inoske.png", "rarity": "epic" },
+            { "name": "Volkswagel Golf GTi", "price": 99, "img": "img/golf.png", "rarity": "common" },
+            { "name": "BMW X5", "price": 219, "img": "img/x5.png", "rarity": "rare" },
+            { "name": "Nissan Qashqai", "price": 199, "img": "img/qashqai.png", "rarity": "rare" },
+            { "name": "Audi A4", "price": 199, "img": "img/a4.png", "rarity": "rare" },
+            { "name": "Acura TSX", "price": 199, "img": "img/tsx.png", "rarity": "rare" },
+            { "name": "Chevrolet Camaro ZL1", "price": 999, "img": "img/camaro.png", "rarity": "epic" },
+            { "name": "Ducati SuperSport", "price": 799, "img": "img/supersport.png", "rarity": "epic" },
+            { "name": "Lamborghini Aventador S", "price": 2999, "img": "img/aventador.png", "rarity": "legendary" },
+            { "name": "Mercedes AMG GT-R", "price": 1999, "img": "img/gtr.png", "rarity": "legendary" },
+            { "name": "100 BC", "price": 100, "img": "img/bc.png", "rarity": "common" },
+            { "name": "200 BC", "price": 200, "img": "img/bc.png", "rarity": "rare" }
         ]
     },
     {
@@ -377,117 +117,25 @@ const GAME_CONFIG = [
         "price": 999,
         "category": "default",
         "img": "img/auto_case.png",
-        "chances": {
-            "consumer": 0,
-            "common": 0,
-            "rare": 86,
-            "epic": 13,
-            "legendary": 1,
-            "mythical": 0
-        },
+        "chances": { "consumer": 0, "common": 0, "rare": 86, "epic": 13, "legendary": 1, "mythical": 0 },
         "items": [
-            {
-                "name": "BMW M5 E60",
-                "price": 499,
-                "img": "img/m5e60.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Subaru WRX STi",
-                "price": 549,
-                "img": "img/wrx.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Toyota Camry 3.5",
-                "price": 599,
-                "img": "img/camry.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Volkswagen Passat",
-                "price": 719,
-                "img": "img/passat.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Mercedes-Benz GT63s",
-                "price": 1199,
-                "img": "img/gt63s.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Lamborghini Aventador S",
-                "price": 4999,
-                "img": "img/aventador.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Aurus Senat",
-                "price": 6999,
-                "img": "img/senat.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Mercedes-Benz G63 AMG",
-                "price": 5499,
-                "img": "img/g63.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Bugatti Divo",
-                "price": 19999,
-                "img": "img/divo.png",
-                "rarity": "mythical"
-            },
-            {
-                "name": "Lamborghini Urus",
-                "price": 3799,
-                "img": "img/urus.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Lamborghini Huracan",
-                "price": 2999,
-                "img": "img/huracan.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "BMW M4 F84",
-                "price": 739,
-                "img": "img/m4f84.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "XPENG P7",
-                "price": 999,
-                "img": "img/p7.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "BMW X6M F16",
-                "price": 1999,
-                "img": "img/x6mf16.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Alfa Romeo Guilia",
-                "price": 699,
-                "img": "img/romeo.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "BMW X5M E70",
-                "price": 799,
-                "img": "img/x5me70.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Ducatti Supersport",
-                "price": 699,
-                "img": "img/supersport.png",
-                "rarity": "rare"
-            }
+            { "name": "BMW M5 E60", "price": 499, "img": "img/m5e60.png", "rarity": "rare" },
+            { "name": "Subaru WRX STi", "price": 549, "img": "img/wrx.png", "rarity": "rare" },
+            { "name": "Toyota Camry 3.5", "price": 599, "img": "img/camry.png", "rarity": "rare" },
+            { "name": "Volkswagen Passat", "price": 719, "img": "img/passat.png", "rarity": "rare" },
+            { "name": "Mercedes-Benz GT63s", "price": 1199, "img": "img/gt63s.png", "rarity": "epic" },
+            { "name": "Lamborghini Aventador S", "price": 4999, "img": "img/aventador.png", "rarity": "legendary" },
+            { "name": "Aurus Senat", "price": 6999, "img": "img/senat.png", "rarity": "legendary" },
+            { "name": "Mercedes-Benz G63 AMG", "price": 5499, "img": "img/g63.png", "rarity": "legendary" },
+            { "name": "Bugatti Divo", "price": 19999, "img": "img/divo.png", "rarity": "mythical" },
+            { "name": "Lamborghini Urus", "price": 3799, "img": "img/urus.png", "rarity": "epic" },
+            { "name": "Lamborghini Huracan", "price": 2999, "img": "img/huracan.png", "rarity": "epic" },
+            { "name": "BMW M4 F84", "price": 739, "img": "img/m4f84.png", "rarity": "rare" },
+            { "name": "XPENG P7", "price": 999, "img": "img/p7.png", "rarity": "rare" },
+            { "name": "BMW X6M F16", "price": 1999, "img": "img/x6mf16.png", "rarity": "epic" },
+            { "name": "Alfa Romeo Guilia", "price": 699, "img": "img/romeo.png", "rarity": "rare" },
+            { "name": "BMW X5M E70", "price": 799, "img": "img/x5me70.png", "rarity": "rare" },
+            { "name": "Ducatti Supersport", "price": 699, "img": "img/supersport.png", "rarity": "rare" }
         ]
     },
     {
@@ -496,117 +144,25 @@ const GAME_CONFIG = [
         "price": 3999,
         "category": "default",
         "img": "img/osobiy_case.png",
-        "chances": {
-            "consumer": 0,
-            "common": 0,
-            "rare": 0,
-            "epic": 0,
-            "legendary": 99.9,
-            "mythical": 0.1
-        },
+        "chances": { "consumer": 0, "common": 0, "rare": 0, "epic": 0, "legendary": 99.9, "mythical": 0.1 },
         "items": [
-            {
-                "name": "Ocean Yacht",
-                "price": 19999,
-                "img": "img/ocean.png",
-                "rarity": "mythical"
-            },
-            {
-                "name": "Rolls Royce Spectre",
-                "price": 29999,
-                "img": "img/spectre.png",
-                "rarity": "mythical"
-            },
-            {
-                "name": "Tesla CyberTruck",
-                "price": 19999,
-                "img": "img/cybertruck.png",
-                "rarity": "mythical"
-            },
-            {
-                "name": "Mercedes-Benz G63 AMG 6x6",
-                "price": 39999,
-                "img": "img/g636x6.png",
-                "rarity": "mythical"
-            },
-            {
-                "name": "Bugatti Chiron",
-                "price": 19999,
-                "img": "img/chiron.png",
-                "rarity": "mythical"
-            },
-            {
-                "name": "Bugatti Veyron",
-                "price": 24999,
-                "img": "img/veyron.png",
-                "rarity": "mythical"
-            },
-            {
-                "name": "Ferrari Enzo",
-                "price": 3999,
-                "img": "img/enzo.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Daewoo Matiz",
-                "price": 2999,
-                "img": "img/matiz.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Ducati XDiavel",
-                "price": 1499,
-                "img": "img/xdiavel.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Lamborghini Urus",
-                "price": 3799,
-                "img": "img/urus.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Mercedes-Benz G63 AMG Max",
-                "price": 5999,
-                "img": "img/g63.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Mercedes-Benz SLR McLaren",
-                "price": 3999,
-                "img": "img/slrmclaren.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Lamborghini Aventador",
-                "price": 4999,
-                "img": "img/aventador.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Зловещий",
-                "price": 1999,
-                "img": "img/zloveshiy.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Invetero Coquette D5",
-                "price": 2999,
-                "img": "img/coquette.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "F1",
-                "price": 2999,
-                "img": "img/f1.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Mercedes-Benz AMG GT-R",
-                "price": 3299,
-                "img": "img/gtr.png",
-                "rarity": "legendary"
-            }
+            { "name": "Ocean Yacht", "price": 19999, "img": "img/ocean.png", "rarity": "mythical" },
+            { "name": "Rolls Royce Spectre", "price": 29999, "img": "img/spectre.png", "rarity": "mythical" },
+            { "name": "Tesla CyberTruck", "price": 19999, "img": "img/cybertruck.png", "rarity": "mythical" },
+            { "name": "Mercedes-Benz G63 AMG 6x6", "price": 39999, "img": "img/g636x6.png", "rarity": "mythical" },
+            { "name": "Bugatti Chiron", "price": 19999, "img": "img/chiron.png", "rarity": "mythical" },
+            { "name": "Bugatti Veyron", "price": 24999, "img": "img/veyron.png", "rarity": "mythical" },
+            { "name": "Ferrari Enzo", "price": 3999, "img": "img/enzo.png", "rarity": "legendary" },
+            { "name": "Daewoo Matiz", "price": 2999, "img": "img/matiz.png", "rarity": "legendary" },
+            { "name": "Ducati XDiavel", "price": 1499, "img": "img/xdiavel.png", "rarity": "legendary" },
+            { "name": "Lamborghini Urus", "price": 3799, "img": "img/urus.png", "rarity": "legendary" },
+            { "name": "Mercedes-Benz G63 AMG Max", "price": 5999, "img": "img/g63.png", "rarity": "legendary" },
+            { "name": "Mercedes-Benz SLR McLaren", "price": 3999, "img": "img/slrmclaren.png", "rarity": "legendary" },
+            { "name": "Lamborghini Aventador", "price": 4999, "img": "img/aventador.png", "rarity": "legendary" },
+            { "name": "Зловещий", "price": 1999, "img": "img/zloveshiy.png", "rarity": "legendary" },
+            { "name": "Invetero Coquette D5", "price": 2999, "img": "img/coquette.png", "rarity": "legendary" },
+            { "name": "F1", "price": 2999, "img": "img/f1.png", "rarity": "legendary" },
+            { "name": "Mercedes-Benz AMG GT-R", "price": 3299, "img": "img/gtr.png", "rarity": "legendary" }
         ]
     },
     {
@@ -615,75 +171,18 @@ const GAME_CONFIG = [
         "price": 269,
         "category": "bundles",
         "img": "img/pack_case.png",
-        "chances": {
-            "consumer": 0,
-            "common": 70,
-            "rare": 23,
-            "epic": 5,
-            "legendary": 1,
-            "mythical": 0.08
-        },
+        "chances": { "consumer": 0, "common": 70, "rare": 23, "epic": 5, "legendary": 1, "mythical": 0.08 },
         "items": [
-            {
-                "name": "Набор «Сельчанин»",
-                "price": 79,
-                "img": "img/pack_selchanin.png",
-                "rarity": "common"
-            },
-            {
-                "name": "Набор «Бандит»",
-                "price": 169,
-                "img": "img/pack_bandit.png",
-                "rarity": "common"
-            },
-            {
-                "name": "Набор «Молодой»",
-                "price": 189,
-                "img": "img/pack_molodoy.png",
-                "rarity": "common"
-            },
-            {
-                "name": "Набор «Гангстер»",
-                "price": 269,
-                "img": "img/pack_gangster.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Набор «Гонщик»",
-                "price": 399,
-                "img": "img/pack_racer.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Набор «Депутат»",
-                "price": 599,
-                "img": "img/pack_deputat.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Набор «Мафиози»",
-                "price": 1199,
-                "img": "img/pack_mafiozi.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Набор «Мажор»",
-                "price": 2999,
-                "img": "img/pack_major.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Набор «Арни и Буши»",
-                "price": 4999,
-                "img": "img/pack_aarnebushi.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Набор «Охотник»",
-                "price": 1999,
-                "img": "img/pack_hunter.png",
-                "rarity": "legendary"
-            }
+            { "name": "Набор «Сельчанин»", "price": 79, "img": "img/pack_selchanin.png", "rarity": "common" },
+            { "name": "Набор «Бандит»", "price": 169, "img": "img/pack_bandit.png", "rarity": "common" },
+            { "name": "Набор «Молодой»", "price": 189, "img": "img/pack_molodoy.png", "rarity": "common" },
+            { "name": "Набор «Гангстер»", "price": 269, "img": "img/pack_gangster.png", "rarity": "rare" },
+            { "name": "Набор «Гонщик»", "price": 399, "img": "img/pack_racer.png", "rarity": "rare" },
+            { "name": "Набор «Депутат»", "price": 599, "img": "img/pack_deputat.png", "rarity": "epic" },
+            { "name": "Набор «Мафиози»", "price": 1199, "img": "img/pack_mafiozi.png", "rarity": "epic" },
+            { "name": "Набор «Мажор»", "price": 2999, "img": "img/pack_major.png", "rarity": "legendary" },
+            { "name": "Набор «Арни и Буши»", "price": 4999, "img": "img/pack_aarnebushi.png", "rarity": "legendary" },
+            { "name": "Набор «Охотник»", "price": 1999, "img": "img/pack_hunter.png", "rarity": "legendary" }
         ]
     },
     {
@@ -692,27 +191,10 @@ const GAME_CONFIG = [
         "price": 19,
         "category": "risk",
         "img": "img/allorno_case.png",
-        "chances": {
-            "consumer": 99.85,
-            "common": 0,
-            "rare": 0,
-            "epic": 0,
-            "legendary": 0.15,
-            "mythical": 0
-        },
+        "chances": { "consumer": 99.85, "common": 0, "rare": 0, "epic": 0, "legendary": 0.15, "mythical": 0 },
         "items": [
-            {
-                "name": "Аптечка",
-                "price": 7,
-                "img": "img/aptechka.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "Lamborghini Huracan",
-                "price": 3999,
-                "img": "img/huracan.png",
-                "rarity": "legendary"
-            }
+            { "name": "Аптечка", "price": 7, "img": "img/aptechka.png", "rarity": "consumer" },
+            { "name": "Lamborghini Huracan", "price": 3999, "img": "img/huracan.png", "rarity": "legendary" }
         ]
     },
     {
@@ -721,87 +203,20 @@ const GAME_CONFIG = [
         "price": 29,
         "category": "bundles",
         "img": "img/money_case.png",
-        "chances": {
-            "consumer": 65,
-            "common": 21,
-            "rare": 10,
-            "epic": 2,
-            "legendary": 0.8,
-            "mythical": 0.2
-        },
+        "chances": { "consumer": 65, "common": 21, "rare": 10, "epic": 2, "legendary": 0.8, "mythical": 0.2 },
         "items": [
-            {
-                "name": "50.000 Вирт",
-                "price": 5,
-                "img": "img/money.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "100.000 Вирт",
-                "price": 10,
-                "img": "img/money.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "200.000 Вирт",
-                "price": 20,
-                "img": "img/money.png",
-                "rarity": "common"
-            },
-            {
-                "name": "300.000 Вирт",
-                "price": 30,
-                "img": "img/money.png",
-                "rarity": "common"
-            },
-            {
-                "name": "500.000 Вирт",
-                "price": 50,
-                "img": "img/money.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "1.000.000 Вирт",
-                "price": 100,
-                "img": "img/money.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "1.500.000 Вирт",
-                "price": 150,
-                "img": "img/money.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "3.000.000 Вирт",
-                "price": 300,
-                "img": "img/money.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "5.000.000 Вирт",
-                "price": 500,
-                "img": "img/money.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "10.000.000 Вирт",
-                "price": 1000,
-                "img": "img/money.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "25.000.000 Вирт",
-                "price": 2500,
-                "img": "img/money.png",
-                "rarity": "mythical"
-            },
-            {
-                "name": "50.000.000 Вирт",
-                "price": 5000,
-                "img": "img/money.png",
-                "rarity": "mythical"
-            }
+            { "name": "50.000 Вирт", "price": 5, "img": "img/money.png", "rarity": "consumer" },
+            { "name": "100.000 Вирт", "price": 10, "img": "img/money.png", "rarity": "consumer" },
+            { "name": "200.000 Вирт", "price": 20, "img": "img/money.png", "rarity": "common" },
+            { "name": "300.000 Вирт", "price": 30, "img": "img/money.png", "rarity": "common" },
+            { "name": "500.000 Вирт", "price": 50, "img": "img/money.png", "rarity": "rare" },
+            { "name": "1.000.000 Вирт", "price": 100, "img": "img/money.png", "rarity": "rare" },
+            { "name": "1.500.000 Вирт", "price": 150, "img": "img/money.png", "rarity": "epic" },
+            { "name": "3.000.000 Вирт", "price": 300, "img": "img/money.png", "rarity": "epic" },
+            { "name": "5.000.000 Вирт", "price": 500, "img": "img/money.png", "rarity": "legendary" },
+            { "name": "10.000.000 Вирт", "price": 1000, "img": "img/money.png", "rarity": "legendary" },
+            { "name": "25.000.000 Вирт", "price": 2500, "img": "img/money.png", "rarity": "mythical" },
+            { "name": "50.000.000 Вирт", "price": 5000, "img": "img/money.png", "rarity": "mythical" }
         ]
     },
     {
@@ -810,87 +225,20 @@ const GAME_CONFIG = [
         "price": 29,
         "category": "bundles",
         "img": "img/bc_case.png",
-        "chances": {
-            "consumer": 60,
-            "common": 21,
-            "rare": 15,
-            "epic": 2,
-            "legendary": 0.8,
-            "mythical": 0.2
-        },
+        "chances": { "consumer": 60, "common": 21, "rare": 15, "epic": 2, "legendary": 0.8, "mythical": 0.2 },
         "items": [
-            {
-                "name": "5 BC",
-                "price": 5,
-                "img": "img/bc.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "10 BC",
-                "price": 10,
-                "img": "img/bc.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "20 BC",
-                "price": 20,
-                "img": "img/bc.png",
-                "rarity": "common"
-            },
-            {
-                "name": "30 BC",
-                "price": 30,
-                "img": "img/bc.png",
-                "rarity": "common"
-            },
-            {
-                "name": "50 BC",
-                "price": 50,
-                "img": "img/bc.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "100 BC",
-                "price": 100,
-                "img": "img/bc.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "150 BC",
-                "price": 150,
-                "img": "img/bc.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "300 BC",
-                "price": 300,
-                "img": "img/bc.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "500 BC",
-                "price": 500,
-                "img": "img/bc.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "1000 BC",
-                "price": 1000,
-                "img": "img/bc.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "2500 BC",
-                "price": 2500,
-                "img": "img/bc.png",
-                "rarity": "mythical"
-            },
-            {
-                "name": "5000 BC",
-                "price": 5000,
-                "img": "https://i.imgur.com/T1peEpa_d.png?maxwidth=520&shape=thumb&fidelity=high",
-                "rarity": "mythical"
-            }
+            { "name": "5 BC", "price": 5, "img": "img/bc.png", "rarity": "consumer" },
+            { "name": "10 BC", "price": 10, "img": "img/bc.png", "rarity": "consumer" },
+            { "name": "20 BC", "price": 20, "img": "img/bc.png", "rarity": "common" },
+            { "name": "30 BC", "price": 30, "img": "img/bc.png", "rarity": "common" },
+            { "name": "50 BC", "price": 50, "img": "img/bc.png", "rarity": "rare" },
+            { "name": "100 BC", "price": 100, "img": "img/bc.png", "rarity": "rare" },
+            { "name": "150 BC", "price": 150, "img": "img/bc.png", "rarity": "epic" },
+            { "name": "300 BC", "price": 300, "img": "img/bc.png", "rarity": "epic" },
+            { "name": "500 BC", "price": 500, "img": "img/bc.png", "rarity": "legendary" },
+            { "name": "1000 BC", "price": 1000, "img": "img/bc.png", "rarity": "legendary" },
+            { "name": "2500 BC", "price": 2500, "img": "img/bc.png", "rarity": "mythical" },
+            { "name": "5000 BC", "price": 5000, "img": "https://i.imgur.com/T1peEpa_d.png?maxwidth=520&shape=thumb&fidelity=high", "rarity": "mythical" }
         ]
     },
     {
@@ -899,27 +247,10 @@ const GAME_CONFIG = [
         "price": 39,
         "category": "risk",
         "img": "img/allorno5_case.png",
-        "chances": {
-            "consumer": 0,
-            "common": 99.8,
-            "rare": 0,
-            "epic": 0,
-            "legendary": 0.2,
-            "mythical": 0
-        },
+        "chances": { "consumer": 0, "common": 99.8, "rare": 0, "epic": 0, "legendary": 0.2, "mythical": 0 },
         "items": [
-            {
-                "name": "Рюкзак «Мопс»",
-                "price": 19,
-                "img": "img/mops.png",
-                "rarity": "common"
-            },
-            {
-                "name": "Mercedes AMG GT-R",
-                "price": 1999,
-                "img": "img/gtr.png",
-                "rarity": "legendary"
-            }
+            { "name": "Рюкзак «Мопс»", "price": 19, "img": "img/mops.png", "rarity": "common" },
+            { "name": "Mercedes AMG GT-R", "price": 1999, "img": "img/gtr.png", "rarity": "legendary" }
         ]
     },
     {
@@ -928,123 +259,26 @@ const GAME_CONFIG = [
         "price": 89,
         "category": "bundles",
         "img": "img/accesories_case.png",
-        "chances": {
-            "consumer": 65,
-            "common": 26,
-            "rare": 6,
-            "epic": 3,
-            "legendary": 1,
-            "mythical": 0
-        },
+        "chances": { "consumer": 65, "common": 26, "rare": 6, "epic": 3, "legendary": 1, "mythical": 0 },
         "items": [
-            {
-                "name": "Кейс Серый",
-                "price": 250,
-                "img": "img/graycase.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Маска Дали",
-                "price": 29,
-                "img": "img/dali.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "Очки «Street»",
-                "price": 19,
-                "img": "img/streetglass.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "Корона Короля",
-                "price": 99,
-                "img": "img/korona.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Рюкзак «Мопс»",
-                "price": 79,
-                "img": "img/mops.png",
-                "rarity": "common"
-            },
-            {
-                "name": "Рюкзак Боксера",
-                "price": 1699,
-                "img": "img/boxer.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Водяной Пистолет",
-                "price": 1399,
-                "img": "img/vodyanoi.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Голова Коня",
-                "price": 399,
-                "img": "img/konya.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Маска Ведущего",
-                "price": 249,
-                "img": "img/squid.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Крылья Демона",
-                "price": 149,
-                "img": "img/demonfly.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Демонические Рожки",
-                "price": 99,
-                "img": "img/demon.png",
-                "rarity": "common"
-            },
-            {
-                "name": "Маска Чилл",
-                "price": 1299,
-                "img": "img/chill.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "BR VISUALS MAX",
-                "price": 69,
-                "img": "img/vr.png",
-                "rarity": "common"
-            },
-            {
-                "name": "Новогодний Топорик",
-                "price": 249,
-                "img": "img/newyearaxe.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Побитые Очки",
-                "price": 10,
-                "img": "img/brokeglass.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "Шлем MechaCat",
-                "price": 49,
-                "img": "img/mechacat.png",
-                "rarity": "common"
-            },
-            {
-                "name": "Кейс Снеговик",
-                "price": 149,
-                "img": "img/casesnegovik.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Пакет",
-                "price": 49,
-                "img": "img/packet.png",
-                "rarity": "consumer"
-            }
+            { "name": "Кейс Серый", "price": 250, "img": "img/graycase.png", "rarity": "epic" },
+            { "name": "Маска Дали", "price": 29, "img": "img/dali.png", "rarity": "consumer" },
+            { "name": "Очки «Street»", "price": 19, "img": "img/streetglass.png", "rarity": "consumer" },
+            { "name": "Корона Короля", "price": 99, "img": "img/korona.png", "rarity": "rare" },
+            { "name": "Рюкзак «Мопс»", "price": 79, "img": "img/mops.png", "rarity": "common" },
+            { "name": "Рюкзак Боксера", "price": 1699, "img": "img/boxer.png", "rarity": "legendary" },
+            { "name": "Водяной Пистолет", "price": 1399, "img": "img/vodyanoi.png", "rarity": "legendary" },
+            { "name": "Голова Коня", "price": 399, "img": "img/konya.png", "rarity": "epic" },
+            { "name": "Маска Ведущего", "price": 249, "img": "img/squid.png", "rarity": "epic" },
+            { "name": "Крылья Демона", "price": 149, "img": "img/demonfly.png", "rarity": "rare" },
+            { "name": "Демонические Рожки", "price": 99, "img": "img/demon.png", "rarity": "common" },
+            { "name": "Маска Чилл", "price": 1299, "img": "img/chill.png", "rarity": "legendary" },
+            { "name": "BR VISUALS MAX", "price": 69, "img": "img/vr.png", "rarity": "common" },
+            { "name": "Новогодний Топорик", "price": 249, "img": "img/newyearaxe.png", "rarity": "epic" },
+            { "name": "Побитые Очки", "price": 10, "img": "img/brokeglass.png", "rarity": "consumer" },
+            { "name": "Шлем MechaCat", "price": 49, "img": "img/mechacat.png", "rarity": "common" },
+            { "name": "Кейс Снеговик", "price": 149, "img": "img/casesnegovik.png", "rarity": "rare" },
+            { "name": "Пакет", "price": 49, "img": "img/packet.png", "rarity": "consumer" }
         ]
     },
     {
@@ -1053,195 +287,38 @@ const GAME_CONFIG = [
         "price": 189,
         "category": "bundles",
         "img": "img/skin_case.png",
-        "chances": {
-            "consumer": 65,
-            "common": 19,
-            "rare": 11,
-            "epic": 4.5,
-            "legendary": 0.5,
-            "mythical": 0
-        },
+        "chances": { "consumer": 65, "common": 19, "rare": 11, "epic": 4.5, "legendary": 0.5, "mythical": 0 },
         "items": [
-            {
-                "name": "Фирменная одежда",
-                "price": 14999,
-                "img": "img/admin.png",
-                "rarity": "mythical"
-            },
-            {
-                "name": "Скелетон",
-                "price": 2999,
-                "img": "img/skeleton.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Известный",
-                "price": 2499,
-                "img": "img/vlada4.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Господин",
-                "price": 2499,
-                "img": "img/putin.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Известный",
-                "price": 2499,
-                "img": "img/buster.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Злой",
-                "price": 1799,
-                "img": "img/ono.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Известный",
-                "price": 1249,
-                "img": "img/ronaldo.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Известный",
-                "price": 1249,
-                "img": "img/litvin.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Илон Маск",
-                "price": 1249,
-                "img": "img/elonmusk.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Игрок 456",
-                "price": 749,
-                "img": "img/456.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Мужчина",
-                "price": 2499,
-                "img": "img/man.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Дед Мороз",
-                "price": 1249,
-                "img": "img/santa.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Иван Блогер",
-                "price": 2499,
-                "img": "img/zolo.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Блогер",
-                "price": 2499,
-                "img": "img/nekoglai.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Поззи",
-                "price": 1249,
-                "img": "img/pozzi.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Пчелка",
-                "price": 399,
-                "img": "img/pchelka.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Женщина",
-                "price": 1249,
-                "img": "img/woman.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Посейдон",
-                "price": 1499,
-                "img": "img/poseydon.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Борик",
-                "price": 749,
-                "img": "img/borik.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Одежда 29",
-                "price": 9,
-                "img": "img/29.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "Защитница закона",
-                "price": 59,
-                "img": "img/zakon.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "Иван Береговой",
-                "price": 79,
-                "img": "img/beregovoy.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "Королева Манипуляций",
-                "price": 149,
-                "img": "img/manipulyaciy.png",
-                "rarity": "common"
-            },
-            {
-                "name": "Бабушка Серафима",
-                "price": 79,
-                "img": "img/serafima.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "Бомж",
-                "price": 9,
-                "img": "img/bomj.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "Емеля",
-                "price": 299,
-                "img": "img/emelya.png",
-                "rarity": "common"
-            },
-            {
-                "name": "Пузатый",
-                "price": 19,
-                "img": "img/pyzatiy.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "Рыбачка",
-                "price": 399,
-                "img": "img/ribachka.png",
-                "rarity": "common"
-            },
-            {
-                "name": "Хоуми",
-                "price": 349,
-                "img": "img/homie.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Опасный",
-                "price": 399,
-                "img": "img/dangerman.png",
-                "rarity": "rare"
-            }
+            { "name": "Фирменная одежда", "price": 14999, "img": "img/admin.png", "rarity": "mythical" },
+            { "name": "Скелетон", "price": 2999, "img": "img/skeleton.png", "rarity": "legendary" },
+            { "name": "Известный", "price": 2499, "img": "img/vlada4.png", "rarity": "legendary" },
+            { "name": "Господин", "price": 2499, "img": "img/putin.png", "rarity": "legendary" },
+            { "name": "Известный", "price": 2499, "img": "img/buster.png", "rarity": "legendary" },
+            { "name": "Злой", "price": 1799, "img": "img/ono.png", "rarity": "legendary" },
+            { "name": "Известный", "price": 1249, "img": "img/ronaldo.png", "rarity": "epic" },
+            { "name": "Известный", "price": 1249, "img": "img/litvin.png", "rarity": "epic" },
+            { "name": "Илон Маск", "price": 1249, "img": "img/elonmusk.png", "rarity": "epic" },
+            { "name": "Игрок 456", "price": 749, "img": "img/456.png", "rarity": "epic" },
+            { "name": "Мужчина", "price": 2499, "img": "img/man.png", "rarity": "legendary" },
+            { "name": "Дед Мороз", "price": 1249, "img": "img/santa.png", "rarity": "epic" },
+            { "name": "Иван Блогер", "price": 2499, "img": "img/zolo.png", "rarity": "legendary" },
+            { "name": "Блогер", "price": 2499, "img": "img/nekoglai.png", "rarity": "legendary" },
+            { "name": "Поззи", "price": 1249, "img": "img/pozzi.png", "rarity": "epic" },
+            { "name": "Пчелка", "price": 399, "img": "img/pchelka.png", "rarity": "rare" },
+            { "name": "Женщина", "price": 1249, "img": "img/woman.png", "rarity": "epic" },
+            { "name": "Посейдон", "price": 1499, "img": "img/poseydon.png", "rarity": "legendary" },
+            { "name": "Борик", "price": 749, "img": "img/borik.png", "rarity": "epic" },
+            { "name": "Одежда 29", "price": 9, "img": "img/29.png", "rarity": "consumer" },
+            { "name": "Защитница закона", "price": 59, "img": "img/zakon.png", "rarity": "consumer" },
+            { "name": "Иван Береговой", "price": 79, "img": "img/beregovoy.png", "rarity": "consumer" },
+            { "name": "Королева Манипуляций", "price": 149, "img": "img/manipulyaciy.png", "rarity": "common" },
+            { "name": "Бабушка Серафима", "price": 79, "img": "img/serafima.png", "rarity": "consumer" },
+            { "name": "Бомж", "price": 9, "img": "img/bomj.png", "rarity": "consumer" },
+            { "name": "Емеля", "price": 299, "img": "img/emelya.png", "rarity": "common" },
+            { "name": "Пузатый", "price": 19, "img": "img/pyzatiy.png", "rarity": "consumer" },
+            { "name": "Рыбачка", "price": 399, "img": "img/ribachka.png", "rarity": "common" },
+            { "name": "Хоуми", "price": 349, "img": "img/homie.png", "rarity": "rare" },
+            { "name": "Опасный", "price": 399, "img": "img/dangerman.png", "rarity": "rare" }
         ]
     },
     {
@@ -1250,27 +327,10 @@ const GAME_CONFIG = [
         "price": 49,
         "category": "risk",
         "img": "img/allorno10_case.png",
-        "chances": {
-            "consumer": 0,
-            "common": 0,
-            "rare": 99.75,
-            "epic": 0,
-            "legendary": 0.25,
-            "mythical": 0
-        },
+        "chances": { "consumer": 0, "common": 0, "rare": 99.75, "epic": 0, "legendary": 0.25, "mythical": 0 },
         "items": [
-            {
-                "name": "Маска «Дали»",
-                "price": 29,
-                "img": "img/dali.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Lamborghini Urus",
-                "price": 3999,
-                "img": "img/urus.png",
-                "rarity": "legendary"
-            }
+            { "name": "Маска «Дали»", "price": 29, "img": "img/dali.png", "rarity": "rare" },
+            { "name": "Lamborghini Urus", "price": 3999, "img": "img/urus.png", "rarity": "legendary" }
         ]
     },
     {
@@ -1279,87 +339,20 @@ const GAME_CONFIG = [
         "price": 2499,
         "category": "container",
         "img": "img/dubai_case.png",
-        "chances": {
-            "consumer": 0,
-            "common": 0,
-            "rare": 96,
-            "epic": 3,
-            "legendary": 0.95,
-            "mythical": 0.05
-        },
+        "chances": { "consumer": 0, "common": 0, "rare": 96, "epic": 3, "legendary": 0.95, "mythical": 0.05 },
         "items": [
-            {
-                "name": "Lamborghini Urus",
-                "price": 3799,
-                "img": "img/urus.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Rolls-Royce Phantom",
-                "price": 11999,
-                "img": "img/senat.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Mercedes-Benz G63 AMG",
-                "price": 5499,
-                "img": "img/g63.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Lamborghini Aventador S",
-                "price": 4999,
-                "img": "img/aventador.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "GAZ 69",
-                "price": 39999,
-                "img": "img/gaz69.png",
-                "rarity": "mythical"
-            },
-            {
-                "name": "Mercedes-Benz GT63s",
-                "price": 1199,
-                "img": "img/gt63s.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Chevrolet Camaro ZL1",
-                "price": 999,
-                "img": "img/camaro.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Kawasaki Ninja H2R",
-                "price": 2499,
-                "img": "img/supersport.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "BMW M4 F84",
-                "price": 739,
-                "img": "img/m4f84.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Mercedes-Benz AMG GT-R",
-                "price": 3299,
-                "img": "img/gtr.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Mercedes-Benz G63 6x6",
-                "price": 39999,
-                "img": "img/g636x6.png",
-                "rarity": "mythical"
-            },
-            {
-                "name": "Mercedes-Benz Maybach S650",
-                "price": 6199,
-                "img": "img/maybach.png",
-                "rarity": "legendary"
-            }
+            { "name": "Lamborghini Urus", "price": 3799, "img": "img/urus.png", "rarity": "epic" },
+            { "name": "Rolls-Royce Phantom", "price": 11999, "img": "img/senat.png", "rarity": "legendary" },
+            { "name": "Mercedes-Benz G63 AMG", "price": 5499, "img": "img/g63.png", "rarity": "legendary" },
+            { "name": "Lamborghini Aventador S", "price": 4999, "img": "img/aventador.png", "rarity": "epic" },
+            { "name": "GAZ 69", "price": 39999, "img": "img/gaz69.png", "rarity": "mythical" },
+            { "name": "Mercedes-Benz GT63s", "price": 1199, "img": "img/gt63s.png", "rarity": "rare" },
+            { "name": "Chevrolet Camaro ZL1", "price": 999, "img": "img/camaro.png", "rarity": "rare" },
+            { "name": "Kawasaki Ninja H2R", "price": 2499, "img": "img/supersport.png", "rarity": "epic" },
+            { "name": "BMW M4 F84", "price": 739, "img": "img/m4f84.png", "rarity": "rare" },
+            { "name": "Mercedes-Benz AMG GT-R", "price": 3299, "img": "img/gtr.png", "rarity": "epic" },
+            { "name": "Mercedes-Benz G63 6x6", "price": 39999, "img": "img/g636x6.png", "rarity": "mythical" },
+            { "name": "Mercedes-Benz Maybach S650", "price": 6199, "img": "img/maybach.png", "rarity": "legendary" }
         ]
     },
     {
@@ -1368,93 +361,21 @@ const GAME_CONFIG = [
         "price": 1199,
         "category": "container",
         "img": "img/gernany_case.png",
-        "chances": {
-            "consumer": 0,
-            "common": 75,
-            "rare": 20,
-            "epic": 4,
-            "legendary": 0.92,
-            "mythical": 0.08
-        },
+        "chances": { "consumer": 0, "common": 75, "rare": 20, "epic": 4, "legendary": 0.92, "mythical": 0.08 },
         "items": [
-            {
-                "name": "Mercedes-Benz A45 AMG",
-                "price": 699,
-                "img": "img/a45amg.png",
-                "rarity": "common"
-            },
-            {
-                "name": "Lexus RCF",
-                "price": 849,
-                "img": "img/lexusRCF.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Volvo XC90",
-                "price": 1055,
-                "img": "img/xc90.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "BMW Z4 M40i",
-                "price": 1199,
-                "img": "img/z4m40i.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "BMW M5 F10",
-                "price": 1249,
-                "img": "img/m5f10.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Cadilac Escalade",
-                "price": 1799,
-                "img": "img/Cescalade.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Tayota Land Cruiser 200",
-                "price": 1999,
-                "img": "img/TLcruiser200.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "BMW M5 F90",
-                "price": 2399,
-                "img": "img/m5f90.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Range Rover SVR",
-                "price": 2499,
-                "img": "img/rrover.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Mercedes-Benz CLS63 AMG",
-                "price": 2599,
-                "img": "img/cls63.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "Infiniti FX50S",
-                "price": 899,
-                "img": "img/fx50s.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Nissan Rathfinder 2022",
-                "price": 1055,
-                "img": "img/pathfinder.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Mercedes-Benz AMG GT-R",
-                "price": 3299,
-                "img": "img/gtr.png",
-                "rarity": "legendary"
-            }
+            { "name": "Mercedes-Benz A45 AMG", "price": 699, "img": "img/a45amg.png", "rarity": "common" },
+            { "name": "Lexus RCF", "price": 849, "img": "img/lexusRCF.png", "rarity": "rare" },
+            { "name": "Volvo XC90", "price": 1055, "img": "img/xc90.png", "rarity": "rare" },
+            { "name": "BMW Z4 M40i", "price": 1199, "img": "img/z4m40i.png", "rarity": "rare" },
+            { "name": "BMW M5 F10", "price": 1249, "img": "img/m5f10.png", "rarity": "epic" },
+            { "name": "Cadilac Escalade", "price": 1799, "img": "img/Cescalade.png", "rarity": "epic" },
+            { "name": "Tayota Land Cruiser 200", "price": 1999, "img": "img/TLcruiser200.png", "rarity": "epic" },
+            { "name": "BMW M5 F90", "price": 2399, "img": "img/m5f90.png", "rarity": "legendary" },
+            { "name": "Range Rover SVR", "price": 2499, "img": "img/rrover.png", "rarity": "legendary" },
+            { "name": "Mercedes-Benz CLS63 AMG", "price": 2599, "img": "img/cls63.png", "rarity": "legendary" },
+            { "name": "Infiniti FX50S", "price": 899, "img": "img/fx50s.png", "rarity": "rare" },
+            { "name": "Nissan Rathfinder 2022", "price": 1055, "img": "img/pathfinder.png", "rarity": "rare" },
+            { "name": "Mercedes-Benz AMG GT-R", "price": 3299, "img": "img/gtr.png", "rarity": "legendary" }
         ]
     },
     {
@@ -1463,105 +384,23 @@ const GAME_CONFIG = [
         "price": 79,
         "category": "container",
         "img": "img/russia_case.png",
-        "chances": {
-            "consumer": 64,
-            "common": 26,
-            "rare": 7,
-            "epic": 2.8,
-            "legendary": 0.2,
-            "mythical": 0.08
-        },
+        "chances": { "consumer": 64, "common": 26, "rare": 7, "epic": 2.8, "legendary": 0.2, "mythical": 0.08 },
         "items": [
-            {
-                "name": "GAZ Volga",
-                "price": 23,
-                "img": "img/volga.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "VAZ 2106",
-                "price": 24,
-                "img": "img/2106.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "VAZ 2107",
-                "price": 39,
-                "img": "img/2107.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "VAZ 2112",
-                "price": 52,
-                "img": "img/2112.png",
-                "rarity": "common"
-            },
-            {
-                "name": "VAZ 2115",
-                "price": 55,
-                "img": "img/2115.png",
-                "rarity": "common"
-            },
-            {
-                "name": "VAZ 2170",
-                "price": 75,
-                "img": "img/priora.png",
-                "rarity": "common"
-            },
-            {
-                "name": "Niva Urban",
-                "price": 90,
-                "img": "img/niva.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "UAZ Hunter",
-                "price": 90,
-                "img": "img/UAZ.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "ЛуАЗ 969",
-                "price": 144,
-                "img": "img/LuAZ.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Lada Vesta",
-                "price": 174,
-                "img": "img/vesta.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Lada Vesta SW",
-                "price": 174,
-                "img": "img/Vesta SW.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Mercedes-Benz A45 AMG",
-                "price": 399,
-                "img": "img/a45amg.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "BMW X5",
-                "price": 432,
-                "img": "img/x5.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "BMW M5 E60",
-                "price": 499,
-                "img": "img/m5e60.png",
-                "rarity": "legendary"
-            },
-            {
-                "name": "UAZ Patriot",
-                "price": 299,
-                "img": "img/patriot.png",
-                "rarity": "epic"
-            }
+            { "name": "GAZ Volga", "price": 23, "img": "img/volga.png", "rarity": "consumer" },
+            { "name": "VAZ 2106", "price": 24, "img": "img/2106.png", "rarity": "consumer" },
+            { "name": "VAZ 2107", "price": 39, "img": "img/2107.png", "rarity": "consumer" },
+            { "name": "VAZ 2112", "price": 52, "img": "img/2112.png", "rarity": "common" },
+            { "name": "VAZ 2115", "price": 55, "img": "img/2115.png", "rarity": "common" },
+            { "name": "VAZ 2170", "price": 75, "img": "img/priora.png", "rarity": "common" },
+            { "name": "Niva Urban", "price": 90, "img": "img/niva.png", "rarity": "rare" },
+            { "name": "UAZ Hunter", "price": 90, "img": "img/UAZ.png", "rarity": "rare" },
+            { "name": "ЛуАЗ 969", "price": 144, "img": "img/LuAZ.png", "rarity": "epic" },
+            { "name": "Lada Vesta", "price": 174, "img": "img/vesta.png", "rarity": "epic" },
+            { "name": "Lada Vesta SW", "price": 174, "img": "img/Vesta SW.png", "rarity": "epic" },
+            { "name": "Mercedes-Benz A45 AMG", "price": 399, "img": "img/a45amg.png", "rarity": "legendary" },
+            { "name": "BMW X5", "price": 432, "img": "img/x5.png", "rarity": "legendary" },
+            { "name": "BMW M5 E60", "price": 499, "img": "img/m5e60.png", "rarity": "legendary" },
+            { "name": "UAZ Patriot", "price": 299, "img": "img/patriot.png", "rarity": "epic" }
         ]
     },
     {
@@ -1570,60 +409,16 @@ const GAME_CONFIG = [
         "price": 599,
         "category": "container",
         "img": "img/yacht_case.png",
-        "chances": {
-            "consumer": 75,
-            "common": 15,
-            "rare": 4,
-            "epic": 0.35,
-            "legendary": 0,
-            "mythical": 0
-        },
+        "chances": { "consumer": 75, "common": 15, "rare": 4, "epic": 0.35, "legendary": 0, "mythical": 0 },
         "items": [
-            {
-                "name": "Гидроцикл",
-                "price": 149,
-                "img": "img/hydrocycle.png",
-                "rarity": "consumer"
-            },
-            {
-                "name": "Ocean Yacht",
-                "price": 19999,
-                "img": "img/oceanyacht.png",
-                "rarity": "mythical"
-            },
-            {
-                "name": "Моторная лодка",
-                "price": 599,
-                "img": "img/motornaya.png",
-                "rarity": "common"
-            },
-            {
-                "name": "Speedy Yacht",
-                "price": 999,
-                "img": "img/speedy.png",
-                "rarity": "rare"
-            },
-            {
-                "name": "Marine Yach",
-                "price": 3749,
-                "img": "img/Marine.png",
-                "rarity": "epic"
-            },
-            {
-                "name": "Sea Yacht",
-                "price": 9999,
-                "img": "img/sea.png",
-                "rarity": "legendary"
-            }
+            { "name": "Гидроцикл", "price": 149, "img": "img/hydrocycle.png", "rarity": "consumer" },
+            { "name": "Ocean Yacht", "price": 19999, "img": "img/oceanyacht.png", "rarity": "mythical" },
+            { "name": "Моторная лодка", "price": 599, "img": "img/motornaya.png", "rarity": "common" },
+            { "name": "Speedy Yacht", "price": 999, "img": "img/speedy.png", "rarity": "rare" },
+            { "name": "Marine Yach", "price": 3749, "img": "img/Marine.png", "rarity": "epic" },
+            { "name": "Sea Yacht", "price": 9999, "img": "img/sea.png", "rarity": "legendary" }
         ]
     }
-];
-
-// Локальные промокоды (статика)
-const LOCAL_PROMOS = [
-    { code: "FREE", val: 20, limit: 1 },
-    { code: "START", val: 50, limit: 1 },
-    { code: "BLACK", val: 15, limit: 1 }
 ];
 
 const DEFAULT_USER = { 
@@ -1641,7 +436,7 @@ let ALL_ITEMS_POOL = [], contractSelection = [];
 document.addEventListener('DOMContentLoaded', () => {
     try { if(tg) tg.expand(); } catch(e) {}
     
-    // Загрузка админского конфига
+    // Загрузка админского конфига для кейсов
     const adminCases = localStorage.getItem('admin_game_config_v7');
     if(adminCases) try { GAME_CONFIG.length=0; JSON.parse(adminCases).forEach(x=>GAME_CONFIG.push(x)); } catch(e){}
     
@@ -1716,7 +511,6 @@ async function initUserSessionSupabase() {
         };
         sb.from('users').update({ username, first_name }).eq('telegram_id', uid).then();
     } else {
-        // Регистрация
         let refId = null;
         if (tg.initDataUnsafe.start_param && tg.initDataUnsafe.start_param.startsWith("ref_")) {
             refId = Number(tg.initDataUnsafe.start_param.split('_')[1]);
@@ -1746,68 +540,61 @@ async function saveUser() {
 // --- SHOP LOGIC ---
 function buyPack(amount) {
     if(!amount || amount < 10) return showNotify("Минимум 10 ₽", "error");
-    
-    // ЗАГЛУШКА ОПЛАТЫ
-    // В будущем замени это на реальный URL платежки
     const paymentUrl = `${PAYMENT_BASE_URL}?sum=${amount}&uid=${user.uid}`;
-    
     tg.openLink(paymentUrl);
     showNotify("Переход к оплате...", "info");
 }
 
 function payCustomAmount() {
-    // Вставь сюда прямую ссылку на свой лот или профиль
     const url = "https://funpay.com/lots/offer?id=64078468"; 
-    
-    // Открываем в новой вкладке
     window.open(url, '_blank');
 }
 
 // --- PROMO CODE LOGIC ---
-// --- PROMO CODE LOGIC ---
 async function activatePromo() {
     const input = document.getElementById('promo-input');
-    const code = input.value.trim();
+    const code = input.value.trim().toUpperCase(); // Переводим в верхний регистр
     if(!code) return showNotify("Введите код", "error");
     if(user.activatedPromos.includes(code)) return showNotify("Вы уже активировали этот код", "error");
 
-    // 1. Локальные коды (многоразовые, но 1 раз на юзера)
-    const local = LOCAL_PROMOS.find(p => p.code === code);
-    if(local) {
-        applyPromo(local.val, code);
+    showNotify("Проверка...", "info");
+
+    // 1. Проверяем таблицу админских (многоразовых) промокодов
+    const { data: adminData, error: adminErr } = await sb.from('admin_promos').select('*').eq('code', code).eq('is_active', true).maybeSingle();
+    
+    if (adminData) {
+        applyPromo(adminData.reward, code);
         input.value = "";
         return;
     }
 
-    // 2. БД (Одноразовые с FunPay)
-    showNotify("Проверка...", "info");
-    const { data, error } = await sb.from('promocodes').select('*').eq('code', code).eq('is_active', true).maybeSingle();
+    // 2. Если в админских нет, проверяем таблицу FunPay (одноразовые)
+    const { data: fpData, error: fpErr } = await sb.from('promocodes').select('*').eq('code', code).eq('is_active', true).maybeSingle();
     
-    if(data) {
-        // Если это одноразовый промокод (limit = 1), деактивируем его и записываем кто активировал
-        if (data.limit === 1) {
+    if (fpData) {
+        // Если это одноразовый (limit = 1), отключаем его
+        if (fpData.limit === 1) {
             const { error: updateError } = await sb.from('promocodes')
                 .update({ 
-                    is_active: false, // Отключаем, чтобы больше никто не ввел
-                    used_by_id: user.uid, // Пишем ID игрока
-                    used_by_username: user.tgUsername || user.name // Пишем Ник игрока
+                    is_active: false, 
+                    used_by_id: user.uid, 
+                    used_by_username: user.tgUsername || user.name 
                 })
-                .eq('id', data.id)
-                .eq('is_active', true); // Защита от двойного нажатия
+                .eq('id', fpData.id)
+                .eq('is_active', true); // Защита от двойного клика
 
             if (updateError) {
                 return showNotify("Ошибка: промокод уже активирован кем-то другим", "error");
             }
-        } else if (data.limit === 0) {
-            // Если это бесконечный промокод (limit = 0), просто фиксируем (если нужно)
-            // Но мы ничего не отключаем.
         }
 
-        applyPromo(data.reward, code);
+        applyPromo(fpData.reward, code);
         input.value = "";
-    } else {
-        showNotify("Код не найден или уже использован", "error");
+        return;
     }
+
+    // 3. Код не найден ни в одной из таблиц
+    showNotify("Код не найден или уже использован", "error");
 }
 
 function applyPromo(amount, code) {
@@ -1944,7 +731,6 @@ async function startRouletteSequence() {
 }
 
 function getWinItem(c) { 
-    // Шансы (если не заданы - стандартные)
     const weights = c.chances || { consumer: 50, common: 30, rare: 15, epic: 4, legendary: 1, mythical: 0 }; 
     const rand = Math.random() * 100; let sum = 0; let rar = 'consumer'; 
     for(let r in weights) { sum += weights[r]; if(rand <= sum) { rar = r; break; } } 
@@ -1968,7 +754,6 @@ function showWin(items) {
     const winContent = document.getElementById('win-modal-content'); winContent.className = 'modal-glass center-modal win-modal ' + bestRarityName; 
     document.getElementById('win-total-price').innerText = sum; document.getElementById('modal-win').style.display = 'flex'; safeHaptic('success'); 
     
-    // LOG TO DB
     items.forEach(i => sb.from('live_drops').insert([{ user_name: user.name, item_name: i.name, item_rarity: i.rarity, item_img: i.img }]).then());
 }
 
@@ -2027,4 +812,3 @@ function copyRefLink() {
     const link = `https://t.me/blackrussiacases_bot/app?startapp=ref_${user.uid}`;
     navigator.clipboard.writeText(link); showNotify("Скопировано!", "success");
 }
-

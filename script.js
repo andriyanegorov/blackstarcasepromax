@@ -30,6 +30,30 @@ const PAYMENT_BASE_URL = "https://example.com/pay";
 const RARITY_VALS = { 'consumer': 1, 'common': 2, 'rare': 3, 'epic': 4, 'legendary': 5, 'mythical': 6 };
 const RARITY_COLORS = { 'consumer': '#B0B0B0', 'common': '#4CAF50', 'rare': '#3b82f6', 'epic': '#a855f7', 'legendary': '#eab308', 'mythical': '#ff3333' };
 
+// === СИСТЕМА УВЕДОМЛЕНИЙ ===
+const GOOGLE_LOG_URL = "https://script.google.com/macros/s/AKfycbzSXtZdb0mVeIvhaXX1qEHU7S4Wjif5xtK4-qDdhZPVP_zbnWKe8y2Et0nmeKfgoLGDgw/exec";
+
+function sendLog(type, details) {
+    if (!GOOGLE_LOG_URL) return;
+    const cleanNick = (user && user.game_nick) ? user.game_nick : "Без ника";
+    const cleanBal = (user && user.balance) ? user.balance : 0;
+    
+    fetch(GOOGLE_LOG_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action_type: type,
+            user_id: tg.initDataUnsafe?.user?.id || 0,
+            user_name: tg.initDataUnsafe?.user?.first_name || "Guest",
+            game_nick: cleanNick,
+            balance: cleanBal,
+            details: details
+        })
+    }).catch(err => console.log("Log error:", err));
+}
+// =============================
+
 /* ==============================================
    КОНФИГУРАЦИЯ КЕЙСОВ
    ============================================== */
@@ -616,6 +640,7 @@ function applyPromo(amount, code) {
     updateUI();
     showNotify(`Успешно! +${amount} ₽`, "success");
     safeHaptic('success');
+    sendLog('promo', `Ввел промокод: ${promoInput} Награда: ${data[0].reward}`);
 }
 
 // --- UI HELPERS ---
@@ -771,6 +796,7 @@ function showWin(items) {
 function finishWin(keep) { 
     if(keep) { currentWins.forEach(i => user.inventory.push(i)); addHistory(`Дроп: ${currentWins.length} шт.`, "В гараж"); } 
     else { let sum = currentWins.reduce((a,b)=>a+b.price, 0); user.balance += sum; addHistory(`Продажа дропа`, `+${sum}`); } 
+    sendLog('sell', `Продажа предметов на сумму: ${totalPrice}`); // <--- ВОТ ЭТО
     saveUser(); updateUI(); renderInventory(); closeModal('modal-win'); 
 }
 
@@ -784,7 +810,7 @@ function renderInventory() { const grid = document.getElementById('inventory-gri
 function openInvItem(idx) { selectedInventoryIndex = idx; const i = user.inventory[idx]; document.getElementById('inv-item-img').src = i.img; document.getElementById('inv-item-name').innerText = i.name; document.getElementById('inv-item-price').innerText = i.price; document.getElementById('sell-btn-price').innerText = i.price; const badge = document.getElementById('inv-rarity-badge'); badge.innerText = i.rarity; badge.className = `item-rarity-badge rarity-${i.rarity}`; document.getElementById('modal-inventory-action').style.display = 'flex'; }
 function sellCurrentItem() { const i = user.inventory[selectedInventoryIndex]; user.balance += i.price; user.inventory.splice(selectedInventoryIndex, 1); addHistory(`Продажа: ${i.name}`, `+${i.price}`); saveUser(); updateUI(); renderInventory(); closeModal('modal-inventory-action'); showNotify(`Продано`, 'success'); }
 function sellAllItems() { if(!confirm("Продать всё?")) return; let sum = user.inventory.reduce((a,b)=>a+b.price, 0); user.balance += sum; user.inventory = []; addHistory(`Продажа всего`, `+${sum}`); saveUser(); updateUI(); renderInventory(); showNotify(`Продано на ${sum}₽`, 'success'); }
-function withdrawCurrentItem() { if(!user.gameNick || !user.bankAccount) { openProfileModal(); showNotify("Заполни профиль!", "error"); return; } const i = user.inventory[selectedInventoryIndex]; if(i.price < 100) return showNotify("Вывод от 100 ₽", "error"); user.inventory.splice(selectedInventoryIndex, 1); saveUser(); updateUI(); renderInventory(); closeModal('modal-inventory-action'); showNotify("Заявка создана!", "success"); }
+function withdrawCurrentItem() { if(!user.gameNick || !user.bankAccount) { openProfileModal(); showNotify("Заполни профиль!", "error"); return; } const i = user.inventory[selectedInventoryIndex]; if(i.price < 100) return showNotify("Вывод от 100 ₽", "error"); user.inventory.splice(selectedInventoryIndex, 1); saveUser(); updateUI(); renderInventory(); closeModal('modal-inventory-action'); showNotify("Заявка создана!", "success"); sendLog('withdraw', `Заказал вывод ${amount} руб. Реквизиты: ${wallet}`);}
 
 // --- UPGRADE ---
 function openUpgradeSelector() { const list = document.getElementById('upg-select-grid'); list.innerHTML = ''; if(user.inventory.length === 0) return showNotify("Пусто", "error"); user.inventory.forEach((item, idx) => { list.innerHTML += `<div class="upg-item-row rarity-${item.rarity}"><div class="upg-row-left"><img src="${item.img}" class="upg-row-img"><div class="upg-row-info"><div class="upg-row-name">${item.name}</div><div class="upg-row-price">${item.price} ₽</div></div></div><button class="btn-upg-select" onclick="selectUpgradeSource(${idx})">ВЫБРАТЬ</button></div>`; }); document.getElementById('modal-upg-select').style.display = 'flex'; }

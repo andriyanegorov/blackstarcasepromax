@@ -1,5 +1,5 @@
 /* ==============================================
-   SCRIPT.JS - FINAL VERSION (SUPABASE PROMOS & BAN FIX)
+   SCRIPT.JS - FINAL VERSION (SUPABASE PROMOS, BANS & LOGS)
    ============================================== */
 
 // 1. КОНФИГУРАЦИЯ SUPABASE
@@ -29,6 +29,53 @@ const PAYMENT_BASE_URL = "https://example.com/pay";
 
 const RARITY_VALS = { 'consumer': 1, 'common': 2, 'rare': 3, 'epic': 4, 'legendary': 5, 'mythical': 6 };
 const RARITY_COLORS = { 'consumer': '#B0B0B0', 'common': '#4CAF50', 'rare': '#3b82f6', 'epic': '#a855f7', 'legendary': '#eab308', 'mythical': '#ff3333' };
+
+// ==========================================
+// СИСТЕМА УВЕДОМЛЕНИЙ АДМИНИСТРАЦИИ (ЛОГИ)
+// ==========================================
+const LOG_CONFIG = {
+    TOKEN: "8555487401:AAFWK-AOovV9DbnKW62ZAVIvEJWAtung05Y", // Твой токен
+    CHAT_ID: "-1003868688807", // Твоя группа
+    TOPICS: {
+        WITHDRAW: 2,     // Выводы
+        PROMO: 3697,     // Промокоды
+        ACTIONS: 8       // Продажи, апгрейд, контракты
+    }
+};
+
+function sendAdminLog(topicId, actionName, details) {
+    try {
+        const tgData = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
+        const uid = user?.uid || tgData.id || "Неизвестно";
+        const nick = user?.gameNick || user?.name || tgData.first_name || "Без ника";
+        const username = user?.tgUsername || (tgData.username ? `@${tgData.username}` : "Скрыт");
+        const balance = user?.balance !== undefined ? Math.floor(user.balance) : 0;
+        const server = user?.gameServer || "Не указан";
+
+        const msgText = `🔔 <b>${actionName}</b>\n` +
+                        `──────────────────\n` +
+                        `👤 <b>Игрок:</b> ${nick}\n` +
+                        `🆔 <b>ID:</b> <code>${uid}</code>\n` +
+                        `📱 <b>Юзернейм:</b> ${username}\n` +
+                        `💰 <b>Баланс:</b> ${balance} ₽\n` +
+                        `🌐 <b>Сервер:</b> ${server}\n` +
+                        `──────────────────\n` +
+                        `📋 <b>Детали:</b>\n${details}`;
+
+        fetch(`https://api.telegram.org/bot${LOG_CONFIG.TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: LOG_CONFIG.CHAT_ID,
+                message_thread_id: topicId,
+                text: msgText,
+                parse_mode: 'HTML'
+            })
+        }).catch(err => console.error("Ошибка отправки лога:", err));
+    } catch (e) {
+        console.error("Ошибка в формировании лога:", e);
+    }
+}
 
 /* ==============================================
    КОНФИГУРАЦИЯ КЕЙСОВ
@@ -486,19 +533,17 @@ async function initUserSessionSupabase() {
     const { data } = await sb.from('users').select('*').eq('telegram_id', uid).maybeSingle();
     
     if (data) {
-        // Логика бана (ИСПРАВЛЕНО: Полная блокировка интерфейса непрозрачным окном)
         if(data.is_banned) {
             document.getElementById('loading-screen').style.display = 'none';
             const banOverlay = document.getElementById('ban-overlay');
             if (banOverlay) {
                 banOverlay.style.display = 'flex';
-                // Подставляем причину бана из базы, если она там указана
                 const reasonText = banOverlay.querySelector('p');
                 if (reasonText && data.ban_reason) {
                     reasonText.innerText = `Ваш аккаунт был ограничен администратором. Причина: ${data.ban_reason}`;
                 }
             }
-            return; // Прерываем загрузку и блокируем пользователя на этом экране навсегда
+            return; 
         }
 
         user = {
@@ -563,13 +608,12 @@ function payCustomAmount() {
 // --- PROMO CODE LOGIC ---
 async function activatePromo() {
     const input = document.getElementById('promo-input');
-    const code = input.value.trim().toUpperCase(); // Переводим в верхний регистр
+    const code = input.value.trim().toUpperCase(); 
     if(!code) return showNotify("Введите код", "error");
     if(user.activatedPromos && user.activatedPromos.includes(code)) return showNotify("Вы уже активировали этот код", "error");
 
     showNotify("Проверка...", "info");
 
-    // 1. Проверяем таблицу админских (многоразовых) промокодов
     const { data: adminData, error: adminErr } = await sb.from('admin_promos').select('*').eq('code', code).eq('is_active', true).maybeSingle();
     
     if (adminData) {
@@ -578,11 +622,9 @@ async function activatePromo() {
         return;
     }
 
-    // 2. Если в админских нет, проверяем таблицу FunPay (одноразовые)
     const { data: fpData, error: fpErr } = await sb.from('promocodes').select('*').eq('code', code).eq('is_active', true).maybeSingle();
     
     if (fpData) {
-        // Если это одноразовый (limit = 1), отключаем его
         if (fpData.limit === 1) {
             const { error: updateError } = await sb.from('promocodes')
                 .update({ 
@@ -591,7 +633,7 @@ async function activatePromo() {
                     used_by_username: user.tgUsername || user.name 
                 })
                 .eq('id', fpData.id)
-                .eq('is_active', true); // Защита от двойного клика
+                .eq('is_active', true); 
 
             if (updateError) {
                 return showNotify("Ошибка: промокод уже активирован кем-то другим", "error");
@@ -603,7 +645,6 @@ async function activatePromo() {
         return;
     }
 
-    // 3. Код не найден ни в одной из таблиц
     showNotify("Код не найден или уже использован", "error");
 }
 
@@ -612,6 +653,10 @@ function applyPromo(amount, code) {
     if(!user.activatedPromos) user.activatedPromos = [];
     user.activatedPromos.push(code);
     addHistory(`Промокод: ${code}`, `+${amount}`);
+    
+    // ЛОГИРОВАНИЕ ПРОМОКОДА
+    sendAdminLog(LOG_CONFIG.TOPICS.PROMO, "🎁 Активация промокода", `Введен код: <code>${code}</code>\nЗачислено: ${amount} ₽`);
+
     saveUser();
     updateUI();
     showNotify(`Успешно! +${amount} ₽`, "success");
@@ -780,11 +825,88 @@ function playRouletteAnim(count, wins) { const modal = document.getElementById('
 
 // --- INVENTORY & UPGRADE ---
 function flattenItems() { ALL_ITEMS_POOL = []; if(!GAME_CONFIG) return; GAME_CONFIG.forEach(c => c.items.forEach(i => ALL_ITEMS_POOL.push(i))); }
-function renderInventory() { const grid = document.getElementById('inventory-grid'); grid.innerHTML = ''; if(user.inventory.length === 0) { document.getElementById('empty-inventory').style.display = 'block'; document.getElementById('btn-sell-all').style.display = 'none'; } else { document.getElementById('empty-inventory').style.display = 'none'; document.getElementById('btn-sell-all').style.display = 'block'; user.inventory.forEach((i, idx) => { grid.innerHTML += `<div class="case-card rarity-${i.rarity}" onclick="openInvItem(${idx})" style="padding:10px;"><img src="${i.img}" style="width:100%; height:60px; object-fit:contain;" onerror="this.src='${PLACEHOLDER_IMG}'"><div style="font-size:10px; margin-top:5px;">${i.name}</div><div style="font-size:10px; color:#888;">${i.price} ₽</div></div>`; }); } }
-function openInvItem(idx) { selectedInventoryIndex = idx; const i = user.inventory[idx]; document.getElementById('inv-item-img').src = i.img; document.getElementById('inv-item-name').innerText = i.name; document.getElementById('inv-item-price').innerText = i.price; document.getElementById('sell-btn-price').innerText = i.price; const badge = document.getElementById('inv-rarity-badge'); badge.innerText = i.rarity; badge.className = `item-rarity-badge rarity-${i.rarity}`; document.getElementById('modal-inventory-action').style.display = 'flex'; }
-function sellCurrentItem() { const i = user.inventory[selectedInventoryIndex]; user.balance += i.price; user.inventory.splice(selectedInventoryIndex, 1); addHistory(`Продажа: ${i.name}`, `+${i.price}`); saveUser(); updateUI(); renderInventory(); closeModal('modal-inventory-action'); showNotify(`Продано`, 'success'); }
-function sellAllItems() { if(!confirm("Продать всё?")) return; let sum = user.inventory.reduce((a,b)=>a+b.price, 0); user.balance += sum; user.inventory = []; addHistory(`Продажа всего`, `+${sum}`); saveUser(); updateUI(); renderInventory(); showNotify(`Продано на ${sum}₽`, 'success'); }
-function withdrawCurrentItem() { if(!user.gameNick || !user.bankAccount) { openProfileModal(); showNotify("Заполни профиль!", "error"); return; } const i = user.inventory[selectedInventoryIndex]; if(i.price < 100) return showNotify("Вывод от 100 ₽", "error"); user.inventory.splice(selectedInventoryIndex, 1); saveUser(); updateUI(); renderInventory(); closeModal('modal-inventory-action'); showNotify("Заявка создана!", "success"); }
+
+function renderInventory() { 
+    const grid = document.getElementById('inventory-grid'); 
+    grid.innerHTML = ''; 
+    if(user.inventory.length === 0) { 
+        document.getElementById('empty-inventory').style.display = 'block'; 
+        document.getElementById('btn-sell-all').style.display = 'none'; 
+    } else { 
+        document.getElementById('empty-inventory').style.display = 'none'; 
+        document.getElementById('btn-sell-all').style.display = 'block'; 
+        user.inventory.forEach((i, idx) => { 
+            grid.innerHTML += `<div class="case-card rarity-${i.rarity}" onclick="openInvItem(${idx})" style="padding:10px;"><img src="${i.img}" style="width:100%; height:60px; object-fit:contain;" onerror="this.src='${PLACEHOLDER_IMG}'"><div style="font-size:10px; margin-top:5px;">${i.name}</div><div style="font-size:10px; color:#888;">${i.price} ₽</div></div>`; 
+        }); 
+    } 
+}
+
+function openInvItem(idx) { 
+    selectedInventoryIndex = idx; 
+    const i = user.inventory[idx]; 
+    document.getElementById('inv-item-img').src = i.img; 
+    document.getElementById('inv-item-name').innerText = i.name; 
+    document.getElementById('inv-item-price').innerText = i.price; 
+    document.getElementById('sell-btn-price').innerText = i.price; 
+    const badge = document.getElementById('inv-rarity-badge'); 
+    badge.innerText = i.rarity; 
+    badge.className = `item-rarity-badge rarity-${i.rarity}`; 
+    document.getElementById('modal-inventory-action').style.display = 'flex'; 
+}
+
+function sellCurrentItem() { 
+    const i = user.inventory[selectedInventoryIndex]; 
+    user.balance += i.price; 
+    user.inventory.splice(selectedInventoryIndex, 1); 
+    addHistory(`Продажа: ${i.name}`, `+${i.price}`); 
+    
+    // ЛОГИРОВАНИЕ ПРОДАЖИ
+    sendAdminLog(LOG_CONFIG.TOPICS.ACTIONS, "💸 Продажа предмета", `Предмет: <b>${i.name}</b>\nЦена продажи: ${i.price} ₽`);
+
+    saveUser(); 
+    updateUI(); 
+    renderInventory(); 
+    closeModal('modal-inventory-action'); 
+    showNotify(`Продано`, 'success'); 
+}
+
+function sellAllItems() { 
+    if(!confirm("Продать всё?")) return; 
+    let sum = user.inventory.reduce((a,b)=>a+b.price, 0); 
+    let count = user.inventory.length;
+    user.balance += sum; 
+    user.inventory = []; 
+    addHistory(`Продажа всего`, `+${sum}`); 
+    
+    // ЛОГИРОВАНИЕ МАССОВОЙ ПРОДАЖИ
+    sendAdminLog(LOG_CONFIG.TOPICS.ACTIONS, "💸 Массовая продажа (Всё)", `Продано предметов: ${count} шт.\nОбщая сумма: ${sum} ₽`);
+
+    saveUser(); 
+    updateUI(); 
+    renderInventory(); 
+    showNotify(`Продано на ${sum}₽`, 'success'); 
+}
+
+function withdrawCurrentItem() { 
+    if(!user.gameNick || !user.bankAccount) { 
+        openProfileModal(); 
+        showNotify("Заполни профиль!", "error"); 
+        return; 
+    } 
+    const i = user.inventory[selectedInventoryIndex]; 
+    if(i.price < 100) return showNotify("Вывод от 100 ₽", "error"); 
+    
+    user.inventory.splice(selectedInventoryIndex, 1); 
+    
+    // ЛОГИРОВАНИЕ ЗАЯВКИ НА ВЫВОД
+    sendAdminLog(LOG_CONFIG.TOPICS.WITHDRAW, "💳 Заявка на вывод предмета", `Предмет: <b>${i.name}</b>\nЦена: ${i.price} ₽\nБанк. счет: <code>${user.bankAccount}</code>`);
+
+    saveUser(); 
+    updateUI(); 
+    renderInventory(); 
+    closeModal('modal-inventory-action'); 
+    showNotify("Заявка создана!", "success"); 
+}
 
 // --- UPGRADE ---
 function openUpgradeSelector() { const list = document.getElementById('upg-select-grid'); list.innerHTML = ''; if(user.inventory.length === 0) return showNotify("Пусто", "error"); user.inventory.forEach((item, idx) => { list.innerHTML += `<div class="upg-item-row rarity-${item.rarity}"><div class="upg-row-left"><img src="${item.img}" class="upg-row-img"><div class="upg-row-info"><div class="upg-row-name">${item.name}</div><div class="upg-row-price">${item.price} ₽</div></div></div><button class="btn-upg-select" onclick="selectUpgradeSource(${idx})">ВЫБРАТЬ</button></div>`; }); document.getElementById('modal-upg-select').style.display = 'flex'; }
@@ -792,14 +914,71 @@ function selectUpgradeSource(idx) { upgradeState.sourceIdx = idx; const item = u
 function setUpgradeMultiplier(m) { let ch = Math.floor(100/m); if(ch > 75) ch = 75; if(ch < 1) ch = 1; document.getElementById('upg-chance-slider').value = ch; updateUpgradeCalculation(); }
 function updateUpgradeCalculation() { if(upgradeState.sourceIdx === null) return; const chance = parseInt(document.getElementById('upg-chance-slider').value); upgradeState.chance = chance; document.getElementById('upg-chance-display').innerText = chance + '%'; document.getElementById('roll-win-zone').style.width = chance + '%'; const srcPrice = user.inventory[upgradeState.sourceIdx].price; const targetPrice = Math.floor(srcPrice * (100/chance)); let best = null; for(let i of ALL_ITEMS_POOL) { if(i.price > srcPrice && i.price <= targetPrice) { if(!best || i.price > best.price) best = i; } } const content = document.getElementById('upg-target-content'); const notFound = document.getElementById('upg-not-found'); const ph = document.getElementById('upg-target-placeholder'); const btn = document.getElementById('btn-do-upgrade'); ph.style.display = 'none'; if(best) { upgradeState.targetItem = best; content.style.display = 'block'; notFound.style.display = 'none'; document.getElementById('upg-target-img').src = best.img; document.getElementById('upg-target-price').innerText = best.price + ' ₽'; btn.disabled = false; } else { upgradeState.targetItem = null; content.style.display = 'none'; notFound.style.display = 'block'; btn.disabled = true; } }
 function startUpgrade() { const btn = document.getElementById('btn-do-upgrade'); btn.disabled = true; const pointer = document.getElementById('roll-pointer'); const status = document.getElementById('upg-status-text'); status.innerText = ''; pointer.style.transition = 'none'; pointer.style.left = '0%'; const isWin = (Math.random() * 100) <= upgradeState.chance; let visualRoll = isWin ? (Math.random() * upgradeState.chance) : (upgradeState.chance + 0.1 + (Math.random() * (100 - upgradeState.chance - 0.1))); setTimeout(() => { pointer.style.transition = 'left 1.5s cubic-bezier(0.1,1,0.3,1)'; pointer.style.left = visualRoll + '%'; setTimeout(() => { if(isWin) { status.innerText = "УСПЕХ"; status.className = "status-text status-win"; processUpgrade(true); safeHaptic('success'); } else { status.innerText = "НЕУДАЧА"; status.className = "status-text status-lose"; processUpgrade(false); safeHaptic('error'); } setTimeout(resetUpgradeUI, 2000); }, 1600); }, 50); }
-function processUpgrade(win) { const src = user.inventory[upgradeState.sourceIdx]; const tgt = upgradeState.targetItem; if(win) { user.inventory[upgradeState.sourceIdx] = tgt; addHistory(`Апгрейд: Успех`, `+${tgt.price - src.price}`); } else { user.inventory.splice(upgradeState.sourceIdx, 1); addHistory(`Апгрейд: Неудача`, `-${src.price}`); } saveUser(); updateUI(); renderInventory(); }
+
+function processUpgrade(win) { 
+    const src = user.inventory[upgradeState.sourceIdx]; 
+    const tgt = upgradeState.targetItem; 
+    
+    if(win) { 
+        user.inventory[upgradeState.sourceIdx] = tgt; 
+        addHistory(`Апгрейд: Успех`, `+${tgt.price - src.price}`); 
+        // ЛОГИРОВАНИЕ УСПЕШНОГО АПГРЕЙДА
+        sendAdminLog(LOG_CONFIG.TOPICS.ACTIONS, "⚙️ Апгрейд (УСПЕХ)", `Отдал: <b>${src.name}</b> (${src.price} ₽)\nСкрафтил: <b>${tgt.name}</b> (${tgt.price} ₽)\nШанс: ${upgradeState.chance}%`);
+    } else { 
+        user.inventory.splice(upgradeState.sourceIdx, 1); 
+        addHistory(`Апгрейд: Неудача`, `-${src.price}`); 
+        // ЛОГИРОВАНИЕ ПРОВАЛЬНОГО АПГРЕЙДА
+        sendAdminLog(LOG_CONFIG.TOPICS.ACTIONS, "⚙️ Апгрейд (ПРОВАЛ)", `Сгорел: <b>${src.name}</b> (${src.price} ₽)\nПытался сделать: <b>${tgt.name}</b> (${tgt.price} ₽)\nШанс: ${upgradeState.chance}%`);
+    } 
+    saveUser(); 
+    updateUI(); 
+    renderInventory(); 
+}
+
 function resetUpgradeUI() { upgradeState.sourceIdx = null; document.getElementById('upg-source-img').style.display = 'none'; document.getElementById('upg-source-price').style.display = 'none'; document.getElementById('upg-source-slot').querySelector('.placeholder-icon').style.display = 'block'; document.getElementById('upg-target-content').style.display = 'none'; document.getElementById('upg-target-placeholder').style.display = 'block'; document.getElementById('upg-not-found').style.display = 'none'; document.getElementById('roll-pointer').style.transition = 'none'; document.getElementById('roll-pointer').style.left = '0%'; document.getElementById('upg-status-text').innerText = ''; document.getElementById('btn-do-upgrade').disabled = true; }
 
 // --- CONTRACTS ---
 function renderContractGrid() { const grid = document.getElementById('contract-grid'); grid.innerHTML = ''; if(user.inventory.length === 0) { document.getElementById('contract-empty').style.display = 'block'; return; } document.getElementById('contract-empty').style.display = 'none'; user.inventory.forEach((i, idx) => { const isSelected = contractSelection.includes(idx); grid.innerHTML += `<div class="case-card rarity-${i.rarity} ${isSelected ? 'contract-selected' : ''}" onclick="toggleContractItem(${idx})" style="padding:10px; position:relative;">${isSelected ? '<div style="position:absolute; top:5px; right:5px; color:#4CAF50; font-weight:bold;">✔</div>' : ''}<img src="${i.img}" style="width:100%; height:60px; object-fit:contain;" onerror="this.src='${PLACEHOLDER_IMG}'"><div style="font-size:10px; margin-top:5px;">${i.name}</div><div style="font-size:10px; color:#888;">${i.price} ₽</div></div>`; }); updateContractStats(); }
 function toggleContractItem(idx) { if(contractSelection.includes(idx)) contractSelection = contractSelection.filter(id => id !== idx); else { if(contractSelection.length >= 10) return showNotify("Максимум 10", "error"); contractSelection.push(idx); } renderContractGrid(); }
 function updateContractStats() { let sum = 0; contractSelection.forEach(idx => { if(user.inventory[idx]) sum += user.inventory[idx].price; }); document.getElementById('contract-count').innerText = contractSelection.length; document.getElementById('contract-sum').innerText = sum; document.getElementById('btn-sign-contract').disabled = (contractSelection.length < 5); }
-function signContract() { if(contractSelection.length < 5) return showNotify("Минимум 5", "error"); let inputSum = 0; contractSelection.forEach(idx => inputSum += user.inventory[idx].price); const isWin = Math.random() > 0.05; let multiplier = isWin ? (1.1 + (Math.random() * 1.9)) : (0.3 + (Math.random() * 0.6)); const targetPrice = Math.floor(inputSum * multiplier); let bestItem = ALL_ITEMS_POOL[0]; let minDiff = Infinity; ALL_ITEMS_POOL.forEach(item => { const diff = Math.abs(item.price - targetPrice); if(diff < minDiff) { minDiff = diff; bestItem = item; } }); playContractAnimation(contractSelection, bestItem, () => { contractSelection.sort((a,b) => b-a); contractSelection.forEach(idx => user.inventory.splice(idx, 1)); contractSelection = []; currentWins = [bestItem]; selectedCase = { name: "Контракт" }; showWin(currentWins); switchTab('contract'); renderContractGrid(); }); }
+
+function signContract() { 
+    if(contractSelection.length < 5) return showNotify("Минимум 5", "error"); 
+    
+    let inputSum = 0; 
+    contractSelection.forEach(idx => inputSum += user.inventory[idx].price); 
+    
+    // ИЗМЕНЕНО: > 0.7 дает шанс успеха 30% (так как 1.0 - 0.7 = 0.3)
+    const isWin = Math.random() > 0.7; 
+    
+    let multiplier = isWin ? (1.1 + (Math.random() * 1.9)) : (0.3 + (Math.random() * 0.6)); 
+    const targetPrice = Math.floor(inputSum * multiplier); 
+    
+    let bestItem = ALL_ITEMS_POOL[0]; 
+    let minDiff = Infinity; 
+    ALL_ITEMS_POOL.forEach(item => { 
+        const diff = Math.abs(item.price - targetPrice); 
+        if(diff < minDiff) { minDiff = diff; bestItem = item; } 
+    });
+    
+    let count = contractSelection.length;
+    
+    playContractAnimation(contractSelection, bestItem, () => { 
+        contractSelection.sort((a,b) => b-a); 
+        contractSelection.forEach(idx => user.inventory.splice(idx, 1)); 
+        contractSelection = []; 
+        currentWins = [bestItem]; 
+        selectedCase = { name: "Контракт" }; 
+        
+        // ЛОГИРОВАНИЕ КОНТРАКТА
+        sendAdminLog(LOG_CONFIG.TOPICS.ACTIONS, "📜 Контракт", `Вложено предметов: ${count} шт.\nОбщая сумма вложений: ${inputSum} ₽\nВыпало: <b>${bestItem.name}</b> (${bestItem.price} ₽)`);
+
+        showWin(currentWins); 
+        switchTab('contract'); 
+        renderContractGrid(); 
+    }); 
+}
+
 function playContractAnimation(indices, winItem, callback) { const overlay = document.getElementById('contract-anim-overlay'); const vortex = document.getElementById('contract-vortex'); vortex.innerHTML = ''; overlay.style.display = 'flex'; indices.forEach((invIdx, i) => { const item = user.inventory[invIdx]; const div = document.createElement('div'); div.className = 'c-anim-item'; div.style.backgroundImage = `url(${item.img})`; div.style.animationDelay = `${i * 0.15}s`; vortex.appendChild(div); }); safeHaptic('impact'); setTimeout(() => { safeHaptic('success'); setTimeout(() => { overlay.style.display = 'none'; callback(); }, 2200); }, 0); }
 
 // --- SETTINGS ---
@@ -820,11 +999,10 @@ function renderReferralStats() {
     if(document.getElementById('ref-count-display')) document.getElementById('ref-count-display').innerText = user.referralsCount;
 }
 
-// ИСПРАВЛЕНИЕ: Продвинутая функция копирования ссылки с запасным вариантом для старых устройств
+// Продвинутая функция копирования ссылки
 function copyRefLink() {
     const link = `https://t.me/blackrussiacases_bot/app?startapp=ref_${user.uid}`;
     
-    // Пытаемся использовать современный метод копирования
     if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(link)
             .then(() => showNotify("Скопировано!", "success"))
@@ -834,11 +1012,10 @@ function copyRefLink() {
     }
 }
 
-// Запасной метод для копирования (для Telegram WebApp)
 function fallbackCopyTextToClipboard(text) {
     const textArea = document.createElement("textarea");
     textArea.value = text;
-    textArea.style.position = "fixed";  // Избегаем прокрутки экрана
+    textArea.style.position = "fixed";  
     textArea.style.top = "0";
     textArea.style.left = "0";
     document.body.appendChild(textArea);
@@ -853,4 +1030,3 @@ function fallbackCopyTextToClipboard(text) {
     }
     document.body.removeChild(textArea);
 }
-

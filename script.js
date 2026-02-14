@@ -1,5 +1,5 @@
 /* ==============================================
-   SCRIPT.JS - FINAL VERSION (SUPABASE PROMOS)
+   SCRIPT.JS - FINAL VERSION (SUPABASE PROMOS & BAN FIX)
    ============================================== */
 
 // 1. КОНФИГУРАЦИЯ SUPABASE
@@ -486,11 +486,21 @@ async function initUserSessionSupabase() {
     const { data } = await sb.from('users').select('*').eq('telegram_id', uid).maybeSingle();
     
     if (data) {
+        // Логика бана (ИСПРАВЛЕНО: Полная блокировка интерфейса непрозрачным окном)
         if(data.is_banned) {
             document.getElementById('loading-screen').style.display = 'none';
-            alert("ВЫ ЗАБАНЕНЫ: " + data.ban_reason);
-            return;
+            const banOverlay = document.getElementById('ban-overlay');
+            if (banOverlay) {
+                banOverlay.style.display = 'flex';
+                // Подставляем причину бана из базы, если она там указана
+                const reasonText = banOverlay.querySelector('p');
+                if (reasonText && data.ban_reason) {
+                    reasonText.innerText = `Ваш аккаунт был ограничен администратором. Причина: ${data.ban_reason}`;
+                }
+            }
+            return; // Прерываем загрузку и блокируем пользователя на этом экране навсегда
         }
+
         user = {
             uid: data.telegram_id,
             name: first_name, 
@@ -555,7 +565,7 @@ async function activatePromo() {
     const input = document.getElementById('promo-input');
     const code = input.value.trim().toUpperCase(); // Переводим в верхний регистр
     if(!code) return showNotify("Введите код", "error");
-    if(user.activatedPromos.includes(code)) return showNotify("Вы уже активировали этот код", "error");
+    if(user.activatedPromos && user.activatedPromos.includes(code)) return showNotify("Вы уже активировали этот код", "error");
 
     showNotify("Проверка...", "info");
 
@@ -599,6 +609,7 @@ async function activatePromo() {
 
 function applyPromo(amount, code) {
     user.balance += amount;
+    if(!user.activatedPromos) user.activatedPromos = [];
     user.activatedPromos.push(code);
     addHistory(`Промокод: ${code}`, `+${amount}`);
     saveUser();
@@ -735,7 +746,7 @@ function getWinItem(c) {
     const rand = Math.random() * 100; let sum = 0; let rar = 'consumer'; 
     for(let r in weights) { sum += weights[r]; if(rand <= sum) { rar = r; break; } } 
     const pool = c.items.filter(i => i.rarity === rar); 
-    if (pool.length === 0) return c.items[0]; 
+    if (pool.length === 0) return c.items[0] || { name: "Пусто", price: 0, rarity: "consumer", img: "" }; 
     return pool[Math.floor(Math.random()*pool.length)]; 
 }
 
@@ -808,7 +819,37 @@ function renderReferralStats() {
     if(document.getElementById('ref-earn-display')) document.getElementById('ref-earn-display').innerText = user.referralEarnings;
     if(document.getElementById('ref-count-display')) document.getElementById('ref-count-display').innerText = user.referralsCount;
 }
+
+// ИСПРАВЛЕНИЕ: Продвинутая функция копирования ссылки с запасным вариантом для старых устройств
 function copyRefLink() {
     const link = `https://t.me/blackrussiacases_bot/app?startapp=ref_${user.uid}`;
-    navigator.clipboard.writeText(link); showNotify("Скопировано!", "success");
+    
+    // Пытаемся использовать современный метод копирования
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(link)
+            .then(() => showNotify("Скопировано!", "success"))
+            .catch(() => fallbackCopyTextToClipboard(link));
+    } else {
+        fallbackCopyTextToClipboard(link);
+    }
+}
+
+// Запасной метод для копирования (для Telegram WebApp)
+function fallbackCopyTextToClipboard(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";  // Избегаем прокрутки экрана
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+        const successful = document.execCommand('copy');
+        if(successful) showNotify("Скопировано!", "success");
+        else showNotify("Ошибка копирования", "error");
+    } catch (err) {
+        showNotify("Не удалось скопировать", "error");
+    }
+    document.body.removeChild(textArea);
 }

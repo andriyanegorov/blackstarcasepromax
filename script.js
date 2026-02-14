@@ -20,7 +20,7 @@ const tg = window.Telegram && window.Telegram.WebApp
       };
 
 // 3. CONFIG & CONSTANTS
-const API_URL = "https://script.google.com/macros/s/AKfycbyeXKjp0y4KdFvpIBYHHMmD48uWRtYHaSHb6iwJfNT5g87oCT9cVFREMGFqFWJua25b/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbwCTnYYNY3u9ceNdIxlBd0so2fWxNCzxgmQfuDntr3HuKRu9gK9cmGzkeui_Z-4HGQiqw/exec"; 
 const SUB_CHANNEL_URL = "https://t.me/blackrussiacases_news"; 
 const PLACEHOLDER_IMG = "https://placehold.co/150x150/1a1a1a/ffffff?text=No+Image";
 const VIRT_RATE = 10000; 
@@ -1050,5 +1050,6 @@ function fallbackCopyTextToClipboard(text) {
     document.body.removeChild(textArea);
 
 }
+
 
 

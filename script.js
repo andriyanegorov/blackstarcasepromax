@@ -87,7 +87,7 @@ const GAME_CONFIG = [
         "price": 0,
         "category": "free",
         "img": "img/free_case.png",
-        "chances": { "consumer": 40, "common": 30, "rare": 20, "epic": 8, "legendary": 2, "mythical": 0 },
+        "chances": { "consumer": 40, "common": 30, "rare": 20, "epic": 0, "legendary": 0, "mythical": 0 },
         "items": [
             { "name": "50.000 Вирт", "price": 5, "img": "img/money.png", "rarity": "consumer" },
             { "name": "100.000 Вирт", "price": 10, "img": "img/money.png", "rarity": "common" },
@@ -1029,4 +1029,5 @@ function fallbackCopyTextToClipboard(text) {
         showNotify("Не удалось скопировать", "error");
     }
     document.body.removeChild(textArea);
+
 }

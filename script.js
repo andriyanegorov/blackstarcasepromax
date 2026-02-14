@@ -575,7 +575,7 @@ async function initUserSessionSupabase() {
         user = { ...DEFAULT_USER, ...newUser, uid: uid, avatar: photo_url };
 // --- ДОБАВЛЕНО: Начисление бонуса рефоводу ---
         if (refId && refId !== uid) {
-            const REWARD_AMOUNT = 50; // Сумма бонуса в рублях за приглашенного друга
+            const REWARD_AMOUNT = 10; // Сумма бонуса в рублях за приглашенного друга
             
             // Получаем текущие данные пригласившего
             const { data: refUser } = await sb.from('users')
@@ -1050,4 +1050,5 @@ function fallbackCopyTextToClipboard(text) {
     document.body.removeChild(textArea);
 
 }
+
 

@@ -1,5 +1,5 @@
 /* ==============================================
-   SCRIPT.JS - FINAL VERSION (SUPABASE PROMOS, BANS & LOGS)
+   SCRIPT.JS - FINAL VERSION (UPDATED)
    ============================================== */
 
 // 1. КОНФИГУРАЦИЯ SUPABASE
@@ -20,12 +20,10 @@ const tg = window.Telegram && window.Telegram.WebApp
       };
 
 // 3. CONFIG & CONSTANTS
+// Вставьте сюда ссылку на развернутый скрипт Google Apps Script
 const API_URL = "https://script.google.com/macros/s/AKfycbwCTnYYNY3u9ceNdIxlBd0so2fWxNCzxgmQfuDntr3HuKRu9gK9cmGzkeui_Z-4HGQiqw/exec"; 
 const SUB_CHANNEL_URL = "https://t.me/blackrussiacases_news"; 
 const PLACEHOLDER_IMG = "https://placehold.co/150x150/1a1a1a/ffffff?text=No+Image";
-const VIRT_RATE = 10000; 
-
-const PAYMENT_BASE_URL = "https://example.com/pay"; 
 
 const RARITY_VALS = { 'consumer': 1, 'common': 2, 'rare': 3, 'epic': 4, 'legendary': 5, 'mythical': 6 };
 const RARITY_COLORS = { 'consumer': '#B0B0B0', 'common': '#4CAF50', 'rare': '#3b82f6', 'epic': '#a855f7', 'legendary': '#eab308', 'mythical': '#ff3333' };
@@ -34,12 +32,12 @@ const RARITY_COLORS = { 'consumer': '#B0B0B0', 'common': '#4CAF50', 'rare': '#3b
 // СИСТЕМА УВЕДОМЛЕНИЙ АДМИНИСТРАЦИИ (ЛОГИ)
 // ==========================================
 const LOG_CONFIG = {
-    TOKEN: "8555487401:AAFWK-AOovV9DbnKW62ZAVIvEJWAtung05Y", // Твой токен
-    CHAT_ID: "-1003868688807", // Твоя группа
+    TOKEN: "8555487401:AAFWK-AOovV9DbnKW62ZAVIvEJWAtung05Y", 
+    CHAT_ID: "-1003868688807", 
     TOPICS: {
-        WITHDRAW: 2,     // Выводы
-        PROMO: 3697,     // Промокоды
-        ACTIONS: 8       // Продажи, апгрейд, контракты
+        WITHDRAW: 2,     
+        PROMO: 3697,     
+        ACTIONS: 8       
     }
 };
 
@@ -480,26 +478,36 @@ let selectedCase = null, currentWins = [], selectedOpenCount = 1;
 let selectedInventoryIndex = null, upgradeState = { sourceIdx: null, targetItem: null, chance: 50 };
 let ALL_ITEMS_POOL = [], contractSelection = [];
 
+// Переменная для хранения "Настоящего" времени (от сервера)
+let serverTimeOffset = 0; 
+
 document.addEventListener('DOMContentLoaded', () => {
     try { if(tg) tg.expand(); } catch(e) {}
     
-    // Загрузка админского конфига для кейсов
+    // Загрузка админского конфига
     const adminCases = localStorage.getItem('admin_game_config_v7');
     if(adminCases) try { GAME_CONFIG.length=0; JSON.parse(adminCases).forEach(x=>GAME_CONFIG.push(x)); } catch(e){}
     
     initCases(); 
     flattenItems(); 
     initUserSessionSupabase();
-    initRealtime(); 
+    initRealtime();
+    syncServerTime(); // Синхронизация времени с GAS
 });
 
 /* --- REALTIME LIVE FEED --- */
 function initRealtime() {
-    const channel = sb.channel('live_drops_feed')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'live_drops' }, (payload) => {
-            addLiveFeedItem(payload.new);
-        })
-        .subscribe();
+    try {
+        const channel = sb.channel('live_drops_feed')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'live_drops' }, (payload) => {
+                addLiveFeedItem(payload.new);
+            })
+            .subscribe((status) => {
+                if(status === 'CHANNEL_ERROR') {
+                   // console.warn("Supabase Realtime Error");
+                }
+            });
+    } catch(e) { console.log("Realtime init failed"); }
 }
 
 function addLiveFeedItem(item) {
@@ -518,6 +526,26 @@ function addLiveFeedItem(item) {
     if(track.children.length > 20) track.lastElementChild.remove();
 }
 
+/* --- SYNC TIME --- */
+async function syncServerTime() {
+    try {
+        const res = await fetch(`${API_URL}?action=get_time`);
+        const data = await res.json();
+        if(data.status) {
+            // Разница между серверным временем и локальным
+            serverTimeOffset = Date.now() - data.serverTime; 
+            // Если оффсет отрицательный (клиент спешит), он будет < 0.
+            // Реальное время = Date.now() - serverTimeOffset;
+        }
+    } catch(e) {
+        console.log("Time sync failed");
+    }
+}
+
+function getTrueTime() {
+    return Date.now() - serverTimeOffset;
+}
+
 /* --- SUPABASE & USER --- */
 async function initUserSessionSupabase() {
     let uid = 0, first_name = "User", username = "", photo_url = "";
@@ -530,71 +558,72 @@ async function initUserSessionSupabase() {
         uid = 123456; first_name = "BrowserTester";
     }
 
-    const { data } = await sb.from('users').select('*').eq('telegram_id', uid).maybeSingle();
-    
-    if (data) {
-        if(data.is_banned) {
-            document.getElementById('loading-screen').style.display = 'none';
-            const banOverlay = document.getElementById('ban-overlay');
-            if (banOverlay) {
-                banOverlay.style.display = 'flex';
-                const reasonText = banOverlay.querySelector('p');
-                if (reasonText && data.ban_reason) {
-                    reasonText.innerText = `Ваш аккаунт был ограничен администратором. Причина: ${data.ban_reason}`;
+    try {
+        const { data, error } = await sb.from('users').select('*').eq('telegram_id', uid).maybeSingle();
+        
+        if (error) throw error;
+
+        if (data) {
+            if(data.is_banned) {
+                document.getElementById('loading-screen').style.display = 'none';
+                const banOverlay = document.getElementById('ban-overlay');
+                if (banOverlay) {
+                    banOverlay.style.display = 'flex';
+                    const reasonText = banOverlay.querySelector('p');
+                    if (reasonText && data.ban_reason) {
+                        reasonText.innerText = `Ваш аккаунт был ограничен администратором. Причина: ${data.ban_reason}`;
+                    }
+                }
+                return; 
+            }
+
+            user = {
+                uid: data.telegram_id,
+                name: first_name, 
+                tgUsername: username,
+                balance: Number(data.balance),
+                inventory: data.inventory || [],
+                history: data.history || [],
+                gameNick: data.game_nick || "",
+                gameServer: data.game_server || "Red",
+                bankAccount: data.bank_account || "",
+                activatedPromos: data.activated_promos || [],
+                isSubscribed: data.is_subscribed || false,
+                lastSubCaseTime: data.last_sub_case_time || 0,
+                referrerId: data.referrer_id,
+                referralsCount: data.referrals_count || 0,
+                referralEarnings: data.referral_earnings || 0,
+                avatar: photo_url
+            };
+            sb.from('users').update({ username, first_name }).eq('telegram_id', uid).then();
+        } else {
+            let refId = null;
+            if (tg.initDataUnsafe.start_param && tg.initDataUnsafe.start_param.startsWith("ref_")) {
+                refId = Number(tg.initDataUnsafe.start_param.split('_')[1]);
+            }
+            const newUser = { telegram_id: uid, username: username, first_name: first_name, balance: 0, inventory: [], history: [], referrer_id: refId };
+            await sb.from('users').insert([newUser]);
+            user = { ...DEFAULT_USER, ...newUser, uid: uid, avatar: photo_url };
+            
+            if (refId && refId !== uid) {
+                const REWARD_AMOUNT = 10; 
+                const { data: refUser } = await sb.from('users').select('balance, referrals_count, referral_earnings').eq('telegram_id', refId).maybeSingle();
+                if (refUser) {
+                    await sb.from('users').update({
+                        balance: Number(refUser.balance || 0) + REWARD_AMOUNT,
+                        referrals_count: Number(refUser.referrals_count || 0) + 1,
+                        referral_earnings: Number(refUser.referral_earnings || 0) + REWARD_AMOUNT
+                    }).eq('telegram_id', refId);
                 }
             }
-            return; 
         }
-
-        user = {
-            uid: data.telegram_id,
-            name: first_name, 
-            tgUsername: username,
-            balance: Number(data.balance),
-            inventory: data.inventory || [],
-            history: data.history || [],
-            gameNick: data.game_nick || "",
-            gameServer: data.game_server || "Red",
-            bankAccount: data.bank_account || "",
-            activatedPromos: data.activated_promos || [],
-            isSubscribed: data.is_subscribed || false,
-            lastSubCaseTime: data.last_sub_case_time || 0,
-            referrerId: data.referrer_id,
-            referralsCount: data.referrals_count || 0,
-            referralEarnings: data.referral_earnings || 0,
-            avatar: photo_url
-        };
-        sb.from('users').update({ username, first_name }).eq('telegram_id', uid).then();
-    } else {
-        let refId = null;
-        if (tg.initDataUnsafe.start_param && tg.initDataUnsafe.start_param.startsWith("ref_")) {
-            refId = Number(tg.initDataUnsafe.start_param.split('_')[1]);
-        }
-        const newUser = { telegram_id: uid, username: username, first_name: first_name, balance: 0, inventory: [], history: [], referrer_id: refId };
-        await sb.from('users').insert([newUser]);
-        user = { ...DEFAULT_USER, ...newUser, uid: uid, avatar: photo_url };
-// --- ДОБАВЛЕНО: Начисление бонуса рефоводу ---
-        if (refId && refId !== uid) {
-            const REWARD_AMOUNT = 10; // Сумма бонуса в рублях за приглашенного друга
-            
-            // Получаем текущие данные пригласившего
-            const { data: refUser } = await sb.from('users')
-                .select('balance, referrals_count, referral_earnings')
-                .eq('telegram_id', refId)
-                .maybeSingle();
-            
-            // Если рефовод найден, обновляем его статистику и баланс
-            if (refUser) {
-                await sb.from('users').update({
-                    balance: Number(refUser.balance || 0) + REWARD_AMOUNT,
-                    referrals_count: Number(refUser.referrals_count || 0) + 1,
-                    referral_earnings: Number(refUser.referral_earnings || 0) + REWARD_AMOUNT
-                }).eq('telegram_id', refId);
-            }
-        }
+        document.getElementById('loading-screen').style.display = 'none';
+        updateUI(); renderInventory(); renderHistory();
+    } catch(err) {
+        console.error("Supabase Error:", err);
+        document.getElementById('loading-screen').style.display = 'none';
+        document.getElementById('vpn-overlay').style.display = 'flex';
     }
-    document.getElementById('loading-screen').style.display = 'none';
-    updateUI(); renderInventory(); renderHistory();
 }
 
 async function saveUser() {
@@ -612,59 +641,87 @@ async function saveUser() {
 }
 
 // --- SHOP LOGIC ---
-function buyPack(amount) {
+let pendingPaymentUrl = "";
+
+function buyPack(amount, url) {
     if(!amount || amount < 10) return showNotify("Минимум 10 ₽", "error");
-    const paymentUrl = `${PAYMENT_BASE_URL}?sum=${amount}&uid=${user.uid}`;
-    tg.openLink(paymentUrl);
-    showNotify("Переход к оплате...", "info");
+    
+    // Формируем URL (если он не передан, то дефолтный)
+    pendingPaymentUrl = url || `${PAYMENT_BASE_URL}?sum=${amount}&uid=${user.uid}`;
+    
+    // Показываем предупреждение
+    document.getElementById('modal-payment-warning').style.display = 'flex';
+    
+    // Привязываем клик
+    document.getElementById('btn-proceed-pay').onclick = function() {
+        closeModal('modal-payment-warning');
+        tg.openLink(pendingPaymentUrl);
+        showNotify("Переход к оплате...", "info");
+    };
 }
 
 function payCustomAmount() {
-    const url = "https://funpay.com/lots/offer?id=64078468"; 
-    window.open(url, '_blank');
+    pendingPaymentUrl = "https://funpay.com/lots/offer?id=64078468"; 
+    document.getElementById('modal-payment-warning').style.display = 'flex';
+    document.getElementById('btn-proceed-pay').onclick = function() {
+        closeModal('modal-payment-warning');
+        window.open(pendingPaymentUrl, '_blank');
+    };
 }
 
 // --- PROMO CODE LOGIC ---
 async function activatePromo() {
+    const btn = document.getElementById('btn-promo-act');
     const input = document.getElementById('promo-input');
     const code = input.value.trim().toUpperCase(); 
-    if(!code) return showNotify("Введите код", "error");
-    if(user.activatedPromos && user.activatedPromos.includes(code)) return showNotify("Вы уже активировали этот код", "error");
-
-    showNotify("Проверка...", "info");
-
-    const { data: adminData, error: adminErr } = await sb.from('admin_promos').select('*').eq('code', code).eq('is_active', true).maybeSingle();
     
-    if (adminData) {
-        applyPromo(adminData.reward, code);
-        input.value = "";
-        return;
+    if(!code) return showNotify("Введите код", "error");
+    if(btn.disabled) return; // Debounce Check
+
+    btn.disabled = true; // Block button
+    btn.innerText = "⏳";
+
+    if(user.activatedPromos && user.activatedPromos.includes(code)) {
+        btn.disabled = false; btn.innerText = "АКТИВИРОВАТЬ";
+        return showNotify("Вы уже активировали этот код", "error");
     }
 
-    const { data: fpData, error: fpErr } = await sb.from('promocodes').select('*').eq('code', code).eq('is_active', true).maybeSingle();
-    
-    if (fpData) {
-        if (fpData.limit === 1) {
-            const { error: updateError } = await sb.from('promocodes')
-                .update({ 
-                    is_active: false, 
-                    used_by_id: user.uid, 
-                    used_by_username: user.tgUsername || user.name 
-                })
-                .eq('id', fpData.id)
-                .eq('is_active', true); 
-
-            if (updateError) {
-                return showNotify("Ошибка: промокод уже активирован кем-то другим", "error");
-            }
+    try {
+        const { data: adminData } = await sb.from('admin_promos').select('*').eq('code', code).eq('is_active', true).maybeSingle();
+        
+        if (adminData) {
+            applyPromo(adminData.reward, code);
+            input.value = "";
+            return;
         }
 
-        applyPromo(fpData.reward, code);
-        input.value = "";
-        return;
-    }
+        const { data: fpData } = await sb.from('promocodes').select('*').eq('code', code).eq('is_active', true).maybeSingle();
+        
+        if (fpData) {
+            if (fpData.limit === 1) {
+                const { error: updateError } = await sb.from('promocodes')
+                    .update({ 
+                        is_active: false, 
+                        used_by_id: user.uid, 
+                        used_by_username: user.tgUsername || user.name 
+                    })
+                    .eq('id', fpData.id)
+                    .eq('is_active', true); 
 
-    showNotify("Код не найден или уже использован", "error");
+                if (updateError) throw new Error("Already used");
+            }
+            applyPromo(fpData.reward, code);
+            input.value = "";
+            return;
+        }
+        showNotify("Код не найден или уже использован", "error");
+
+    } catch(e) {
+        showNotify("Ошибка активации", "error");
+    } finally {
+        btn.disabled = false; 
+        btn.innerText = "АКТИВИРОВАТЬ";
+    }
 }
 
 function applyPromo(amount, code) {
@@ -672,10 +729,7 @@ function applyPromo(amount, code) {
     if(!user.activatedPromos) user.activatedPromos = [];
     user.activatedPromos.push(code);
     addHistory(`Промокод: ${code}`, `+${amount}`);
-    
-    // ЛОГИРОВАНИЕ ПРОМОКОДА
     sendAdminLog(LOG_CONFIG.TOPICS.PROMO, "🎁 Активация промокода", `Введен код: <code>${code}</code>\nЗачислено: ${amount} ₽`);
-
     saveUser();
     updateUI();
     showNotify(`Успешно! +${amount} ₽`, "success");
@@ -730,6 +784,7 @@ function initCases() {
     }); 
 }
 
+// НОВАЯ ПРОВЕРКА ПОДПИСКИ ЧЕРЕЗ GAS
 async function checkGlobalSubscription() {
     if (user.isSubscribed) return true;
     try {
@@ -765,16 +820,20 @@ function openPreview(id) {
     if(selectedCase.category === 'free') {
         qtySel.style.display = 'none'; 
         const COOLDOWN = 48 * 60 * 60 * 1000; 
-        const now = Date.now();
+        
+        // Используем getTrueTime() для защиты от перемотки
+        const now = getTrueTime();
         const diff = now - (user.lastSubCaseTime || 0);
+        
         if(user.lastSubCaseTime > 0 && diff < COOLDOWN) {
             btnOpen.style.display = 'none'; timerDiv.style.display = 'block';
             updateTimer(COOLDOWN - diff);
             countdownInterval = setInterval(() => {
-                const newDiff = Date.now() - (user.lastSubCaseTime || 0);
+                const newDiff = getTrueTime() - (user.lastSubCaseTime || 0);
                 if(newDiff >= COOLDOWN) { clearInterval(countdownInterval); openPreview(id); } else updateTimer(COOLDOWN - newDiff);
             }, 1000);
         } else {
+            // Сначала показываем кнопку подписаться, если статус локально false
             if (!user.isSubscribed) { btnOpen.style.display = 'none'; subBtn.style.display = 'block'; subBtn.innerText = "ПОДПИСАТЬСЯ"; } 
             else { btnOpen.innerText = "ОТКРЫТЬ БЕСПЛАТНО"; }
         }
@@ -791,12 +850,31 @@ async function verifySubscriptionWithBackend() { const vBtn = document.getElemen
 function setOpenCount(n) { selectedOpenCount = n; document.querySelectorAll('.qty-btn').forEach(b => { b.classList.remove('active'); if (b.innerText === `x${n}`) b.classList.add('active'); }); const priceSpan = document.getElementById('btn-total-price'); if (priceSpan && selectedCase) priceSpan.innerText = (selectedCase.price * n).toLocaleString(); }
 
 async function startRouletteSequence() {
-    if(selectedCase.category === 'free') { const isRealSub = await checkGlobalSubscription(); if(!isRealSub) return showNotify("Нет подписки!", "error"); }
+    // Еще раз обновляем время перед открытием
+    syncServerTime();
+
+    if(selectedCase.category === 'free') { 
+        const isRealSub = await checkGlobalSubscription(); 
+        if(!isRealSub) return showNotify("Нет подписки!", "error"); 
+        
+        // Проверка времени по серверу
+        const now = getTrueTime();
+        const COOLDOWN = 48 * 60 * 60 * 1000;
+        if (user.lastSubCaseTime > 0 && (now - user.lastSubCaseTime < COOLDOWN)) {
+             return showNotify("Время еще не пришло!", "error");
+        }
+    }
+
     const cost = selectedCase.price * selectedOpenCount;
     if(user.balance < cost) return showNotify("Недостаточно средств!", "error");
     
-    if(cost > 0) { user.balance -= cost; addHistory(`Открытие ${selectedCase.name} x${selectedOpenCount}`, `-${cost}`); } 
-    else { addHistory(`Открытие ${selectedCase.name}`, `Бесплатно`); user.lastSubCaseTime = Date.now(); }
+    if(cost > 0) { 
+        user.balance -= cost; 
+        addHistory(`Открытие ${selectedCase.name} x${selectedOpenCount}`, `-${cost}`); 
+    } else { 
+        addHistory(`Открытие ${selectedCase.name}`, `Бесплатно`); 
+        user.lastSubCaseTime = getTrueTime(); // Сохраняем "Настоящее" время
+    }
     
     saveUser(); updateUI(); closeModal('modal-preview');
     currentWins = []; for(let i=0; i<selectedOpenCount; i++) currentWins.push(getWinItem(selectedCase));
@@ -878,10 +956,7 @@ function sellCurrentItem() {
     user.balance += i.price; 
     user.inventory.splice(selectedInventoryIndex, 1); 
     addHistory(`Продажа: ${i.name}`, `+${i.price}`); 
-    
-    // ЛОГИРОВАНИЕ ПРОДАЖИ
     sendAdminLog(LOG_CONFIG.TOPICS.ACTIONS, "💸 Продажа предмета", `Предмет: <b>${i.name}</b>\nЦена продажи: ${i.price} ₽`);
-
     saveUser(); 
     updateUI(); 
     renderInventory(); 
@@ -896,10 +971,7 @@ function sellAllItems() {
     user.balance += sum; 
     user.inventory = []; 
     addHistory(`Продажа всего`, `+${sum}`); 
-    
-    // ЛОГИРОВАНИЕ МАССОВОЙ ПРОДАЖИ
     sendAdminLog(LOG_CONFIG.TOPICS.ACTIONS, "💸 Массовая продажа (Всё)", `Продано предметов: ${count} шт.\nОбщая сумма: ${sum} ₽`);
-
     saveUser(); 
     updateUI(); 
     renderInventory(); 
@@ -916,10 +988,7 @@ function withdrawCurrentItem() {
     if(i.price < 100) return showNotify("Вывод от 100 ₽", "error"); 
     
     user.inventory.splice(selectedInventoryIndex, 1); 
-    
-    // ЛОГИРОВАНИЕ ЗАЯВКИ НА ВЫВОД
     sendAdminLog(LOG_CONFIG.TOPICS.WITHDRAW, "💳 Заявка на вывод предмета", `Предмет: <b>${i.name}</b>\nЦена: ${i.price} ₽\nБанк. счет: <code>${user.bankAccount}</code>`);
-
     saveUser(); 
     updateUI(); 
     renderInventory(); 
@@ -927,12 +996,52 @@ function withdrawCurrentItem() {
     showNotify("Заявка создана!", "success"); 
 }
 
-// --- UPGRADE ---
+// --- UPGRADE (NERFED) ---
 function openUpgradeSelector() { const list = document.getElementById('upg-select-grid'); list.innerHTML = ''; if(user.inventory.length === 0) return showNotify("Пусто", "error"); user.inventory.forEach((item, idx) => { list.innerHTML += `<div class="upg-item-row rarity-${item.rarity}"><div class="upg-row-left"><img src="${item.img}" class="upg-row-img"><div class="upg-row-info"><div class="upg-row-name">${item.name}</div><div class="upg-row-price">${item.price} ₽</div></div></div><button class="btn-upg-select" onclick="selectUpgradeSource(${idx})">ВЫБРАТЬ</button></div>`; }); document.getElementById('modal-upg-select').style.display = 'flex'; }
 function selectUpgradeSource(idx) { upgradeState.sourceIdx = idx; const item = user.inventory[idx]; document.getElementById('upg-source-slot').querySelector('.placeholder-icon').style.display = 'none'; const img = document.getElementById('upg-source-img'); img.src = item.img; img.style.display = 'block'; const pr = document.getElementById('upg-source-price'); pr.innerText = item.price + '₽'; pr.style.display = 'block'; closeModal('modal-upg-select'); updateUpgradeCalculation(); }
 function setUpgradeMultiplier(m) { let ch = Math.floor(100/m); if(ch > 75) ch = 75; if(ch < 1) ch = 1; document.getElementById('upg-chance-slider').value = ch; updateUpgradeCalculation(); }
 function updateUpgradeCalculation() { if(upgradeState.sourceIdx === null) return; const chance = parseInt(document.getElementById('upg-chance-slider').value); upgradeState.chance = chance; document.getElementById('upg-chance-display').innerText = chance + '%'; document.getElementById('roll-win-zone').style.width = chance + '%'; const srcPrice = user.inventory[upgradeState.sourceIdx].price; const targetPrice = Math.floor(srcPrice * (100/chance)); let best = null; for(let i of ALL_ITEMS_POOL) { if(i.price > srcPrice && i.price <= targetPrice) { if(!best || i.price > best.price) best = i; } } const content = document.getElementById('upg-target-content'); const notFound = document.getElementById('upg-not-found'); const ph = document.getElementById('upg-target-placeholder'); const btn = document.getElementById('btn-do-upgrade'); ph.style.display = 'none'; if(best) { upgradeState.targetItem = best; content.style.display = 'block'; notFound.style.display = 'none'; document.getElementById('upg-target-img').src = best.img; document.getElementById('upg-target-price').innerText = best.price + ' ₽'; btn.disabled = false; } else { upgradeState.targetItem = null; content.style.display = 'none'; notFound.style.display = 'block'; btn.disabled = true; } }
-function startUpgrade() { const btn = document.getElementById('btn-do-upgrade'); btn.disabled = true; const pointer = document.getElementById('roll-pointer'); const status = document.getElementById('upg-status-text'); status.innerText = ''; pointer.style.transition = 'none'; pointer.style.left = '0%'; const isWin = (Math.random() * 100) <= upgradeState.chance; let visualRoll = isWin ? (Math.random() * upgradeState.chance) : (upgradeState.chance + 0.1 + (Math.random() * (100 - upgradeState.chance - 0.1))); setTimeout(() => { pointer.style.transition = 'left 1.5s cubic-bezier(0.1,1,0.3,1)'; pointer.style.left = visualRoll + '%'; setTimeout(() => { if(isWin) { status.innerText = "УСПЕХ"; status.className = "status-text status-win"; processUpgrade(true); safeHaptic('success'); } else { status.innerText = "НЕУДАЧА"; status.className = "status-text status-lose"; processUpgrade(false); safeHaptic('error'); } setTimeout(resetUpgradeUI, 2000); }, 1600); }, 50); }
+
+function startUpgrade() { 
+    const btn = document.getElementById('btn-do-upgrade'); 
+    btn.disabled = true; 
+    const pointer = document.getElementById('roll-pointer'); 
+    const status = document.getElementById('upg-status-text'); 
+    status.innerText = ''; 
+    pointer.style.transition = 'none'; 
+    pointer.style.left = '0%'; 
+
+    // НЕРФ ШАНСОВ (УМНОЖЕНИЕ НА 0.7)
+    // Визуально шанс: upgradeState.chance (например 50%)
+    // Реальный шанс: upgradeState.chance * 0.7 (например 35%)
+    const NERF_FACTOR = 0.7;
+    const realChance = upgradeState.chance * NERF_FACTOR;
+    const isWin = (Math.random() * 100) <= realChance; 
+    
+    // Визуализация броска
+    // Если выиграл - рулетка останавливается в зоне победы (0..chance)
+    // Если проиграл - рулетка останавливается в зоне поражения (chance..100)
+    let visualRoll;
+    if (isWin) {
+        visualRoll = Math.random() * upgradeState.chance;
+    } else {
+        // Гарантируем, что визуально покажет проигрыш, даже если число выпало между 35 и 50
+        visualRoll = upgradeState.chance + 0.1 + (Math.random() * (100 - upgradeState.chance - 0.1));
+    }
+
+    setTimeout(() => { 
+        pointer.style.transition = 'left 1.5s cubic-bezier(0.1,1,0.3,1)'; 
+        pointer.style.left = visualRoll + '%'; 
+        setTimeout(() => { 
+            if(isWin) { 
+                status.innerText = "УСПЕХ"; status.className = "status-text status-win"; processUpgrade(true); safeHaptic('success'); 
+            } else { 
+                status.innerText = "НЕУДАЧА"; status.className = "status-text status-lose"; processUpgrade(false); safeHaptic('error'); 
+            } 
+            setTimeout(resetUpgradeUI, 2000); 
+        }, 1600); 
+    }, 50); 
+}
 
 function processUpgrade(win) { 
     const src = user.inventory[upgradeState.sourceIdx]; 
@@ -941,12 +1050,10 @@ function processUpgrade(win) {
     if(win) { 
         user.inventory[upgradeState.sourceIdx] = tgt; 
         addHistory(`Апгрейд: Успех`, `+${tgt.price - src.price}`); 
-        // ЛОГИРОВАНИЕ УСПЕШНОГО АПГРЕЙДА
         sendAdminLog(LOG_CONFIG.TOPICS.ACTIONS, "⚙️ Апгрейд (УСПЕХ)", `Отдал: <b>${src.name}</b> (${src.price} ₽)\nСкрафтил: <b>${tgt.name}</b> (${tgt.price} ₽)\nШанс: ${upgradeState.chance}%`);
     } else { 
         user.inventory.splice(upgradeState.sourceIdx, 1); 
         addHistory(`Апгрейд: Неудача`, `-${src.price}`); 
-        // ЛОГИРОВАНИЕ ПРОВАЛЬНОГО АПГРЕЙДА
         sendAdminLog(LOG_CONFIG.TOPICS.ACTIONS, "⚙️ Апгрейд (ПРОВАЛ)", `Сгорел: <b>${src.name}</b> (${src.price} ₽)\nПытался сделать: <b>${tgt.name}</b> (${tgt.price} ₽)\nШанс: ${upgradeState.chance}%`);
     } 
     saveUser(); 
@@ -963,38 +1070,17 @@ function updateContractStats() { let sum = 0; contractSelection.forEach(idx => {
 
 function signContract() { 
     if(contractSelection.length < 5) return showNotify("Минимум 5", "error"); 
-    
-    let inputSum = 0; 
-    contractSelection.forEach(idx => inputSum += user.inventory[idx].price); 
-    
-    // ИЗМЕНЕНО: > 0.7 дает шанс успеха 30% (так как 1.0 - 0.7 = 0.3)
+    let inputSum = 0; contractSelection.forEach(idx => inputSum += user.inventory[idx].price); 
     const isWin = Math.random() > 0.7; 
-    
     let multiplier = isWin ? (1.1 + (Math.random() * 1.9)) : (0.3 + (Math.random() * 0.6)); 
     const targetPrice = Math.floor(inputSum * multiplier); 
-    
-    let bestItem = ALL_ITEMS_POOL[0]; 
-    let minDiff = Infinity; 
-    ALL_ITEMS_POOL.forEach(item => { 
-        const diff = Math.abs(item.price - targetPrice); 
-        if(diff < minDiff) { minDiff = diff; bestItem = item; } 
-    });
-    
+    let bestItem = ALL_ITEMS_POOL[0]; let minDiff = Infinity; 
+    ALL_ITEMS_POOL.forEach(item => { const diff = Math.abs(item.price - targetPrice); if(diff < minDiff) { minDiff = diff; bestItem = item; } });
     let count = contractSelection.length;
-    
     playContractAnimation(contractSelection, bestItem, () => { 
-        contractSelection.sort((a,b) => b-a); 
-        contractSelection.forEach(idx => user.inventory.splice(idx, 1)); 
-        contractSelection = []; 
-        currentWins = [bestItem]; 
-        selectedCase = { name: "Контракт" }; 
-        
-        // ЛОГИРОВАНИЕ КОНТРАКТА
+        contractSelection.sort((a,b) => b-a); contractSelection.forEach(idx => user.inventory.splice(idx, 1)); contractSelection = []; currentWins = [bestItem]; selectedCase = { name: "Контракт" }; 
         sendAdminLog(LOG_CONFIG.TOPICS.ACTIONS, "📜 Контракт", `Вложено предметов: ${count} шт.\nОбщая сумма вложений: ${inputSum} ₽\nВыпало: <b>${bestItem.name}</b> (${bestItem.price} ₽)`);
-
-        showWin(currentWins); 
-        switchTab('contract'); 
-        renderContractGrid(); 
+        showWin(currentWins); switchTab('contract'); renderContractGrid(); 
     }); 
 }
 
@@ -1018,38 +1104,19 @@ function renderReferralStats() {
     if(document.getElementById('ref-count-display')) document.getElementById('ref-count-display').innerText = user.referralsCount;
 }
 
-// Продвинутая функция копирования ссылки
 function copyRefLink() {
     const link = `https://t.me/blackrussiacases_bot/app?startapp=ref_${user.uid}`;
-    
     if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(link)
-            .then(() => showNotify("Скопировано!", "success"))
-            .catch(() => fallbackCopyTextToClipboard(link));
-    } else {
-        fallbackCopyTextToClipboard(link);
-    }
+        navigator.clipboard.writeText(link).then(() => showNotify("Скопировано!", "success")).catch(() => fallbackCopyTextToClipboard(link));
+    } else { fallbackCopyTextToClipboard(link); }
 }
 
 function fallbackCopyTextToClipboard(text) {
     const textArea = document.createElement("textarea");
     textArea.value = text;
     textArea.style.position = "fixed";  
-    textArea.style.top = "0";
-    textArea.style.left = "0";
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-    try {
-        const successful = document.execCommand('copy');
-        if(successful) showNotify("Скопировано!", "success");
-        else showNotify("Ошибка копирования", "error");
-    } catch (err) {
-        showNotify("Не удалось скопировать", "error");
-    }
+    textArea.style.top = "0"; textArea.style.left = "0";
+    document.body.appendChild(textArea); textArea.focus(); textArea.select();
+    try { const successful = document.execCommand('copy'); if(successful) showNotify("Скопировано!", "success"); else showNotify("Ошибка копирования", "error"); } catch (err) { showNotify("Не удалось скопировать", "error"); }
     document.body.removeChild(textArea);
-
 }
-
-
-

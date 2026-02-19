@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Black Russia Cases</title>
+    <meta name="theme-color" content="#09090b">
+    <meta name="description" content="Black Russia Cases - Откройте лучшие кейсы и выигрывайте удивительные предметы!">
+    <title>⭐ Black Russia Cases - Откройте Кейсы</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -11,37 +13,42 @@
 </head>
 <body>
 
+<!-- VPN Overlay -->
 <div id="vpn-overlay" style="display:none; position:fixed; inset:0; background:#09090b; z-index:10001; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px;">
-    <div style="font-size: 60px; margin-bottom: 20px;">🌍</div>
+    <div style="font-size: 60px; margin-bottom: 20px; animation: float 3s ease-in-out infinite;">🌍</div>
     <h1 style="color:#FFD700; font-weight:900; margin-bottom:10px;">ТРЕБУЕТСЯ VPN</h1>
-    <p style="color:#ccc; font-size:16px; max-width:300px; margin-bottom:20px;">Не удалось подключиться к серверу. Если вы из РФ, пожалуйста, включите VPN для корректной работы.</p>
+    <p style="color:#ccc; font-size:16px; max-width:300px; margin-bottom:20px;">Не удалось подключиться к серверу. Если вы из РФ, включите VPN.</p>
     <button onclick="location.reload()" class="btn-primary" style="width: auto; padding: 10px 30px;">ПОВТОРИТЬ</button>
 </div>
 
+<!-- Ban Overlay -->
 <div id="ban-overlay" style="display:none; position:fixed; inset:0; background:#09090b; z-index:10000; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px;">
     <div style="font-size: 80px; margin-bottom: 20px;">🚫</div>
     <h1 style="color:#ff3333; font-weight:900; margin-bottom:10px;">ДОСТУП ЗАБЛОКИРОВАН</h1>
-    <p style="color:#ccc; font-size:16px; max-width:300px; margin-bottom:20px;">Ваш аккаунт был ограничен администратором за нарушение правил.</p>
-    <div style="color:#888; font-size:14px;">Если вы считаете, что это ошибка, обратитесь в поддержку в Telegram.</div>
+    <p style="color:#ccc; font-size:16px; max-width:300px; margin-bottom:20px;">Ваш аккаунт был ограничен администратором.</p>
 </div>
     
+    <!-- Background Glows -->
     <div class="bg-glow bg-glow-1"></div>
     <div class="bg-glow bg-glow-2"></div>
 
+    <!-- Live Feed Strip -->
     <div class="live-feed-strip">
         <div class="live-feed-overlay"></div> 
-        <div class="live-feed-track" id="live-feed-track">
-            <div class="live-item-placeholder"><span class="loader-dot"></span> Ждем дропы...</div>
-        </div>
+        <div class="live-feed-track" id="live-feed-track"><div class="live-item-placeholder"><span class="loader-dot"></span> Ждем дропы...</div></div>
         <div class="live-fade-left"></div>
         <div class="live-fade-right"></div>
     </div>
 
+    <!-- Loading Screen -->
     <div id="loading-screen" style="position:fixed; inset:0; background:#09090b; z-index:9999; display:flex; align-items:center; justify-content:center; flex-direction:column;">
-        <div class="payment-loader"></div>
+        <div class="loader-dot" style="width:20px; height:20px;"></div>
         <div style="margin-top:15px; color:#FFD700; font-weight:bold;">ЗАГРУЗКА...</div>
     </div>
 
+    <!-- Particle Container (for future effects) -->
+    <div id="particle-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"></div>
+    
     <div id="blur-container">
         <header>
             <div class="brand-box">
@@ -63,99 +70,56 @@
         </header>
 
         <main>
-            <div id="tab-shop" class="section">
-                <div class="hero-section small">
-                    <h1>Магазин</h1>
-                    <p>Пополнение и бонусы</p>
-                </div>
-
-                <div class="glass-panel" style="padding: 20px; margin-bottom: 25px;">
-                    <h3 style="margin-top:0; color:#FFD700;">🎟 Промокод</h3>
-                    <div class="promo-box-large">
-                        <input type="text" id="promo-input" placeholder="Введите код (например: FREE)">
-                        <button onclick="activatePromo()" id="btn-promo-act">АКТИВИРОВАТЬ</button>
-                    </div>
-                </div>
-
-                <div class="section-divider"><span>ПАКЕТЫ ПОПОЛНЕНИЯ</span></div>
-                
-<div class="shop-grid">
-    <button class="shop-btn" onclick="buyPack(20, 'https://funpay.com/lots/offer?id=64078084')">
-        <div class="sb-price">20 ₽</div>
-        <div class="sb-desc">Старт</div>
-    </button>
-
-    <button class="shop-btn" onclick="buyPack(50, 'https://funpay.com/lots/offer?id=64078147')">
-        <div class="sb-price">50 ₽</div>
-        <div class="sb-desc">Новичок</div>
-    </button>
-
-    <button class="shop-btn popular" onclick="buyPack(100, 'https://funpay.com/lots/offer?id=64078181')">
-        <div class="sb-badge">ХИТ</div>
-        <div class="sb-price">100 ₽</div>
-        <div class="sb-desc">Базовый</div>
-    </button>
-
-    <button class="shop-btn" onclick="buyPack(200, 'https://funpay.com/lots/offer?id=64078217')">
-        <div class="sb-price">200 ₽</div>
-        <div class="sb-desc">Продвинутый</div>
-    </button>
-
-    <button class="shop-btn gold" onclick="buyPack(500, 'https://funpay.com/lots/offer?id=64078258')">
-        <div class="sb-price">500 ₽</div>
-        <div class="sb-desc">Элита</div>
-    </button>
-
-    <button class="shop-btn gold" onclick="buyPack(1000, 'https://funpay.com/lots/offer?id=64078292')">
-        <div class="sb-price">1000 ₽</div>
-        <div class="sb-desc">Мажор</div>
-    </button>
-
-    <button class="shop-btn myth" onclick="buyPack(5000, 'https://funpay.com/lots/offer?id=64078331')">
-        <div class="sb-price">5000 ₽</div>
-        <div class="sb-desc">Олигарх</div>
-    </button>
-
-    <button class="shop-btn myth" onclick="buyPack(10000, 'https://funpay.com/lots/offer?id=64078369')">
-        <div class="sb-price">10000 ₽</div>
-        <div class="sb-desc">Владелец</div>
-    </button>
-</div>
-
-<div class="glass-panel custom-pay-box">
-    <div class="custom-pay-label">Нужна другая сумма?</div>
-    <button class="btn-primary" onclick="payCustomAmount()">КУПИТЬ НА FUNPAY</button>
-</div>
+            <div id="tab-cases" class="section active">
+                <div class="hero-section"><h1>Black Russia Cases</h1><p>Испытай удачу прямо сейчас</p></div>
+                <div class="section-divider"><span>БЕСПЛАТНО</span></div><div class="cases-grid" id="cases-free"></div>
+                <div class="section-divider"><span>КЕЙСЫ</span></div><div class="cases-grid" id="cases-default"></div>
+                <div class="section-divider"><span>НАБОРЫ</span></div><div class="cases-grid" id="cases-bundles"></div>
+                <div class="section-divider"><span>РИСК</span></div><div class="cases-grid" id="cases-risk"></div>
+                <div class="section-divider"><span>КОНТЕЙНЕРЫ</span></div><div class="cases-grid" id="containers"></div>
             </div>
 
-            <div id="tab-cases" class="section active">
-                <div class="hero-section">
-                    <h1>Black Russia Cases</h1>
-                    <p>Испытай удачу прямо сейчас</p>
+            <div id="tab-games" class="section">
+                <div class="hero-section small"><h1>Мини-Игры</h1><p>Рискуй и приумножай</p></div>
+                
+                <div class="games-hub-grid">
+                    <div class="game-hub-card upgrade" onclick="switchTab('upgrade')">
+                        <div class="gh-icon">⚙️</div>
+                        <div class="gh-info">
+                            <h3>Апгрейд</h3>
+                            <p>Улучши предмет или потеряй его</p>
+                        </div>
+                        <div class="gh-btn">ИГРАТЬ</div>
+                    </div>
+                    
+                    <div class="game-hub-card contract" onclick="switchTab('contract')">
+                        <div class="gh-icon">📜</div>
+                        <div class="gh-info">
+                            <h3>Контракт</h3>
+                            <p>Обменяй 5 предметов на 1 крутой</p>
+                        </div>
+                        <div class="gh-btn">ИГРАТЬ</div>
+                    </div>
+
+                    <div class="game-hub-card top" onclick="switchTab('top')">
+                        <div class="gh-icon">🏆</div>
+                        <div class="gh-info">
+                            <h3>Топ Игроков</h3>
+                            <p>Рейтинг богачей сервера</p>
+                        </div>
+                        <div class="gh-btn">СМОТРЕТЬ</div>
+                    </div>
                 </div>
-                <div class="section-divider"><span>БЕСПЛАТНО</span></div>
-                <div class="cases-grid" id="cases-free"></div>
-                <div class="section-divider"><span>КЕЙСЫ</span></div>
-                <div class="cases-grid" id="cases-default"></div>
-                <div class="section-divider"><span>НАБОРЫ</span></div>
-                <div class="cases-grid" id="cases-bundles"></div>
-                <div class="section-divider"><span>РИСК</span></div>
-                <div class="cases-grid" id="cases-risk"></div>
-                <div class="section-divider"><span>КОНТЕЙНЕРЫ</span></div>
-                <div class="cases-grid" id="containers"></div>
             </div>
 
             <div id="tab-upgrade" class="section">
+                <div class="back-nav" onclick="switchTab('games')">‹ Назад к играм</div>
                  <div class="hero-section small"><h1>Апгрейд</h1><p>Повышай ставки</p></div>
                 <div class="upgrade-wrapper">
                     <div class="upgrade-slots-row">
                         <div class="upg-card glass-panel" id="upg-source-slot" onclick="openUpgradeSelector()">
                             <div class="upg-card-header">ТВОЙ ПРЕДМЕТ</div>
-                            <div class="upg-card-body">
-                                <div class="placeholder-icon">+</div>
-                                <img id="upg-source-img" src="" style="display:none">
-                                <div id="upg-source-price" class="price-badge" style="display:none">0 ₽</div>
-                            </div>
+                            <div class="upg-card-body"><div class="placeholder-icon">+</div><img id="upg-source-img" src="" style="display:none"><div id="upg-source-price" class="price-badge" style="display:none">0 ₽</div></div>
                         </div>
                         <div class="upg-arrow">➜</div>
                         <div class="upg-card glass-panel target">
@@ -163,47 +127,74 @@
                             <div class="upg-card-body">
                                 <div id="upg-target-placeholder" class="placeholder-icon" style="opacity:0.3">?</div>
                                 <div id="upg-not-found" class="error-text" style="display:none">НЕТ ДРОПА</div>
-                                <div id="upg-target-content" style="display:none">
-                                    <img id="upg-target-img" src="">
-                                    <div id="upg-target-price" class="price-badge gold">0 ₽</div>
-                                </div>
+                                <div id="upg-target-content" style="display:none"><img id="upg-target-img" src=""><div id="upg-target-price" class="price-badge gold">0 ₽</div></div>
                             </div>
                         </div>
                     </div>
                     <div class="glass-panel controls-panel">
-                        <div class="multipliers-grid">
-                            <button onclick="setUpgradeMultiplier(1.5)">x1.5</button>
-                            <button onclick="setUpgradeMultiplier(2)">x2.0</button>
-                            <button onclick="setUpgradeMultiplier(5)">x5.0</button>
-                            <button onclick="setUpgradeMultiplier(10)">x10</button>
-                        </div>
-                        <div class="slider-wrapper">
-                            <div class="slider-labels"><span>Шанс</span><span id="upg-chance-display">50%</span></div>
-                            <input type="range" id="upg-chance-slider" min="1" max="75" value="50" oninput="updateUpgradeCalculation()">
-                        </div>
+                        <div class="multipliers-grid"><button onclick="setUpgradeMultiplier(1.5)">x1.5</button><button onclick="setUpgradeMultiplier(2)">x2.0</button><button onclick="setUpgradeMultiplier(5)">x5.0</button><button onclick="setUpgradeMultiplier(10)">x10</button></div>
+                        <div class="slider-wrapper"><div class="slider-labels"><span>Шанс</span><span id="upg-chance-display">50%</span></div><input type="range" id="upg-chance-slider" min="1" max="75" value="50" oninput="updateUpgradeCalculation()"></div>
                     </div>
-                    <div class="roll-container glass-panel">
-                        <div class="roll-track-neon">
-                            <div class="roll-win-area" id="roll-win-zone" style="width: 50%;"></div>
-                            <div class="roll-pointer" id="roll-pointer"></div>
-                        </div>
-                    </div>
+                    <div class="roll-container glass-panel"><div class="roll-track-neon"><div class="roll-win-area" id="roll-win-zone" style="width: 50%;"></div><div class="roll-pointer" id="roll-pointer"></div></div></div>
                     <div id="upg-status-text" class="status-text"></div>
                     <button id="btn-do-upgrade" class="btn-primary big-btn" onclick="startUpgrade()" disabled>УЛУЧШИТЬ</button>
                 </div>
             </div>
 
             <div id="tab-contract" class="section">
+                <div class="back-nav" onclick="switchTab('games')">‹ Назад к играм</div>
                 <div class="hero-section small"><h1>Контракты</h1><p>Обменяй ненужное</p></div>
-                <div id="contract-stats" class="contract-stats glass-panel">
-                    <div>Выбрано: <span id="contract-count" class="gold-text">0</span></div>
-                    <div>Сумма: <span id="contract-sum" class="gold-text">0</span> ₽</div>
-                </div>
+                <div id="contract-stats" class="contract-stats glass-panel"><div>Выбрано: <span id="contract-count" class="gold-text">0</span></div><div>Сумма: <span id="contract-sum" class="gold-text">0</span> ₽</div></div>
                 <div id="contract-grid" class="inventory-grid"></div>
                 <div id="contract-empty" class="empty-state" style="display:none;"><div class="empty-icon">📂</div><p>Пусто</p></div>
-                <div class="contract-footer">
-                    <button id="btn-sign-contract" class="btn-primary big-btn" onclick="signContract()" disabled>ПОДПИСАТЬ КОНТРАКТ</button>
+                <div class="contract-footer"><button id="btn-sign-contract" class="btn-primary big-btn" onclick="signContract()" disabled>ПОДПИСАТЬ КОНТРАКТ</button></div>
+            </div>
+            
+            <div id="tab-top" class="section">
+                <div class="back-nav" onclick="switchTab('games')">‹ Назад к играм</div>
+                <div class="hero-section"><h1>Топ Богачей</h1><p>Лучшие по тратам в игре</p></div>
+                <div class="glass-panel" style="padding: 10px;"><div id="leaderboard-list">Loading...</div></div>
+            </div>
+
+            <div id="tab-shop" class="section">
+                <div class="hero-section small"><h1>Магазин</h1><p>Пополнение и бонусы</p></div>
+                <div class="glass-panel" style="padding: 20px; margin-bottom: 25px;">
+                    <h3 style="margin-top:0; color:#FFD700;">🎟 Промокод</h3>
+                    <div class="promo-box-large"><input type="text" id="promo-input" placeholder="Введите код"><button onclick="activatePromo()" id="btn-promo-act">АКТИВИРОВАТЬ</button></div>
                 </div>
+                <div class="section-divider"><span>ПАКЕТЫ ПОПОЛНЕНИЯ</span></div>
+                <div class="shop-grid">
+                    <button class="shop-btn" onclick="buyPack(20, 'https://funpay.com/lots/offer?id=64312154')"><div class="sb-price">20 ₽</div><div class="sb-desc">Старт</div></button>
+                    <button class="shop-btn" onclick="buyPack(50, 'https://funpay.com/lots/offer?id=64312011')"><div class="sb-price">50 ₽</div><div class="sb-desc">Новичок</div></button>
+                    <button class="shop-btn popular" onclick="buyPack(100, 'https://funpay.com/lots/offer?id=64312367')"><div class="sb-badge">ХИТ</div><div class="sb-price">100 ₽</div><div class="sb-desc">Базовый</div></button>
+                    <button class="shop-btn" onclick="buyPack(200, 'https://funpay.com/lots/offer?id=64312491')"><div class="sb-price">200 ₽</div><div class="sb-desc">Продвинутый</div></button>
+                    <button class="shop-btn gold" onclick="buyPack(500, 'https://funpay.com/lots/offer?id=64312576')"><div class="sb-price">500 ₽</div><div class="sb-desc">Элита</div></button>
+                    <button class="shop-btn gold" onclick="buyPack(1000, 'https://funpay.com/lots/offer?id=64312701')"><div class="sb-price">1000 ₽</div><div class="sb-desc">Мажор</div></button>
+                    <button class="shop-btn myth" onclick="buyPack(5000, 'https://funpay.com/lots/offer?id=64312833')"><div class="sb-price">5000 ₽</div><div class="sb-desc">Олигарх</div></button>
+                    <button class="shop-btn myth" onclick="buyPack(10000, 'https://funpay.com/lots/offer?id=64312922')"><div class="sb-price">10000 ₽</div><div class="sb-desc">Владелец</div></button>
+                </div>
+                <div class="glass-panel custom-pay-box"><div class="custom-pay-label">Нужна другая сумма?</div><button class="btn-primary" onclick="payCustomAmount()">КУПИТЬ НА FUNPAY</button></div>
+            </div>
+
+            <div id="tab-pass" class="section">
+                <div class="hero-section small"><h1>Battle Pass</h1><p>Выполняй задания - получай награды</p></div>
+                
+                <div class="bp-header glass-panel">
+                    <div class="bp-level-info">
+                        <div class="bp-lvl-badge" id="bp-current-level">1</div>
+                        <div class="bp-exp-text">Уровень <span id="bp-current-exp">0</span> / <span id="bp-need-exp">100</span> EXP</div>
+                    </div>
+                    <div class="bp-progress-bar"><div class="bp-progress-fill" id="bp-progress-fill" style="width: 0%;"></div></div>
+                    <button id="btn-buy-premium" class="btn-primary bp-buy-btn" onclick="buyPremiumPass()">КУПИТЬ PREMIUM (249 ₽)</button>
+                    <div id="bp-premium-active" class="bp-premium-active-badge" style="display:none;">PREMIUM АКТИВЕН 👑</div>
+                    <div style="font-size:10px; color:#666; margin-top:5px; text-align:center;">Окупаемость Premium: x2.5 (предметами)</div>
+                </div>
+
+                <div class="section-divider"><span>НАГРАДЫ</span></div>
+                <div class="bp-track-container" id="bp-track"></div>
+
+                <div class="section-divider"><span>ЗАДАНИЯ</span></div>
+                <div class="bp-tasks-list" id="bp-tasks"></div>
             </div>
 
             <div id="tab-inventory" class="section">
@@ -212,13 +203,19 @@
                 <div id="empty-inventory" class="empty-state" style="display:none;"><div class="empty-icon">🚘</div><p>Ваш гараж пуст</p></div>
             </div>
         </main>
+    </div>
+
+    <!-- Floating Action Buttons -->
+    <div id="fab-container" style="position:fixed; bottom:90px; right:20px; z-index:99; display:flex; flex-direction:column; gap:12px; pointer-events:none;">
+        <button style="width:50px; height:50px; border-radius:50%; background:linear-gradient(135deg,#4CAF50,#1B5E20); border:none; color:#fff; font-size:24px; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.3); pointer-events:auto; transition:all 0.3s ease;" onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 0 20px rgba(76,175,80,0.5)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.3)'" onclick="switchTab('pass'); createClickParticle(event.clientX, event.clientY)">🎫</button>
+        <button style="width:50px; height:50px; border-radius:50%; background:linear-gradient(135deg,#FF9800,#FF6F00); border:none; color:#fff; font-size:24px; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.3); pointer-events:auto; transition:all 0.3s ease;" onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 0 20px rgba(255,152,0,0.5)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.3)'" onclick="switchTab('shop'); createClickParticle(event.clientX, event.clientY)">🛍️</button>
     </div> 
 
-    <nav class="glass-nav">
-        <button class="nav-item active" onclick="switchTab('cases')"><div class="nav-icon">📦</div><span>Кейсы</span></button>
-        <button class="nav-item" onclick="switchTab('upgrade')"><div class="nav-icon">⚡️</div><span>Апгрейд</span></button>
-        <button class="nav-item" onclick="switchTab('shop')"><div class="nav-icon">💳</div><span>Магазин</span></button>
-        <button class="nav-item" onclick="switchTab('contract')"><div class="nav-icon">📜</div><span>Контракт</span></button>
+    <nav class="bottom-nav">
+        <button class="nav-item" onclick="switchTab('shop')"><div class="nav-icon">🛒</div><span>Магазин</span></button>
+        <button class="nav-item" onclick="switchTab('games')"><div class="nav-icon">🎮</div><span>Игры</span></button>
+        <button class="nav-item main-action" onclick="switchTab('cases')"><div class="nav-icon">📦</div></button>
+        <button class="nav-item" onclick="switchTab('pass')"><div class="nav-icon">🎫</div><span>Pass</span></button>
         <button class="nav-item" onclick="switchTab('inventory')"><div class="nav-icon">🚘</div><span>Гараж</span></button>
     </nav>
 
@@ -226,12 +223,20 @@
         <div class="modal-glass center-modal" style="text-align:center;">
             <div style="font-size: 40px; margin-bottom: 10px;">⚠️</div>
             <h3 style="color:#FFD700; margin-top:0;">ПОДТВЕРЖДЕНИЕ</h3>
-            <p style="font-size:13px; color:#ccc; line-height:1.5;">
-                После оплаты <b>обязательно</b> подтвердите выполнение заказа на сайте оплаты.<br><br>
-                <span style="color:#ff4d4d;">Если вы не подтвердите заказ, средства не будут зачислены, а аккаунт может быть заблокирован.</span>
-            </p>
+            <p style="font-size:13px; color:#ccc;">После оплаты подтвердите заказ на сайте оплаты.</p>
             <button id="btn-proceed-pay" class="btn-primary" style="margin-top:15px;">Я ПОНЯЛ, ОПЛАТИТЬ</button>
             <button class="btn-secondary" style="margin-top:10px;" onclick="closeModal('modal-payment-warning')">ОТМЕНА</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-premium-pass-confirm">
+        <div class="modal-glass center-modal" style="text-align:center;">
+            <div style="font-size: 50px; margin-bottom: 15px;">📝</div>
+            <h3 style="color:#FFD700; margin-top:0; font-size:20px;">НЕ ЗАБУДЬ</h3>
+            <p style="font-size:16px; color:#fff; margin:15px 0; font-weight:600;">Подтвердить заказ</p>
+            <p style="font-size:12px; color:#aaa; margin-bottom:20px;">После оплаты подтвердите заказ на сайте оплаты.</p>
+            <button id="btn-proceed-premium" class="btn-primary" style="margin-top:15px;">Я ПОДТВЕРДИЛ, ОПЛАТИТЬ</button>
+            <button class="btn-secondary" style="margin-top:10px;" onclick="closeModal('modal-premium-pass-confirm')">ОТМЕНА</button>
         </div>
     </div>
 
@@ -247,10 +252,7 @@
             <button id="btn-sub-check" class="btn-primary" style="display:none; margin-bottom:10px;" onclick="checkSubscriptionAction()">ПОДПИСАТЬСЯ</button>
             <button id="btn-sub-verify" class="btn-primary" style="display:none; background:#4CAF50; margin-bottom:10px;" onclick="verifySubscriptionWithBackend()">ПРОВЕРИТЬ</button>
             <div class="qty-selector" id="qty-selector">
-                <button class="qty-btn active" onclick="setOpenCount(1)">x1</button>
-                <button class="qty-btn" onclick="setOpenCount(2)">x2</button>
-                <button class="qty-btn" onclick="setOpenCount(5)">x5</button>
-                <button class="qty-btn" onclick="setOpenCount(10)">x10</button>
+                <button class="qty-btn active" onclick="setOpenCount(1)">x1</button><button class="qty-btn" onclick="setOpenCount(2)">x2</button><button class="qty-btn" onclick="setOpenCount(5)">x5</button><button class="qty-btn" onclick="setOpenCount(10)">x10</button>
             </div>
             <div class="items-scroller" id="preview-items-container"></div>
             <div class="modal-footer-sticky">
@@ -275,107 +277,81 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="modal-upg-select">
-        <div class="modal-glass center-modal full-height">
-            <button class="btn-close" onclick="closeModal('modal-upg-select')">✕</button>
-            <h3>Выбери предмет</h3>
-            <div class="upg-select-list" id="upg-select-grid"></div>
-        </div>
-    </div>
+    <div class="modal-overlay" id="modal-upg-select"><div class="modal-glass center-modal full-height"><button class="btn-close" onclick="closeModal('modal-upg-select')">✕</button><h3>Выбери предмет</h3><div class="upg-select-list" id="upg-select-grid"></div></div></div>
 
     <div class="modal-overlay" id="modal-profile">
         <div class="modal-glass center-modal">
             <button class="btn-close" onclick="closeModal('modal-profile')">✕</button>
-            <h3>Профиль</h3>
+            <div style="display:flex; align-items:center; gap:10px;"><h3>Профиль</h3></div>
             <div class="profile-scroll-area">
-                <div class="profile-stats">
-                    <div class="stat-line">ID: <span id="profile-uid">...</span></div>
-                    <div class="stat-line">Баланс: <span id="profile-bal" class="gold-text">0</span></div>
-                </div>
+                <div class="profile-stats"><div class="stat-line" style="display:flex; align-items:center;">ID: <span id="profile-uid" style="margin-right:5px;">...</span><span id="profile-verified-badge" class="insta-verified-badge large" style="display:none;"></span></div><div class="stat-line">Баланс: <span id="profile-bal" class="gold-text">0</span></div></div>
                 <div class="settings-form">
                     <div class="input-group"><label>Никнейм</label><input type="text" id="setting-nick" placeholder="Ivan_Ivanov"></div>
-                    <div class="input-group">
-                        <label>Сервер</label>
-<select id="setting-server">
-                                <option value="Red">Red</option><option value="Green">Green</option><option value="Blue">Blue</option>
-                                <option value="Yellow">Yellow</option><option value="Orange">Orange</option><option value="Purple">Purple</option>
-                                <option value="Lime">Lime</option><option value="Pink">Pink</option><option value="Cherry">Cherry</option>
-                                <option value="Black">Black</option><option value="Indigo">Indigo</option><option value="White">White</option>
-                                <option value="Magenta">Magenta</option><option value="Crimson">Crimson</option><option value="Gold">Gold</option>
-                                <option value="Azure">Azure</option><option value="Platinum">Platinum</option><option value="Aqua">Aqua</option>
-                                <option value="Gray">Gray</option><option value="Ice">Ice</option><option value="Chilli">Chilli</option>
-                                <option value="Choco">Choco</option><option value="Moscow">Moscow</option><option value="SPB">SPB</option>
-                                <option value="Ufa">Ufa</option><option value="Sochi">Sochi</option><option value="Kazan">Kazan</option>
-                                <option value="Samara">Samara</option><option value="Rostov">Rostov</option><option value="Anapa">Anapa</option>
-                                <option value="EKB">EKB</option><option value="Krasnodar">Krasnodar</option><option value="Arzamas">Arzamas</option>
-                                <option value="Novosib">Novosib</option><option value="Grozny">Grozny</option><option value="Saratov">Saratov</option>
-                                <option value="Omsk">Omsk</option><option value="Irkutsk">Irkutsk</option><option value="Volgograd">Volgograd</option>
-                                <option value="Voronezh">Voronezh</option><option value="Belgorod">Belgorod</option><option value="Makhachkala">Makhachkala</option>
-                                <option value="Vladikavkaz">Vladikavkaz</option><option value="Vladivostok">Vladivostok</option><option value="Kaliningrad">Kaliningrad</option>
-                                <option value="Chelyabinsk">Chelyabinsk</option><option value="Krasnoyarsk">Krasnoyarsk</option><option value="Cheboksary">Cheboksary</option>
-                                <option value="Khabarovsk">Khabarovsk</option><option value="Perm">Perm</option><option value="Tula">Tula</option>
-                                <option value="Ryazan">Ryazan</option><option value="Murmansk">Murmansk</option><option value="Penza">Penza</option>
-                                <option value="Kursk">Kursk</option><option value="Arkhangelsk">Arkhangelsk</option><option value="Orenburg">Orenburg</option>
-                                <option value="Kirov">Kirov</option><option value="Kemerovo">Kemerovo</option><option value="Tyumen">Tyumen</option>
-                                <option value="Tolyatti">Tolyatti</option><option value="Ivanovo">Ivanovo</option><option value="Stavropol">Stavropol</option>
-                                <option value="Smolensk">Smolensk</option><option value="Pskov">Pskov</option><option value="Bryansk">Bryansk</option>
-                                <option value="Orel">Orel</option><option value="Yaroslavl">Yaroslavl</option><option value="Barnaul">Barnaul</option>
-                                <option value="Lipetsk">Lipetsk</option><option value="Ulyanovsk">Ulyanovsk</option><option value="Yakutsk">Yakutsk</option>
-                                <option value="Tambov">Tambov</option><option value="Bratsk">Bratsk</option><option value="Astrakhan">Astrakhan</option>
-                                <option value="Chita">Chita</option><option value="Kostroma">Kostroma</option><option value="Vladimir">Vladimir</option>
-                                <option value="Kaluga">Kaluga</option><option value="Novgorod">Novgorod</option><option value="Taganrog">Taganrog</option>
-                                <option value="Vologda">Vologda</option><option value="Tver">Tver</option><option value="Tomsk">Tomsk</option>
-                                <option value="Izhevsk">Izhevsk</option><option value="Surgut">Surgut</option><option value="Podolsk">Podolsk</option>
-                                <option value="Magadan">Magadan</option><option value="Cherepovets">Cherepovets</option><option value="Norilsk">Norilsk</option>
-                        </select>
-                    </div>
+                    <div class="input-group"><label>Сервер</label>                       
+                        <select id="setting-server">
+                            <option value="Red">Red</option><option value="Green">Green</option><option value="Blue">Blue</option>
+                            <option value="Yellow">Yellow</option><option value="Orange">Orange</option><option value="Purple">Purple</option>
+                            <option value="Lime">Lime</option><option value="Pink">Pink</option><option value="Cherry">Cherry</option>
+                            <option value="Black">Black</option><option value="Indigo">Indigo</option><option value="White">White</option>
+                            <option value="Magenta">Magenta</option><option value="Crimson">Crimson</option><option value="Gold">Gold</option>
+                            <option value="Azure">Azure</option><option value="Platinum">Platinum</option><option value="Aqua">Aqua</option>
+                            <option value="Gray">Gray</option><option value="Ice">Ice</option><option value="Chilli">Chilli</option>
+                            <option value="Choco">Choco</option><option value="Moscow">Moscow</option><option value="SPB">SPB</option>
+                            <option value="Ufa">Ufa</option><option value="Sochi">Sochi</option><option value="Kazan">Kazan</option>
+                            <option value="Samara">Samara</option><option value="Rostov">Rostov</option><option value="Anapa">Anapa</option>
+                            <option value="EKB">EKB</option><option value="Krasnodar">Krasnodar</option><option value="Arzamas">Arzamas</option>
+                            <option value="Novosib">Novosib</option><option value="Grozny">Grozny</option><option value="Saratov">Saratov</option>
+                            <option value="Omsk">Omsk</option><option value="Irkutsk">Irkutsk</option><option value="Volgograd">Volgograd</option>
+                            <option value="Voronezh">Voronezh</option><option value="Belgorod">Belgorod</option><option value="Makhachkala">Makhachkala</option>
+                            <option value="Vladikavkaz">Vladikavkaz</option><option value="Vladivostok">Vladivostok</option><option value="Kaliningrad">Kaliningrad</option>
+                            <option value="Chelyabinsk">Chelyabinsk</option><option value="Krasnoyarsk">Krasnoyarsk</option><option value="Cheboksary">Cheboksary</option>
+                            <option value="Khabarovsk">Khabarovsk</option><option value="Perm">Perm</option><option value="Tula">Tula</option>
+                            <option value="Ryazan">Ryazan</option><option value="Murmansk">Murmansk</option><option value="Penza">Penza</option>
+                            <option value="Kursk">Kursk</option><option value="Arkhangelsk">Arkhangelsk</option><option value="Orenburg">Orenburg</option>
+                            <option value="Kirov">Kirov</option><option value="Kemerovo">Kemerovo</option><option value="Tyumen">Tyumen</option>
+                            <option value="Tolyatti">Tolyatti</option><option value="Ivanovo">Ivanovo</option><option value="Stavropol">Stavropol</option>
+                            <option value="Smolensk">Smolensk</option><option value="Pskov">Pskov</option><option value="Bryansk">Bryansk</option>
+                            <option value="Orel">Orel</option><option value="Yaroslavl">Yaroslavl</option><option value="Barnaul">Barnaul</option>
+                            <option value="Lipetsk">Lipetsk</option><option value="Ulyanovsk">Ulyanovsk</option><option value="Yakutsk">Yakutsk</option>
+                            <option value="Tambov">Tambov</option><option value="Bratsk">Bratsk</option><option value="Astrakhan">Astrakhan</option>
+                            <option value="Chita">Chita</option><option value="Kostroma">Kostroma</option><option value="Vladimir">Vladimir</option>
+                            <option value="Kaluga">Kaluga</option><option value="Novgorod">Novgorod</option><option value="Taganrog">Taganrog</option>
+                            <option value="Vologda">Vologda</option><option value="Tver">Tver</option><option value="Tomsk">Tomsk</option>
+                            <option value="Izhevsk">Izhevsk</option><option value="Surgut">Surgut</option><option value="Podolsk">Podolsk</option>
+                            <option value="Magadan">Magadan</option><option value="Cherepovets">Cherepovets</option><option value="Norilsk">Norilsk</option>
+                        </select></div>
                     <div class="input-group"><label>Счет</label><input type="number" id="setting-bank" placeholder="0000"></div>
                     <button class="btn-primary" style="margin-top:10px;" onclick="saveSettings()">Сохранить</button>
                 </div>
                 <div class="section-divider"><span>РЕФЕРАЛКА</span></div>
                 <div class="ref-card glass-panel">
-                    <div class="ref-header">Заработано</div>
-                    <div class="ref-balance"><span id="ref-earn-display">0</span> ₽</div>
-                    <div class="ref-stats-row">
-                         <div class="ref-stat"><div class="rs-val" id="ref-count-display">0</div><div class="rs-label">Друзей</div></div>
-                         <div class="ref-stat"><div class="rs-val">10 ₽</div><div class="rs-label">За друга</div></div>
-                    </div>
+                    <div class="ref-header">Заработано</div><div class="ref-balance"><span id="ref-earn-display">0</span> ₽</div>
+                    <div class="ref-stats-row"><div class="ref-stat"><div class="rs-val" id="ref-count-display">0</div><div class="rs-label">Друзей</div></div><div class="ref-stat"><div class="rs-val">10 ₽</div><div class="rs-label">За друга</div></div></div>
                 </div>
                 <button class="btn-secondary" onclick="copyRefLink()" style="margin-top:10px;">Копировать ссылку</button>
-                <div class="history-block" style="margin-top:20px;">
-                    <h4>История</h4>
-                    <div class="history-scroll-container"><div id="history-list"></div></div>
-                </div>
+                <div class="history-block" style="margin-top:20px;"><h4>История</h4><div class="history-scroll-container"><div id="history-list"></div></div></div>
             </div>
         </div>
     </div>
-
-    <div class="modal-overlay" id="modal-win">
-        <div class="modal-glass center-modal win-modal" id="win-modal-content">
-            <div class="win-light" id="win-light-bg"></div>
-            <h2 class="win-title">ПОБЕДА!</h2>
-            <div id="win-grid" class="win-grid"></div>
-            <div class="win-sum">Сумма: <span id="win-total-price">0</span> ₽</div>
-            <div class="win-actions">
-                <button class="btn-secondary" onclick="finishWin(false)">Продать</button>
-                <button class="btn-primary" onclick="finishWin(true)">В гараж</button>
+    
+    <div class="modal-overlay" id="modal-other-profile">
+        <div class="modal-glass center-modal">
+            <button class="btn-close" onclick="closeModal('modal-other-profile')">✕</button>
+            <div style="text-align:center; margin-bottom:15px;">
+                <img id="other-avatar" src="" style="width:60px; height:60px; border-radius:50%; margin-bottom:10px;">
+                <h3 style="margin:0; display:flex; align-items:center; justify-content:center;"><span id="other-name">User</span><span id="other-verified" class="insta-verified-badge large" style="display:none;"></span></h3>
+                <div id="other-server" style="color:#666; font-size:12px; margin-top: 5px;">Server: Red</div>
             </div>
+            <div class="profile-scroll-area"><div id="other-inventory-grid" class="inventory-grid"></div><div id="other-inventory-empty" class="empty-state" style="display:none;"><p>Пусто</p></div></div>
         </div>
     </div>
 
-    <div class="roulette-overlay" id="modal-roulette">
-        <div class="roulette-status">ОТКРЫВАЕМ...</div>
-        <div id="roulette-strips-container" class="roulette-strips-container"></div>
-    </div>
+    <div class="modal-overlay" id="modal-win"><div class="modal-glass center-modal win-modal" id="win-modal-content"><div class="win-light" id="win-light-bg"></div><h2 class="win-title">ПОБЕДА!</h2><div id="win-grid" class="win-grid"></div><div class="win-sum">Сумма: <span id="win-total-price">0</span> ₽</div><div class="win-actions"><button class="btn-secondary" onclick="finishWin(false)">Продать</button><button class="btn-primary" onclick="finishWin(true)">В гараж</button></div></div></div>
 
+    <div class="roulette-overlay" id="modal-roulette"><div class="roulette-status">ОТКРЫВАЕМ...</div><div id="roulette-strips-container" class="roulette-strips-container"></div></div>
     <div id="notify-area"></div>
-    <div class="contract-anim-overlay" id="contract-anim-overlay"><div class="contract-vortex" id="contract-vortex"></div><div class="contract-flash" id="contract-flash"></div></div>
-    <div class="container-anim-overlay" id="container-anim-overlay">
-        <div class="container-box" id="container-box">
-             <div class="container-lock"></div><div class="container-door c-door-left"></div><div class="container-door c-door-right"></div>
-             <div class="container-inner-light"></div><img id="container-reveal-img" class="container-item-reveal" src="">
-        </div>
-    </div>
+    <div class="contract-anim-overlay" id="contract-anim-overlay"><div class="contract-vortex" id="contract-vortex"></div></div>
+    <div class="container-anim-overlay" id="container-anim-overlay"><div class="container-box" id="container-box"><div class="container-lock"></div><div class="container-door c-door-left"></div><div class="container-door c-door-right"></div><div class="container-inner-light"></div><img id="container-reveal-img" class="container-item-reveal" src=""></div></div>
 
     <script src="script.js"></script>
 </body>

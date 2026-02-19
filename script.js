@@ -1,513 +1,150 @@
-/* ==============================================
-   SCRIPT.JS - FINAL VERSION (UPDATED)
-   ============================================== */
-
-// 1. КОНФИГУРАЦИЯ SUPABASE
 const SUPABASE_URL = 'https://itqlqsixknkqoggvubrp.supabase.co'; 
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml0cWxxc2l4a25rcW9nZ3Z1YnJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MjE3MDIsImV4cCI6MjA4NjQ5NzcwMn0.mV0As50_W8MBC3kpLYm_mLbExqRRyf8JaJi1eNOtAj4'; 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// 2. TELEGRAM INIT
 const tg = window.Telegram && window.Telegram.WebApp 
     ? window.Telegram.WebApp 
     : { 
         initDataUnsafe: { user: { id: 123456, first_name: "TestUser", username: "browser_test" }, start_param: "" }, 
-        expand: () => console.log("TG Expand"), 
-        HapticFeedback: { notificationOccurred: (t) => console.log("Haptic:", t) },
+        expand: () => {}, 
+        HapticFeedback: { notificationOccurred: (t) => {} },
         openLink: (url) => window.open(url, '_blank'),
         openTelegramLink: (url) => window.open(url, '_blank'),
-        close: () => console.log("Closing App")
+        close: () => {}
       };
 
-// 3. CONFIG & CONSTANTS
-// Вставьте сюда ссылку на развернутый скрипт Google Apps Script
 const API_URL = "https://script.google.com/macros/s/AKfycbwCTnYYNY3u9ceNdIxlBd0so2fWxNCzxgmQfuDntr3HuKRu9gK9cmGzkeui_Z-4HGQiqw/exec"; 
 const SUB_CHANNEL_URL = "https://t.me/blackrussiacases_news"; 
 const PLACEHOLDER_IMG = "https://placehold.co/150x150/1a1a1a/ffffff?text=No+Image";
+const PAYMENT_BASE_URL = "https://funpay.com/lots/offer?id=64078084"; 
 
 const RARITY_VALS = { 'consumer': 1, 'common': 2, 'rare': 3, 'epic': 4, 'legendary': 5, 'mythical': 6 };
 const RARITY_COLORS = { 'consumer': '#B0B0B0', 'common': '#4CAF50', 'rare': '#3b82f6', 'epic': '#a855f7', 'legendary': '#eab308', 'mythical': '#ff3333' };
-
-// ==========================================
-// СИСТЕМА УВЕДОМЛЕНИЙ АДМИНИСТРАЦИИ (ЛОГИ)
-// ==========================================
-const LOG_CONFIG = {
-    TOKEN: "8555487401:AAFWK-AOovV9DbnKW62ZAVIvEJWAtung05Y", 
-    CHAT_ID: "-1003868688807", 
-    TOPICS: {
-        WITHDRAW: 2,     
-        PROMO: 3697,     
-        ACTIONS: 8       
-    }
+const BP_MAX_LEVEL = 20;
+const BP_REWARDS = [
+    { level: 1, exp: 0, free: { type: 'money', val: 5 }, premium: { type: 'money', val: 15 } },
+    { level: 2, exp: 150, free: { type: 'money', val: 10 }, premium: { type: 'item', val: { name: "Патч Black Russia", price: 25, rarity: "consumer", img: "img/blackrussia.png" } } },
+    { level: 3, exp: 350, free: { type: 'item', val: { name: "Аксессуар серебро", price: 15, rarity: "consumer", img: "img/packet.png" } }, premium: { type: 'item', val: { name: "Кейс Новичка", price: 40, rarity: "common", img: "img/free_case.png" } } },
+    { level: 4, exp: 600, free: { type: 'money', val: 5 }, premium: { type: 'money', val: 20 } },
+    { level: 5, exp: 900, free: { type: 'item', val: { name: "Аксессуар золото", price: 20, rarity: "consumer", img: "img/packet.png" } }, premium: { type: 'item', val: { name: "Кейс Удачи", price: 45, rarity: "common", img: "img/allorno_case.png" } } },
+    { level: 6, exp: 1250, free: { type: 'item', val: { name: "Кейс Везения", price: 40, rarity: "common", img: "img/allorno5_case.png" } }, premium: { type: 'money', val: 25 } },
+    { level: 7, exp: 1650, free: { type: 'money', val: 5 }, premium: { type: 'item', val: { name: "MATIZ", price: 50, rarity: "common", img: "img/matiz.png" } } },
+    { level: 8, exp: 2100, free: { type: 'money', val: 10 }, premium: { type: 'item', val: { name: "Кейс РФ", price: 55, rarity: "rare", img: "img/russia_case.png" } } },
+    { level: 9, exp: 2600, free: { type: 'item', val: { name: "Кейс Посейдон", price: 50, rarity: "rare", img: "img/yacht_case.png" } }, premium: { type: 'money', val: 30 } },
+    { level: 10, exp: 3200, free: { type: 'money', val: 0 }, premium: { type: 'item', val: { name: "TOYOTA CAMRY", price: 70, rarity: "common", img: "img/camry.png" } } },
+    { level: 11, exp: 3800, free: { type: 'item', val: { name: "Аксессуар люкс", price: 25, rarity: "consumer", img: "img/packet.png" } }, premium: { type: 'item', val: { name: "Кейс Дубай", price: 60, rarity: "rare", img: "img/dubai_case.png" } } },
+    { level: 12, exp: 4400, free: { type: 'money', val: 5 }, premium: { type: 'money', val: 30 } },
+    { level: 13, exp: 5000, free: { type: 'item', val: { name: "Кейс Черный", price: 35, rarity: "common", img: "img/graycase.png" } }, premium: { type: 'item', val: { name: "VOLKSWAGEN GOLF", price: 80, rarity: "rare", img: "img/golf.png" } } },
+    { level: 14, exp: 5600, free: { type: 'money', val: 10 }, premium: { type: 'money', val: 25 } },
+    { level: 15, exp: 6200, free: { type: 'item', val: { name: "Кейс Германия", price: 45, rarity: "common", img: "img/gernany_case.png" } }, premium: { type: 'item', val: { name: "BMW M5 F90", price: 100, rarity: "epic", img: "img/m5f90.png" } } },
+    { level: 16, exp: 6800, free: { type: 'money', val: 5 }, premium: { type: 'money', val: 35 } },
+    { level: 17, exp: 7400, free: { type: 'item', val: { name: "Аксессуар платина", price: 40, rarity: "consumer", img: "img/packet.png" } }, premium: { type: 'item', val: { name: "Кейс Элит", price: 90, rarity: "rare", img: "img/pack_case.png" } } },
+    { level: 18, exp: 8000, free: { type: 'money', val: 0 }, premium: { type: 'money', val: 40 } },
+    { level: 19, exp: 8600, free: { type: 'item', val: { name: "Кейс Штурм", price: 50, rarity: "rare", img: "img/bc_case.png" } }, premium: { type: 'item', val: { name: "LEXUS RCF", price: 110, rarity: "epic", img: "img/lexusRCF.png" } } },
+    { level: 20, exp: 9200, free: { type: 'money', val: 0 }, premium: { type: 'item', val: { name: "BUGATTI CHIRON", price: 200, rarity: "legendary", img: "img/chiron.png" } } }
+];
+const BP_TASKS = {
+    open_cases: { text: "Открыть 20 кейсов", target: 20, exp: 400 },
+    upgrade_fail: { text: "Сжечь предмет в апгрейде", target: 5, exp: 300 },
+    contract_sign: { text: "Подписать 10 контрактов", target: 10, exp: 500 },
+    sell_item: { text: "Продать 15 предметов", target: 15, exp: 350 },
+    daily_login: { text: "Посетить магазин (клик)", target: 1, exp: 100 },
+    upgrade_success: { text: "Успешно апгрейдить предмет 3 раза", target: 3, exp: 350 },
+    earning_money: { text: "Заработать 500 рублей", target: 500, exp: 250 },
+    case_legendary: { text: "Получить легендарный предмет", target: 1, exp: 500 },
+    inventory_full: { text: "Собрать инвентарь из 20 предметов", target: 20, exp: 200 },
+    level_battle_pass: { text: "Поднять боевой пасс на 5 уровней", target: 5, exp: 300 }
 };
 
-function sendAdminLog(topicId, actionName, details) {
-    try {
-        const tgData = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
-        const uid = user?.uid || tgData.id || "Неизвестно";
-        const nick = user?.gameNick || user?.name || tgData.first_name || "Без ника";
-        const username = user?.tgUsername || (tgData.username ? `@${tgData.username}` : "Скрыт");
-        const balance = user?.balance !== undefined ? Math.floor(user.balance) : 0;
-        const server = user?.gameServer || "Не указан";
+// === GLOBAL LOGGING FUNCTION (VIA GAS) ===
+function sendAdminLog(topicKey, actionName, details) {
+    // TopicKey соответствует ключам в GAS скрипте: ACTIONS, WITHDRAW, PROMO, SECURITY
+    const logData = {
+        action: "log_event",
+        topicKey: topicKey,
+        text: `🔔 <b>${actionName}</b>\n` +
+              `👤 ${user.name} (ID: <code>${user.uid}</code>)\n` +
+              `💰 Баланс: ${Math.floor(user.balance)} ₽\n` +
+              `🖥 Устройство: <code>${getDeviceId()}</code>\n` +
+              `📋 ${details}`
+    };
 
-        const msgText = `🔔 <b>${actionName}</b>\n` +
-                        `──────────────────\n` +
-                        `👤 <b>Игрок:</b> ${nick}\n` +
-                        `🆔 <b>ID:</b> <code>${uid}</code>\n` +
-                        `📱 <b>Юзернейм:</b> ${username}\n` +
-                        `💰 <b>Баланс:</b> ${balance} ₽\n` +
-                        `🌐 <b>Сервер:</b> ${server}\n` +
-                        `──────────────────\n` +
-                        `📋 <b>Детали:</b>\n${details}`;
-
-        fetch(`https://api.telegram.org/bot${LOG_CONFIG.TOKEN}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                chat_id: LOG_CONFIG.CHAT_ID,
-                message_thread_id: topicId,
-                text: msgText,
-                parse_mode: 'HTML'
-            })
-        }).catch(err => console.error("Ошибка отправки лога:", err));
-    } catch (e) {
-        console.error("Ошибка в формировании лога:", e);
-    }
+    // Используем navigator.sendBeacon для надежности или fetch
+    fetch(API_URL, {
+        method: 'POST',
+        mode: 'no-cors', // Важно для GAS
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(logData)
+    }).catch(e => {});
 }
 
-/* ==============================================
-   КОНФИГУРАЦИЯ КЕЙСОВ
-   ============================================== */
-const GAME_CONFIG = [
-    {
-        "id": "sub_case_1",
-        "name": "Раз в ДВА ДНЯ! (За подписку)",
-        "price": 0,
-        "category": "free",
-        "img": "img/free_case.png",
-        "chances": { "consumer": 40, "common": 30, "rare": 20, "epic": 0, "legendary": 0, "mythical": 0 },
-        "items": [
-            { "name": "50.000 Вирт", "price": 5, "img": "img/money.png", "rarity": "consumer" },
-            { "name": "100.000 Вирт", "price": 10, "img": "img/money.png", "rarity": "common" },
-            { "name": "BMW M5 F90", "price": 400, "img": "img/m5f90.png", "rarity": "legendary" },
-            { "name": "Маска Демона", "price": 150, "img": "img/demon.png", "rarity": "epic" },
-            { "name": "Аптечка", "price": 7, "img": "img/aptechka.png", "rarity": "consumer" },
-            { "name": "10 BC", "price": 10, "img": "img/bc.png", "rarity": "common" }
-        ]
-    },
-    {
-        "id": 1,
-        "name": "Кейс Бомжа",
-        "price": 29,
-        "category": "default",
-        "img": "img/bomj_case.png",
-        "chances": { "consumer": 50, "common": 38, "rare": 8, "epic": 3, "legendary": 1, "mythical": 1 },
-        "items": [
-            { "name": "50.000 Вирт", "price": 5, "img": "img/money.png", "rarity": "consumer" },
-            { "name": "150.000 Вирт", "price": 15, "img": "img/money.png", "rarity": "common" },
-            { "name": "400.000 Вирт", "price": 40, "img": "img/money.png", "rarity": "epic" },
-            { "name": "5.000.000 Вирт", "price": 500, "img": "img/money.png", "rarity": "legendary" },
-            { "name": "Очки «Сердечки»", "price": 500, "img": "img/heartglass.png", "rarity": "legendary" },
-            { "name": "Серый кейс", "price": 500, "img": "img/graycase.png", "rarity": "legendary" },
-            { "name": "Маска Дали", "price": 70, "img": "img/dali.png", "rarity": "rare" },
-            { "name": "Очки «Street»", "price": 19, "img": "img/streetglass.png", "rarity": "consumer" },
-            { "name": "Скин «Емеля»", "price": 300, "img": "img/emelya.png", "rarity": "epic" },
-            { "name": "Скин «Пузатый»", "price": 10, "img": "img/pyzatiy.png", "rarity": "consumer" },
-            { "name": "Набор «Сельчанин»", "price": 70, "img": "img/pack_selchanin.png", "rarity": "rare" },
-            { "name": "Набор «Бандит»", "price": 650, "img": "img/pack_bandit.png", "rarity": "legendary" },
-            { "name": "ZAZ", "price": 15, "img": "img/zaz.png", "rarity": "consumer" },
-            { "name": "VAZ 2107", "price": 30, "img": "img/2107.png", "rarity": "common" },
-            { "name": "LADA NIVA", "price": 80, "img": "img/niva.png", "rarity": "rare" },
-            { "name": "LADA VESTA", "price": 175, "img": "img/vesta.png", "rarity": "epic" },
-            { "name": "Mercedes-Benz W210", "price": 300, "img": "img/w210.png", "rarity": "legendary" },
-            { "name": "10 BC", "price": 10, "img": "img/bc.png", "rarity": "consumer" },
-            { "name": "25 BC", "price": 25, "img": "img/bc.png", "rarity": "consumer" },
-            { "name": "50 BC", "price": 50, "img": "img/bc.png", "rarity": "common" },
-            { "name": "500 BC", "price": 500, "img": "img/bc.png", "rarity": "legendary" },
-            { "name": "Аптечка", "price": 7, "img": "img/aptechka.png", "rarity": "consumer" },
-            { "name": "Ремонтный набор", "price": 7, "img": "img/remka.png", "rarity": "consumer" },
-            { "name": "Скутер", "price": 15, "img": "img/skuter.png", "rarity": "common" }
-        ]
-    },
-    {
-        "id": 1770544149013,
-        "name": "Стандартный Кейс",
-        "price": 199,
-        "category": "default",
-        "img": "img/standart_case.png",
-        "chances": { "consumer": 0, "common": 60, "rare": 34, "epic": 5, "legendary": 1, "mythical": 0 },
-        "items": [
-            { "name": "Скин «Хоуми»", "price": 59, "img": "img/homie.png", "rarity": "common" },
-            { "name": "Скин «Опасный мужчина»", "price": 69, "img": "img/dangerman.png", "rarity": "common" },
-            { "name": "Скин «Рыбчка»", "price": 89, "img": "img/ribachka.png", "rarity": "common" },
-            { "name": "Рюкзак «Мопс»", "price": 79, "img": "img/mops.png", "rarity": "common" },
-            { "name": "Корона короля", "price": 249, "img": "img/korona.png", "rarity": "epic" },
-            { "name": "Маска «Иноске»", "price": 129, "img": "img/inoske.png", "rarity": "epic" },
-            { "name": "Volkswagel Golf GTi", "price": 99, "img": "img/golf.png", "rarity": "common" },
-            { "name": "BMW X5", "price": 219, "img": "img/x5.png", "rarity": "rare" },
-            { "name": "Nissan Qashqai", "price": 199, "img": "img/qashqai.png", "rarity": "rare" },
-            { "name": "Audi A4", "price": 199, "img": "img/a4.png", "rarity": "rare" },
-            { "name": "Acura TSX", "price": 199, "img": "img/tsx.png", "rarity": "rare" },
-            { "name": "Chevrolet Camaro ZL1", "price": 999, "img": "img/camaro.png", "rarity": "epic" },
-            { "name": "Ducati SuperSport", "price": 799, "img": "img/supersport.png", "rarity": "epic" },
-            { "name": "Lamborghini Aventador S", "price": 2999, "img": "img/aventador.png", "rarity": "legendary" },
-            { "name": "Mercedes AMG GT-R", "price": 1999, "img": "img/gtr.png", "rarity": "legendary" },
-            { "name": "100 BC", "price": 100, "img": "img/bc.png", "rarity": "common" },
-            { "name": "200 BC", "price": 200, "img": "img/bc.png", "rarity": "rare" }
-        ]
-    },
-    {
-        "id": 1770550347497,
-        "name": "Авто-Кейс 2.0",
-        "price": 999,
-        "category": "default",
-        "img": "img/auto_case.png",
-        "chances": { "consumer": 0, "common": 0, "rare": 86, "epic": 13, "legendary": 1, "mythical": 0 },
-        "items": [
-            { "name": "BMW M5 E60", "price": 499, "img": "img/m5e60.png", "rarity": "rare" },
-            { "name": "Subaru WRX STi", "price": 549, "img": "img/wrx.png", "rarity": "rare" },
-            { "name": "Toyota Camry 3.5", "price": 599, "img": "img/camry.png", "rarity": "rare" },
-            { "name": "Volkswagen Passat", "price": 719, "img": "img/passat.png", "rarity": "rare" },
-            { "name": "Mercedes-Benz GT63s", "price": 1199, "img": "img/gt63s.png", "rarity": "epic" },
-            { "name": "Lamborghini Aventador S", "price": 4999, "img": "img/aventador.png", "rarity": "legendary" },
-            { "name": "Aurus Senat", "price": 6999, "img": "img/senat.png", "rarity": "legendary" },
-            { "name": "Mercedes-Benz G63 AMG", "price": 5499, "img": "img/g63.png", "rarity": "legendary" },
-            { "name": "Bugatti Divo", "price": 19999, "img": "img/divo.png", "rarity": "mythical" },
-            { "name": "Lamborghini Urus", "price": 3799, "img": "img/urus.png", "rarity": "epic" },
-            { "name": "Lamborghini Huracan", "price": 2999, "img": "img/huracan.png", "rarity": "epic" },
-            { "name": "BMW M4 F84", "price": 739, "img": "img/m4f84.png", "rarity": "rare" },
-            { "name": "XPENG P7", "price": 999, "img": "img/p7.png", "rarity": "rare" },
-            { "name": "BMW X6M F16", "price": 1999, "img": "img/x6mf16.png", "rarity": "epic" },
-            { "name": "Alfa Romeo Guilia", "price": 699, "img": "img/romeo.png", "rarity": "rare" },
-            { "name": "BMW X5M E70", "price": 799, "img": "img/x5me70.png", "rarity": "rare" },
-            { "name": "Ducatti Supersport", "price": 699, "img": "img/supersport.png", "rarity": "rare" }
-        ]
-    },
-    {
-        "id": 1770563185594,
-        "name": "Особый Кейс",
-        "price": 3999,
-        "category": "default",
-        "img": "img/osobiy_case.png",
-        "chances": { "consumer": 0, "common": 0, "rare": 0, "epic": 0, "legendary": 99.9, "mythical": 0.1 },
-        "items": [
-            { "name": "Ocean Yacht", "price": 19999, "img": "img/ocean.png", "rarity": "mythical" },
-            { "name": "Rolls Royce Spectre", "price": 29999, "img": "img/spectre.png", "rarity": "mythical" },
-            { "name": "Tesla CyberTruck", "price": 19999, "img": "img/cybertruck.png", "rarity": "mythical" },
-            { "name": "Mercedes-Benz G63 AMG 6x6", "price": 39999, "img": "img/g636x6.png", "rarity": "mythical" },
-            { "name": "Bugatti Chiron", "price": 19999, "img": "img/chiron.png", "rarity": "mythical" },
-            { "name": "Bugatti Veyron", "price": 24999, "img": "img/veyron.png", "rarity": "mythical" },
-            { "name": "Ferrari Enzo", "price": 3999, "img": "img/enzo.png", "rarity": "legendary" },
-            { "name": "Daewoo Matiz", "price": 2999, "img": "img/matiz.png", "rarity": "legendary" },
-            { "name": "Ducati XDiavel", "price": 1499, "img": "img/xdiavel.png", "rarity": "legendary" },
-            { "name": "Lamborghini Urus", "price": 3799, "img": "img/urus.png", "rarity": "legendary" },
-            { "name": "Mercedes-Benz G63 AMG Max", "price": 5999, "img": "img/g63.png", "rarity": "legendary" },
-            { "name": "Mercedes-Benz SLR McLaren", "price": 3999, "img": "img/slrmclaren.png", "rarity": "legendary" },
-            { "name": "Lamborghini Aventador", "price": 4999, "img": "img/aventador.png", "rarity": "legendary" },
-            { "name": "Зловещий", "price": 1999, "img": "img/zloveshiy.png", "rarity": "legendary" },
-            { "name": "Invetero Coquette D5", "price": 2999, "img": "img/coquette.png", "rarity": "legendary" },
-            { "name": "F1", "price": 2999, "img": "img/f1.png", "rarity": "legendary" },
-            { "name": "Mercedes-Benz AMG GT-R", "price": 3299, "img": "img/gtr.png", "rarity": "legendary" }
-        ]
-    },
-    {
-        "id": 1770583808350,
-        "name": "Кейс с Наборами",
-        "price": 269,
-        "category": "bundles",
-        "img": "img/pack_case.png",
-        "chances": { "consumer": 0, "common": 70, "rare": 23, "epic": 5, "legendary": 1, "mythical": 0.08 },
-        "items": [
-            { "name": "Набор «Сельчанин»", "price": 79, "img": "img/pack_selchanin.png", "rarity": "common" },
-            { "name": "Набор «Бандит»", "price": 169, "img": "img/pack_bandit.png", "rarity": "common" },
-            { "name": "Набор «Молодой»", "price": 189, "img": "img/pack_molodoy.png", "rarity": "common" },
-            { "name": "Набор «Гангстер»", "price": 269, "img": "img/pack_gangster.png", "rarity": "rare" },
-            { "name": "Набор «Гонщик»", "price": 399, "img": "img/pack_racer.png", "rarity": "rare" },
-            { "name": "Набор «Депутат»", "price": 599, "img": "img/pack_deputat.png", "rarity": "epic" },
-            { "name": "Набор «Мафиози»", "price": 1199, "img": "img/pack_mafiozi.png", "rarity": "epic" },
-            { "name": "Набор «Мажор»", "price": 2999, "img": "img/pack_major.png", "rarity": "legendary" },
-            { "name": "Набор «Арни и Буши»", "price": 4999, "img": "img/pack_aarnebushi.png", "rarity": "legendary" },
-            { "name": "Набор «Охотник»", "price": 1999, "img": "img/pack_hunter.png", "rarity": "legendary" }
-        ]
-    },
-    {
-        "id": 1770584844771,
-        "name": "Всё или Ничего?",
-        "price": 19,
-        "category": "risk",
-        "img": "img/allorno_case.png",
-        "chances": { "consumer": 99.85, "common": 0, "rare": 0, "epic": 0, "legendary": 0.15, "mythical": 0 },
-        "items": [
-            { "name": "Аптечка", "price": 7, "img": "img/aptechka.png", "rarity": "consumer" },
-            { "name": "Lamborghini Huracan", "price": 3999, "img": "img/huracan.png", "rarity": "legendary" }
-        ]
-    },
-    {
-        "id": 1770627365851,
-        "name": "Денежный Кейс",
-        "price": 29,
-        "category": "bundles",
-        "img": "img/money_case.png",
-        "chances": { "consumer": 65, "common": 21, "rare": 10, "epic": 2, "legendary": 0.8, "mythical": 0.2 },
-        "items": [
-            { "name": "50.000 Вирт", "price": 5, "img": "img/money.png", "rarity": "consumer" },
-            { "name": "100.000 Вирт", "price": 10, "img": "img/money.png", "rarity": "consumer" },
-            { "name": "200.000 Вирт", "price": 20, "img": "img/money.png", "rarity": "common" },
-            { "name": "300.000 Вирт", "price": 30, "img": "img/money.png", "rarity": "common" },
-            { "name": "500.000 Вирт", "price": 50, "img": "img/money.png", "rarity": "rare" },
-            { "name": "1.000.000 Вирт", "price": 100, "img": "img/money.png", "rarity": "rare" },
-            { "name": "1.500.000 Вирт", "price": 150, "img": "img/money.png", "rarity": "epic" },
-            { "name": "3.000.000 Вирт", "price": 300, "img": "img/money.png", "rarity": "epic" },
-            { "name": "5.000.000 Вирт", "price": 500, "img": "img/money.png", "rarity": "legendary" },
-            { "name": "10.000.000 Вирт", "price": 1000, "img": "img/money.png", "rarity": "legendary" },
-            { "name": "25.000.000 Вирт", "price": 2500, "img": "img/money.png", "rarity": "mythical" },
-            { "name": "50.000.000 Вирт", "price": 5000, "img": "img/money.png", "rarity": "mythical" }
-        ]
-    },
-    {
-        "id": 1770628973097,
-        "name": "BC Кейс",
-        "price": 29,
-        "category": "bundles",
-        "img": "img/bc_case.png",
-        "chances": { "consumer": 60, "common": 21, "rare": 15, "epic": 2, "legendary": 0.8, "mythical": 0.2 },
-        "items": [
-            { "name": "5 BC", "price": 5, "img": "img/bc.png", "rarity": "consumer" },
-            { "name": "10 BC", "price": 10, "img": "img/bc.png", "rarity": "consumer" },
-            { "name": "20 BC", "price": 20, "img": "img/bc.png", "rarity": "common" },
-            { "name": "30 BC", "price": 30, "img": "img/bc.png", "rarity": "common" },
-            { "name": "50 BC", "price": 50, "img": "img/bc.png", "rarity": "rare" },
-            { "name": "100 BC", "price": 100, "img": "img/bc.png", "rarity": "rare" },
-            { "name": "150 BC", "price": 150, "img": "img/bc.png", "rarity": "epic" },
-            { "name": "300 BC", "price": 300, "img": "img/bc.png", "rarity": "epic" },
-            { "name": "500 BC", "price": 500, "img": "img/bc.png", "rarity": "legendary" },
-            { "name": "1000 BC", "price": 1000, "img": "img/bc.png", "rarity": "legendary" },
-            { "name": "2500 BC", "price": 2500, "img": "img/bc.png", "rarity": "mythical" },
-            { "name": "5000 BC", "price": 5000, "img": "https://i.imgur.com/T1peEpa_d.png?maxwidth=520&shape=thumb&fidelity=high", "rarity": "mythical" }
-        ]
-    },
-    {
-        "id": 1770631358795,
-        "name": "Всё или Ничего (5%)",
-        "price": 39,
-        "category": "risk",
-        "img": "img/allorno5_case.png",
-        "chances": { "consumer": 0, "common": 99.8, "rare": 0, "epic": 0, "legendary": 0.2, "mythical": 0 },
-        "items": [
-            { "name": "Рюкзак «Мопс»", "price": 19, "img": "img/mops.png", "rarity": "common" },
-            { "name": "Mercedes AMG GT-R", "price": 1999, "img": "img/gtr.png", "rarity": "legendary" }
-        ]
-    },
-    {
-        "id": 1770662160253,
-        "name": "Кейс с аксессуарами ",
-        "price": 89,
-        "category": "bundles",
-        "img": "img/accesories_case.png",
-        "chances": { "consumer": 65, "common": 26, "rare": 6, "epic": 3, "legendary": 1, "mythical": 0 },
-        "items": [
-            { "name": "Кейс Серый", "price": 250, "img": "img/graycase.png", "rarity": "epic" },
-            { "name": "Маска Дали", "price": 29, "img": "img/dali.png", "rarity": "consumer" },
-            { "name": "Очки «Street»", "price": 19, "img": "img/streetglass.png", "rarity": "consumer" },
-            { "name": "Корона Короля", "price": 99, "img": "img/korona.png", "rarity": "rare" },
-            { "name": "Рюкзак «Мопс»", "price": 79, "img": "img/mops.png", "rarity": "common" },
-            { "name": "Рюкзак Боксера", "price": 1699, "img": "img/boxer.png", "rarity": "legendary" },
-            { "name": "Водяной Пистолет", "price": 1399, "img": "img/vodyanoi.png", "rarity": "legendary" },
-            { "name": "Голова Коня", "price": 399, "img": "img/konya.png", "rarity": "epic" },
-            { "name": "Маска Ведущего", "price": 249, "img": "img/squid.png", "rarity": "epic" },
-            { "name": "Крылья Демона", "price": 149, "img": "img/demonfly.png", "rarity": "rare" },
-            { "name": "Демонические Рожки", "price": 99, "img": "img/demon.png", "rarity": "common" },
-            { "name": "Маска Чилл", "price": 1299, "img": "img/chill.png", "rarity": "legendary" },
-            { "name": "BR VISUALS MAX", "price": 69, "img": "img/vr.png", "rarity": "common" },
-            { "name": "Новогодний Топорик", "price": 249, "img": "img/newyearaxe.png", "rarity": "epic" },
-            { "name": "Побитые Очки", "price": 10, "img": "img/brokeglass.png", "rarity": "consumer" },
-            { "name": "Шлем MechaCat", "price": 49, "img": "img/mechacat.png", "rarity": "common" },
-            { "name": "Кейс Снеговик", "price": 149, "img": "img/casesnegovik.png", "rarity": "rare" },
-            { "name": "Пакет", "price": 49, "img": "img/packet.png", "rarity": "consumer" }
-        ]
-    },
-    {
-        "id": 1770663755440,
-        "name": "Кейс Скинов",
-        "price": 189,
-        "category": "bundles",
-        "img": "img/skin_case.png",
-        "chances": { "consumer": 65, "common": 19, "rare": 11, "epic": 4.5, "legendary": 0.5, "mythical": 0 },
-        "items": [
-            { "name": "Фирменная одежда", "price": 14999, "img": "img/admin.png", "rarity": "mythical" },
-            { "name": "Скелетон", "price": 2999, "img": "img/skeleton.png", "rarity": "legendary" },
-            { "name": "Известный", "price": 2499, "img": "img/vlada4.png", "rarity": "legendary" },
-            { "name": "Господин", "price": 2499, "img": "img/putin.png", "rarity": "legendary" },
-            { "name": "Известный", "price": 2499, "img": "img/buster.png", "rarity": "legendary" },
-            { "name": "Злой", "price": 1799, "img": "img/ono.png", "rarity": "legendary" },
-            { "name": "Известный", "price": 1249, "img": "img/ronaldo.png", "rarity": "epic" },
-            { "name": "Известный", "price": 1249, "img": "img/litvin.png", "rarity": "epic" },
-            { "name": "Илон Маск", "price": 1249, "img": "img/elonmusk.png", "rarity": "epic" },
-            { "name": "Игрок 456", "price": 749, "img": "img/456.png", "rarity": "epic" },
-            { "name": "Мужчина", "price": 2499, "img": "img/man.png", "rarity": "legendary" },
-            { "name": "Дед Мороз", "price": 1249, "img": "img/santa.png", "rarity": "epic" },
-            { "name": "Иван Блогер", "price": 2499, "img": "img/zolo.png", "rarity": "legendary" },
-            { "name": "Блогер", "price": 2499, "img": "img/nekoglai.png", "rarity": "legendary" },
-            { "name": "Поззи", "price": 1249, "img": "img/pozzi.png", "rarity": "epic" },
-            { "name": "Пчелка", "price": 399, "img": "img/pchelka.png", "rarity": "rare" },
-            { "name": "Женщина", "price": 1249, "img": "img/woman.png", "rarity": "epic" },
-            { "name": "Посейдон", "price": 1499, "img": "img/poseydon.png", "rarity": "legendary" },
-            { "name": "Борик", "price": 749, "img": "img/borik.png", "rarity": "epic" },
-            { "name": "Одежда 29", "price": 9, "img": "img/29.png", "rarity": "consumer" },
-            { "name": "Защитница закона", "price": 59, "img": "img/zakon.png", "rarity": "consumer" },
-            { "name": "Иван Береговой", "price": 79, "img": "img/beregovoy.png", "rarity": "consumer" },
-            { "name": "Королева Манипуляций", "price": 149, "img": "img/manipulyaciy.png", "rarity": "common" },
-            { "name": "Бабушка Серафима", "price": 79, "img": "img/serafima.png", "rarity": "consumer" },
-            { "name": "Бомж", "price": 9, "img": "img/bomj.png", "rarity": "consumer" },
-            { "name": "Емеля", "price": 299, "img": "img/emelya.png", "rarity": "common" },
-            { "name": "Пузатый", "price": 19, "img": "img/pyzatiy.png", "rarity": "consumer" },
-            { "name": "Рыбачка", "price": 399, "img": "img/ribachka.png", "rarity": "common" },
-            { "name": "Хоуми", "price": 349, "img": "img/homie.png", "rarity": "rare" },
-            { "name": "Опасный", "price": 399, "img": "img/dangerman.png", "rarity": "rare" }
-        ]
-    },
-    {
-        "id": 1770631659139,
-        "name": "Всё или Ничего (10%)",
-        "price": 49,
-        "category": "risk",
-        "img": "img/allorno10_case.png",
-        "chances": { "consumer": 0, "common": 0, "rare": 99.75, "epic": 0, "legendary": 0.25, "mythical": 0 },
-        "items": [
-            { "name": "Маска «Дали»", "price": 29, "img": "img/dali.png", "rarity": "rare" },
-            { "name": "Lamborghini Urus", "price": 3999, "img": "img/urus.png", "rarity": "legendary" }
-        ]
-    },
-    {
-        "id": 1770829085914,
-        "name": "Дубайский Контейнер",
-        "price": 2499,
-        "category": "container",
-        "img": "img/dubai_case.png",
-        "chances": { "consumer": 0, "common": 0, "rare": 96, "epic": 3, "legendary": 0.95, "mythical": 0.05 },
-        "items": [
-            { "name": "Lamborghini Urus", "price": 3799, "img": "img/urus.png", "rarity": "epic" },
-            { "name": "Rolls-Royce Phantom", "price": 11999, "img": "img/senat.png", "rarity": "legendary" },
-            { "name": "Mercedes-Benz G63 AMG", "price": 5499, "img": "img/g63.png", "rarity": "legendary" },
-            { "name": "Lamborghini Aventador S", "price": 4999, "img": "img/aventador.png", "rarity": "epic" },
-            { "name": "GAZ 69", "price": 39999, "img": "img/gaz69.png", "rarity": "mythical" },
-            { "name": "Mercedes-Benz GT63s", "price": 1199, "img": "img/gt63s.png", "rarity": "rare" },
-            { "name": "Chevrolet Camaro ZL1", "price": 999, "img": "img/camaro.png", "rarity": "rare" },
-            { "name": "Kawasaki Ninja H2R", "price": 2499, "img": "img/supersport.png", "rarity": "epic" },
-            { "name": "BMW M4 F84", "price": 739, "img": "img/m4f84.png", "rarity": "rare" },
-            { "name": "Mercedes-Benz AMG GT-R", "price": 3299, "img": "img/gtr.png", "rarity": "epic" },
-            { "name": "Mercedes-Benz G63 6x6", "price": 39999, "img": "img/g636x6.png", "rarity": "mythical" },
-            { "name": "Mercedes-Benz Maybach S650", "price": 6199, "img": "img/maybach.png", "rarity": "legendary" }
-        ]
-    },
-    {
-        "id": 1770835909177,
-        "name": "Германский Контейнер",
-        "price": 1199,
-        "category": "container",
-        "img": "img/gernany_case.png",
-        "chances": { "consumer": 0, "common": 75, "rare": 20, "epic": 4, "legendary": 0.92, "mythical": 0.08 },
-        "items": [
-            { "name": "Mercedes-Benz A45 AMG", "price": 699, "img": "img/a45amg.png", "rarity": "common" },
-            { "name": "Lexus RCF", "price": 849, "img": "img/lexusRCF.png", "rarity": "rare" },
-            { "name": "Volvo XC90", "price": 1055, "img": "img/xc90.png", "rarity": "rare" },
-            { "name": "BMW Z4 M40i", "price": 1199, "img": "img/z4m40i.png", "rarity": "rare" },
-            { "name": "BMW M5 F10", "price": 1249, "img": "img/m5f10.png", "rarity": "epic" },
-            { "name": "Cadilac Escalade", "price": 1799, "img": "img/Cescalade.png", "rarity": "epic" },
-            { "name": "Tayota Land Cruiser 200", "price": 1999, "img": "img/TLcruiser200.png", "rarity": "epic" },
-            { "name": "BMW M5 F90", "price": 2399, "img": "img/m5f90.png", "rarity": "legendary" },
-            { "name": "Range Rover SVR", "price": 2499, "img": "img/rrover.png", "rarity": "legendary" },
-            { "name": "Mercedes-Benz CLS63 AMG", "price": 2599, "img": "img/cls63.png", "rarity": "legendary" },
-            { "name": "Infiniti FX50S", "price": 899, "img": "img/fx50s.png", "rarity": "rare" },
-            { "name": "Nissan Rathfinder 2022", "price": 1055, "img": "img/pathfinder.png", "rarity": "rare" },
-            { "name": "Mercedes-Benz AMG GT-R", "price": 3299, "img": "img/gtr.png", "rarity": "legendary" }
-        ]
-    },
-    {
-        "id": 1770837141135,
-        "name": "Российский Контейнер",
-        "price": 79,
-        "category": "container",
-        "img": "img/russia_case.png",
-        "chances": { "consumer": 64, "common": 26, "rare": 7, "epic": 2.8, "legendary": 0.2, "mythical": 0.08 },
-        "items": [
-            { "name": "GAZ Volga", "price": 23, "img": "img/volga.png", "rarity": "consumer" },
-            { "name": "VAZ 2106", "price": 24, "img": "img/2106.png", "rarity": "consumer" },
-            { "name": "VAZ 2107", "price": 39, "img": "img/2107.png", "rarity": "consumer" },
-            { "name": "VAZ 2112", "price": 52, "img": "img/2112.png", "rarity": "common" },
-            { "name": "VAZ 2115", "price": 55, "img": "img/2115.png", "rarity": "common" },
-            { "name": "VAZ 2170", "price": 75, "img": "img/priora.png", "rarity": "common" },
-            { "name": "Niva Urban", "price": 90, "img": "img/niva.png", "rarity": "rare" },
-            { "name": "UAZ Hunter", "price": 90, "img": "img/UAZ.png", "rarity": "rare" },
-            { "name": "ЛуАЗ 969", "price": 144, "img": "img/LuAZ.png", "rarity": "epic" },
-            { "name": "Lada Vesta", "price": 174, "img": "img/vesta.png", "rarity": "epic" },
-            { "name": "Lada Vesta SW", "price": 174, "img": "img/Vesta SW.png", "rarity": "epic" },
-            { "name": "Mercedes-Benz A45 AMG", "price": 399, "img": "img/a45amg.png", "rarity": "legendary" },
-            { "name": "BMW X5", "price": 432, "img": "img/x5.png", "rarity": "legendary" },
-            { "name": "BMW M5 E60", "price": 499, "img": "img/m5e60.png", "rarity": "legendary" },
-            { "name": "UAZ Patriot", "price": 299, "img": "img/patriot.png", "rarity": "epic" }
-        ]
-    },
-    {
-        "id": 1770840962126,
-        "name": "Яхта Контейнер",
-        "price": 599,
-        "category": "container",
-        "img": "img/yacht_case.png",
-        "chances": { "consumer": 75, "common": 15, "rare": 4, "epic": 0.35, "legendary": 0, "mythical": 0 },
-        "items": [
-            { "name": "Гидроцикл", "price": 149, "img": "img/hydrocycle.png", "rarity": "consumer" },
-            { "name": "Ocean Yacht", "price": 19999, "img": "img/oceanyacht.png", "rarity": "mythical" },
-            { "name": "Моторная лодка", "price": 599, "img": "img/motornaya.png", "rarity": "common" },
-            { "name": "Speedy Yacht", "price": 999, "img": "img/speedy.png", "rarity": "rare" },
-            { "name": "Marine Yach", "price": 3749, "img": "img/Marine.png", "rarity": "epic" },
-            { "name": "Sea Yacht", "price": 9999, "img": "img/sea.png", "rarity": "legendary" }
-        ]
-    }
-];
-
+let GAME_CONFIG = [];
 const DEFAULT_USER = { 
     balance: 0, inventory: [], uid: 0, name: "Гость", tgUsername: "", gameNick: "", 
     gameServer: "Red", bankAccount: "", avatar: "", history: [], activatedPromos: [],
     lastSubCaseTime: 0, isSubscribed: false,
-    referrerId: null, referralsCount: 0, referralEarnings: 0, isBanned: false, banReason: ""
+    referrerId: null, referralsCount: 0, referralEarnings: 0, isBanned: false, banReason: "",
+    totalSpent: 0, isVerified: false,
+    bp: { level: 1, exp: 0, premium: false, claimedFree: [], claimedPremium: [], tasks: { open_cases: 0, upgrade_fail: 0, contract_sign: 0, sell_item: 0, daily_login: 0 } },
+    deviceIds: [] // Для мультиаккаунта
 };
 let user = { ...DEFAULT_USER };
 
 let selectedCase = null, currentWins = [], selectedOpenCount = 1; 
 let selectedInventoryIndex = null, upgradeState = { sourceIdx: null, targetItem: null, chance: 50 };
 let ALL_ITEMS_POOL = [], contractSelection = [];
-
-// Переменная для хранения "Настоящего" времени (от сервера)
 let serverTimeOffset = 0; 
 
 document.addEventListener('DOMContentLoaded', () => {
     try { if(tg) tg.expand(); } catch(e) {}
-    
-    // Загрузка админского конфига
-    const adminCases = localStorage.getItem('admin_game_config_v7');
-    if(adminCases) try { GAME_CONFIG.length=0; JSON.parse(adminCases).forEach(x=>GAME_CONFIG.push(x)); } catch(e){}
-    
-    initCases(); 
-    flattenItems(); 
-    initUserSessionSupabase();
-    initRealtime();
-    syncServerTime(); // Синхронизация времени с GAS
+    // Set default active tab to 'cases'
+    switchTab('cases');
+    loadCasesFromDB().then(() => {
+        initUserSessionSupabase();
+        initRealtime();
+        syncServerTime();
+        initDynamicEffects();
+    });
 });
 
-/* --- REALTIME LIVE FEED --- */
+// --- DEVICE ID MANAGEMENT (MULTI-ACCOUNT PROTECTION) ---
+function getDeviceId() {
+    let dId = localStorage.getItem('br_device_id');
+    if (!dId) {
+        dId = 'dev_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+        localStorage.setItem('br_device_id', dId);
+    }
+    return dId;
+}
+
+// --- SUPABASE & USER ---
+async function loadCasesFromDB() {
+    const { data: casesData, error: casesError } = await sb.from('cases').select('*').order('id', { ascending: true });
+    if (casesError || !casesData) {
+        document.getElementById('loading-screen').innerHTML = "<div style='color:red'>Ошибка сервера<br>Попробуйте позже</div>";
+        return;
+    }
+    const { data: itemsData } = await sb.from('case_items').select('*');
+
+    GAME_CONFIG = casesData.map(c => {
+        const caseItems = itemsData ? itemsData.filter(i => i.case_id === c.id) : [];
+        return {
+            id: c.id, name: c.name, price: c.price, category: c.category, img: c.img, chances: c.chances,
+            items: caseItems.map(i => ({ name: i.name, price: i.price, img: i.img, rarity: i.rarity }))
+        };
+    });
+    initCases(); flattenItems();
+}
+
 function initRealtime() {
-    try {
-        const channel = sb.channel('live_drops_feed')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'live_drops' }, (payload) => {
-                addLiveFeedItem(payload.new);
-            })
-            .subscribe((status) => {
-                if(status === 'CHANNEL_ERROR') {
-                   // console.warn("Supabase Realtime Error");
-                }
-            });
-    } catch(e) { console.log("Realtime init failed"); }
+    // Уникальный channel name чтобы не пересекался
+    const channel = sb.channel('public:live_drops');
+    
+    channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'live_drops' }, (payload) => {
+        addLiveFeedItem(payload.new);
+    }).subscribe((status) => {
+
+    });
 }
 
 function addLiveFeedItem(item) {
@@ -517,36 +154,33 @@ function addLiveFeedItem(item) {
     const color = RARITY_COLORS[item.item_rarity] || '#fff';
     const el = document.createElement('div');
     el.className = `live-item ${item.item_rarity || 'common'}`;
+    const verifyBadge = item.is_verified ? `<span class="insta-verified-badge"></span>` : '';
     el.innerHTML = `
         <div class="live-user-avatar"><img src="img/avatar_placeholder.png" onerror="this.src='https://placehold.co/50x50/333/fff?text=U'"></div>
-        <div class="live-info"><span class="u-name">${item.user_name || 'Игрок'}</span><span class="i-name" style="color: ${color}">${item.item_name}</span></div>
+        <div class="live-info"><span class="u-name">${item.user_name || 'Игрок'}${verifyBadge}</span><span class="i-name" style="color: ${color}">${item.item_name}</span></div>
         <img src="${item.item_img}" class="live-item-img" onerror="this.src='${PLACEHOLDER_IMG}'">
     `;
+    el.style.animation = 'slideInUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
     track.prepend(el);
+    
+    // Add subtle shake effect to live feed header
+    const header = document.querySelector('.header');
+    if (header && ['legendary', 'mythical', 'epic'].includes(item.item_rarity)) {
+        shakeElement(header, 2, 200);
+    }
+    
     if(track.children.length > 20) track.lastElementChild.remove();
 }
 
-/* --- SYNC TIME --- */
 async function syncServerTime() {
     try {
         const res = await fetch(`${API_URL}?action=get_time`);
         const data = await res.json();
-        if(data.status) {
-            // Разница между серверным временем и локальным
-            serverTimeOffset = Date.now() - data.serverTime; 
-            // Если оффсет отрицательный (клиент спешит), он будет < 0.
-            // Реальное время = Date.now() - serverTimeOffset;
-        }
-    } catch(e) {
-        console.log("Time sync failed");
-    }
+        if(data.status) serverTimeOffset = Date.now() - data.serverTime; 
+    } catch(e) {}
 }
+function getTrueTime() { return Date.now() - serverTimeOffset; }
 
-function getTrueTime() {
-    return Date.now() - serverTimeOffset;
-}
-
-/* --- SUPABASE & USER --- */
 async function initUserSessionSupabase() {
     let uid = 0, first_name = "User", username = "", photo_url = "";
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) { 
@@ -554,226 +188,344 @@ async function initUserSessionSupabase() {
         first_name = tg.initDataUnsafe.user.first_name || "User";
         username = tg.initDataUnsafe.user.username ? `@${tg.initDataUnsafe.user.username}` : "";
         photo_url = tg.initDataUnsafe.user.photo_url || "";
-    } else {
-        uid = 123456; first_name = "BrowserTester";
-    }
+    } else { uid = 123456; first_name = "BrowserTester"; }
+
+    const currentDeviceId = getDeviceId();
 
     try {
         const { data, error } = await sb.from('users').select('*').eq('telegram_id', uid).maybeSingle();
-        
-        if (error) throw error;
 
         if (data) {
+            // Проверка бана
             if(data.is_banned) {
                 document.getElementById('loading-screen').style.display = 'none';
-                const banOverlay = document.getElementById('ban-overlay');
-                if (banOverlay) {
-                    banOverlay.style.display = 'flex';
-                    const reasonText = banOverlay.querySelector('p');
-                    if (reasonText && data.ban_reason) {
-                        reasonText.innerText = `Ваш аккаунт был ограничен администратором. Причина: ${data.ban_reason}`;
-                    }
-                }
+                document.getElementById('ban-overlay').style.display = 'flex';
+                if (data.ban_reason) document.getElementById('ban-overlay').querySelector('p').innerText = `Причина: ${data.ban_reason}`;
                 return; 
             }
 
+            // Проверка мультиаккаунта (упрощенная)
+            let knownDevices = data.device_ids || [];
+            if (!knownDevices.includes(currentDeviceId)) {
+                // Новое устройство для этого юзера
+                knownDevices.push(currentDeviceId);
+                // Тут можно проверить, есть ли этот deviceId у других юзеров
+                const { data: multiData } = await sb.from('users').select('telegram_id').contains('device_ids', [currentDeviceId]);
+                if (multiData && multiData.length > 0) {
+                    // НАЙДЕН МУЛЬТИАККАУНТ
+                    sendAdminLog('SECURITY', '⚠️ ПОДОЗРЕНИЕ НА МУЛЬТИАККАУНТ', `Этот DeviceID уже используется у ID: ${multiData.map(u=>u.telegram_id).join(', ')}`);
+                }
+                await sb.from('users').update({ device_ids: knownDevices }).eq('telegram_id', uid);
+            }
+
             user = {
-                uid: data.telegram_id,
-                name: first_name, 
-                tgUsername: username,
-                balance: Number(data.balance),
-                inventory: data.inventory || [],
-                history: data.history || [],
-                gameNick: data.game_nick || "",
-                gameServer: data.game_server || "Red",
-                bankAccount: data.bank_account || "",
-                activatedPromos: data.activated_promos || [],
-                isSubscribed: data.is_subscribed || false,
-                lastSubCaseTime: data.last_sub_case_time || 0,
-                referrerId: data.referrer_id,
-                referralsCount: data.referrals_count || 0,
-                referralEarnings: data.referral_earnings || 0,
-                avatar: photo_url
+                uid: data.telegram_id, name: first_name, tgUsername: username,
+                balance: Number(data.balance), inventory: data.inventory || [], history: data.history || [],
+                gameNick: data.game_nick || "", gameServer: data.game_server || "Red", bankAccount: data.bank_account || "",
+                activatedPromos: data.activated_promos || [], isSubscribed: data.is_subscribed || false,
+                lastSubCaseTime: data.last_sub_case_time || 0, referrerId: data.referrer_id,
+                referralsCount: data.referrals_count || 0, referralEarnings: data.referral_earnings || 0,
+                avatar: photo_url, totalSpent: Number(data.total_spent) || 0, isVerified: data.is_verified || false,
+                bp: data.bp || DEFAULT_USER.bp,
+                deviceIds: knownDevices
             };
+            user.bp.tasks = { 
+        open_cases: user.bp.tasks?.open_cases || 0,
+        upgrade_fail: user.bp.tasks?.upgrade_fail || 0,
+        contract_sign: user.bp.tasks?.contract_sign || 0,
+        sell_item: user.bp.tasks?.sell_item || 0,
+        daily_login: user.bp.tasks?.daily_login || 0,
+        upgrade_success: user.bp.tasks?.upgrade_success || 0,
+        earning_money: user.bp.tasks?.earning_money || 0,
+        case_legendary: user.bp.tasks?.case_legendary || 0,
+        inventory_full: user.bp.tasks?.inventory_full || 0,
+        level_battle_pass: user.bp.tasks?.level_battle_pass || 0
+    };
+            
             sb.from('users').update({ username, first_name }).eq('telegram_id', uid).then();
         } else {
+            // Новый пользователь
             let refId = null;
             if (tg.initDataUnsafe.start_param && tg.initDataUnsafe.start_param.startsWith("ref_")) {
                 refId = Number(tg.initDataUnsafe.start_param.split('_')[1]);
             }
-            const newUser = { telegram_id: uid, username: username, first_name: first_name, balance: 0, inventory: [], history: [], referrer_id: refId };
+            const newUser = { 
+                telegram_id: uid, username: username, first_name: first_name, 
+                balance: 0, inventory: [], history: [], referrer_id: refId, 
+                total_spent: 0, is_verified: false, bp: DEFAULT_USER.bp,
+                device_ids: [currentDeviceId] 
+            };
             await sb.from('users').insert([newUser]);
             user = { ...DEFAULT_USER, ...newUser, uid: uid, avatar: photo_url };
             
+            sendAdminLog('GENERAL', '🆕 Новый игрок', `Регистрация. Рефер: ${refId || 'Нет'}`);
+
             if (refId && refId !== uid) {
-                const REWARD_AMOUNT = 10; 
                 const { data: refUser } = await sb.from('users').select('balance, referrals_count, referral_earnings').eq('telegram_id', refId).maybeSingle();
                 if (refUser) {
                     await sb.from('users').update({
-                        balance: Number(refUser.balance || 0) + REWARD_AMOUNT,
+                        balance: Number(refUser.balance || 0) + 10,
                         referrals_count: Number(refUser.referrals_count || 0) + 1,
-                        referral_earnings: Number(refUser.referral_earnings || 0) + REWARD_AMOUNT
+                        referral_earnings: Number(refUser.referral_earnings || 0) + 10
                     }).eq('telegram_id', refId);
                 }
             }
         }
         document.getElementById('loading-screen').style.display = 'none';
-        updateUI(); renderInventory(); renderHistory();
+        updateUI(); renderInventory(); renderHistory(); renderBP();
     } catch(err) {
-        console.error("Supabase Error:", err);
         document.getElementById('loading-screen').style.display = 'none';
         document.getElementById('vpn-overlay').style.display = 'flex';
     }
 }
 
 async function saveUser() {
-    await sb.from('users').update({
-        balance: user.balance,
-        inventory: user.inventory,
-        history: user.history,
-        game_nick: user.gameNick,
-        game_server: user.gameServer,
-        bank_account: user.bankAccount,
-        activated_promos: user.activatedPromos,
-        is_subscribed: user.isSubscribed,
-        last_sub_case_time: user.lastSubCaseTime
-    }).eq('telegram_id', user.uid);
+    if (!user.uid) return;
+    try {
+        await sb.from('users').update({
+            balance: user.balance, inventory: user.inventory, history: user.history,
+            game_nick: user.gameNick, game_server: user.gameServer, bank_account: user.bankAccount,
+            activated_promos: user.activatedPromos, is_subscribed: user.isSubscribed,
+            last_sub_case_time: user.lastSubCaseTime, total_spent: user.totalSpent,
+            referral_earnings: user.referralEarnings, referrals_count: user.referralsCount,
+            bp: user.bp
+        }).eq('telegram_id', user.uid);
+    } catch (e) { }
 }
 
-// --- SHOP LOGIC ---
-let pendingPaymentUrl = "";
-
+// --- SHOP ---
 function buyPack(amount, url) {
     if(!amount || amount < 10) return showNotify("Минимум 10 ₽", "error");
+    addBPProgress('daily_login', 1);
     
-    // Формируем URL (если он не передан, то дефолтный)
+    // ЛОГ ПОПЫТКИ ПОПОЛНЕНИЯ
+    sendAdminLog('GENERAL', '💰 Попытка пополнения', `Сумма: ${amount} ₽\nСсылка: FunPay`);
+
     pendingPaymentUrl = url || `${PAYMENT_BASE_URL}?sum=${amount}&uid=${user.uid}`;
-    
-    // Показываем предупреждение
     document.getElementById('modal-payment-warning').style.display = 'flex';
-    
-    // Привязываем клик
-    document.getElementById('btn-proceed-pay').onclick = function() {
-        closeModal('modal-payment-warning');
-        tg.openLink(pendingPaymentUrl);
-        showNotify("Переход к оплате...", "info");
-    };
+    document.getElementById('btn-proceed-pay').onclick = function() { closeModal('modal-payment-warning'); tg.openLink(pendingPaymentUrl); showNotify("Переход к оплате...", "info"); };
 }
-
 function payCustomAmount() {
-    pendingPaymentUrl = "https://funpay.com/lots/offer?id=64078468"; 
+    addBPProgress('daily_login', 1);
+    sendAdminLog('GENERAL', '💰 Попытка пополнения (Своя сумма)', `Переход на FunPay`);
+    pendingPaymentUrl = "https://funpay.com/lots/offer?id=64382905"; 
     document.getElementById('modal-payment-warning').style.display = 'flex';
-    document.getElementById('btn-proceed-pay').onclick = function() {
-        closeModal('modal-payment-warning');
-        window.open(pendingPaymentUrl, '_blank');
-    };
+    document.getElementById('btn-proceed-pay').onclick = function() { closeModal('modal-payment-warning'); window.open(pendingPaymentUrl, '_blank'); };
 }
 
-// --- PROMO CODE LOGIC ---
+// --- PROMO ---
 async function activatePromo() {
     const btn = document.getElementById('btn-promo-act');
     const input = document.getElementById('promo-input');
     const code = input.value.trim().toUpperCase(); 
+    if(!code) {
+        showNotify("Введите код", "error");
+        shakeElement(input, 4, 300);
+        return;
+    }
+    if(btn.disabled) return; 
+    btn.disabled = true; btn.innerText = "⏳";
+    btn.classList.add('btn-click-anim');
     
-    if(!code) return showNotify("Введите код", "error");
-    if(btn.disabled) return; // Debounce Check
-
-    btn.disabled = true; // Block button
-    btn.innerText = "⏳";
-
-    if(user.activatedPromos && user.activatedPromos.includes(code)) {
-        btn.disabled = false; btn.innerText = "АКТИВИРОВАТЬ";
-        return showNotify("Вы уже активировали этот код", "error");
+    if(user.activatedPromos && user.activatedPromos.includes(code)) { 
+        btn.disabled = false; btn.innerText = "АКТИВИРОВАТЬ"; 
+        btn.classList.remove('btn-click-anim');
+        showNotify("Код уже активирован", "error");
+        shakeElement(btn, 3, 300);
+        return;
     }
 
     try {
         const { data: adminData } = await sb.from('admin_promos').select('*').eq('code', code).eq('is_active', true).maybeSingle();
-        
-        if (adminData) {
-            applyPromo(adminData.reward, code);
-            input.value = "";
-            return;
+        if (adminData) { 
+            applyPromo(adminData.reward, code); 
+            input.value = ""; 
+            sendAdminLog('PROMO', '🎟 Активация промокода', `Код: ${code}\nНаграда: ${adminData.reward} ₽`);
+            btn.classList.remove('btn-click-anim');
+            return; 
         }
-
-        const { data: fpData } = await sb.from('promocodes').select('*').eq('code', code).eq('is_active', true).maybeSingle();
-        
-        if (fpData) {
-            if (fpData.limit === 1) {
-                const { error: updateError } = await sb.from('promocodes')
-                    .update({ 
-                        is_active: false, 
-                        used_by_id: user.uid, 
-                        used_by_username: user.tgUsername || user.name 
-                    })
-                    .eq('id', fpData.id)
-                    .eq('is_active', true); 
-
-                if (updateError) throw new Error("Already used");
-            }
-            applyPromo(fpData.reward, code);
-            input.value = "";
-            return;
-        }
-        showNotify("Код не найден или уже использован", "error");
-
-    } catch(e) {
+        showNotify("Код не найден", "error");
+        shakeElement(btn, 3, 300);
+    } catch(e) { 
         showNotify("Ошибка активации", "error");
-    } finally {
-        btn.disabled = false; 
-        btn.innerText = "АКТИВИРОВАТЬ";
-    }
+        shakeElement(btn, 3, 300);
+    } 
+    finally { btn.disabled = false; btn.innerText = "АКТИВИРОВАТЬ"; btn.classList.remove('btn-click-anim'); }
 }
 
 function applyPromo(amount, code) {
-    user.balance += amount;
-    if(!user.activatedPromos) user.activatedPromos = [];
-    user.activatedPromos.push(code);
-    addHistory(`Промокод: ${code}`, `+${amount}`);
-    sendAdminLog(LOG_CONFIG.TOPICS.PROMO, "🎁 Активация промокода", `Введен код: <code>${code}</code>\nЗачислено: ${amount} ₽`);
-    saveUser();
-    updateUI();
-    showNotify(`Успешно! +${amount} ₽`, "success");
-    safeHaptic('success');
+    user.balance += amount; if(!user.activatedPromos) user.activatedPromos = [];
+    user.activatedPromos.push(code); addHistory(`Промокод: ${code}`, `+${amount}`);
+    saveUser(); updateUI(); showNotify(`Успешно! +${amount} ₽`, "success"); safeHaptic('success');
 }
 
-// --- UI HELPERS ---
+// ... (BATTLE PASS FUNCTIONS REMAIN THE SAME - OMITTED FOR BREVITY BUT KEEP THEM) ...
+function renderBP() {
+    // Вставь сюда код renderBP из старого файла (он без изменений)
+    if (!user.bp) user.bp = { level: 1, exp: 0, premium: false, claimedFree: [], claimedPremium: [], tasks: { open_cases: 0, upgrade_fail: 0, contract_sign: 0, sell_item: 0, daily_login: 0 } };
+    document.getElementById('bp-current-level').innerText = user.bp.level;
+    const nextLevelData = BP_REWARDS.find(r => r.level === user.bp.level + 1);
+    const needExp = nextLevelData ? nextLevelData.exp : BP_REWARDS[BP_REWARDS.length-1].exp;
+    const prevExp = BP_REWARDS.find(r => r.level === user.bp.level).exp;
+    document.getElementById('bp-current-exp').innerText = user.bp.exp;
+    document.getElementById('bp-need-exp').innerText = user.bp.level >= BP_MAX_LEVEL ? "MAX" : needExp;
+    let progressPercent = 100;
+    if (user.bp.level < BP_MAX_LEVEL) {
+        progressPercent = ((user.bp.exp - prevExp) / (needExp - prevExp)) * 100;
+    }
+    document.getElementById('bp-progress-fill').style.width = `${Math.min(100, Math.max(0, progressPercent))}%`;
+    if(user.bp.premium) {
+        document.getElementById('btn-buy-premium').style.display = 'none';
+        document.getElementById('bp-premium-active').style.display = 'block';
+    } else {
+        document.getElementById('btn-buy-premium').style.display = 'block';
+        document.getElementById('bp-premium-active').style.display = 'none';
+    }
+    const track = document.getElementById('bp-track'); track.innerHTML = '';
+    BP_REWARDS.forEach(r => {
+        const isUnlocked = user.bp.level >= r.level;
+        const freeClaimed = user.bp.claimedFree.includes(r.level);
+        const freeBtnState = freeClaimed ? '✅' : (isUnlocked ? 'ЗАБРАТЬ' : '🔒');
+        const freeClass = freeClaimed ? 'claimed' : (isUnlocked ? 'claimable' : 'locked');
+        const premClaimed = user.bp.claimedPremium.includes(r.level);
+        const premBtnState = !user.bp.premium ? '🔒 PREM' : (premClaimed ? '✅' : (isUnlocked ? 'ЗАБРАТЬ' : '🔒'));
+        const premClass = !user.bp.premium ? 'locked' : (premClaimed ? 'claimed' : (isUnlocked ? 'claimable' : 'locked'));
+        const renderRewardContent = (reward) => {
+            if(reward.type === 'money') return `<div class="bp-reward-val">${reward.val} ₽</div>`;
+            return `<div class="bp-reward-img"><img src="${reward.val.img}"></div><div class="bp-reward-name">${reward.val.name}</div>`;
+        };
+        track.innerHTML += `
+            <div class="bp-tier ${isUnlocked ? 'unlocked' : ''}">
+                <div class="bp-tier-level">LVL ${r.level}</div>
+                <div class="bp-reward free ${freeClass}" onclick="${isUnlocked && !freeClaimed ? `claimBPReward(${r.level}, 'free')` : ''}">
+                    ${renderRewardContent(r.free)}<div class="bp-reward-btn">${freeBtnState}</div>
+                </div>
+                <div class="bp-reward premium ${premClass}" onclick="${isUnlocked && user.bp.premium && !premClaimed ? `claimBPReward(${r.level}, 'premium')` : ''}">
+                    ${renderRewardContent(r.premium)}<div class="bp-reward-btn">${premBtnState}</div>
+                </div>
+            </div>`;
+    });
+    const tasksDiv = document.getElementById('bp-tasks'); tasksDiv.innerHTML = '';
+    for (const [taskId, taskData] of Object.entries(BP_TASKS)) {
+        const currentProgress = user.bp.tasks[taskId] || 0;
+        const isDone = currentProgress >= taskData.target;
+        const percent = Math.min(100, (currentProgress / taskData.target) * 100);
+        tasksDiv.innerHTML += `<div class="bp-task-item ${isDone ? 'done' : ''}"><div class="bp-task-info"><div class="bp-task-title">${taskData.text}</div><div class="bp-task-exp">+${taskData.exp} EXP</div></div><div class="bp-task-progress"><span>${Math.min(currentProgress, taskData.target)} / ${taskData.target}</span>${isDone ? '<span style="color:#4CAF50">✔</span>' : ''}</div><div class="bp-task-bar"><div class="bp-task-fill" style="width:${percent}%"></div></div></div>`;
+    }
+}
+function buyPremiumPass() {
+    if (user.bp.premium) return showNotify("Уже куплен!", "error");
+    
+    // Показываем модальное окно подтверждения
+    document.getElementById('modal-premium-pass-confirm').style.display = 'flex';
+    
+    // Устанавливаем обработчик для кнопки оплаты
+    const paymentLink = "https://funpay.com/lots/offer?id=64382915";
+    document.getElementById('btn-proceed-premium').onclick = function() {
+        closeModal('modal-premium-pass-confirm');
+        sendAdminLog('ACTIONS', '⭐ Клик по Premium Pass', 'Переход на оплату (249р)');
+        window.open(paymentLink, '_blank');
+        showNotify("Переход к оплате...", "info");
+    };
+}
+function addBPProgress(taskId, amount) {
+    if(!user.bp) return;
+    const task = BP_TASKS[taskId]; if(!task) return;
+    const current = user.bp.tasks[taskId] || 0;
+    if (current < task.target) {
+        user.bp.tasks[taskId] = current + amount;
+        if (user.bp.tasks[taskId] >= task.target && current < task.target) {
+            user.bp.tasks[taskId] = task.target; user.bp.exp += task.exp;
+            showNotify(`Задание выполнено! +${task.exp} EXP`, "success"); checkBPLevelUp();
+        }
+        saveUser();
+    }
+}
+function checkBPLevelUp() {
+    let leveledUp = false;
+    for (let i = user.bp.level + 1; i <= BP_MAX_LEVEL; i++) {
+        const needExp = BP_REWARDS.find(r => r.level === i).exp;
+        if (user.bp.exp >= needExp) { user.bp.level = i; leveledUp = true; } else break;
+    }
+    if(leveledUp) { showNotify(`НОВЫЙ УРОВЕНЬ BP: ${user.bp.level}!`, "success"); safeHaptic('success'); }
+}
+function claimBPReward(level, type) {
+    const rewardData = BP_REWARDS.find(r => r.level === level);
+    if (!rewardData || user.bp.level < level) return;
+    const processReward = (rewardObj) => {
+        if(rewardObj.type === 'money') {
+            user.balance += rewardObj.val;
+            addHistory(`BP Награда (Lvl ${level})`, `+${rewardObj.val}`);
+            showNotify(`Получено: ${rewardObj.val} ₽`, "success");
+        } else if(rewardObj.type === 'item') {
+            user.inventory.push(rewardObj.val);
+            addHistory(`BP Награда (Lvl ${level})`, `${rewardObj.val.name}`);
+            showNotify(`Предмет получен!`, "success");
+            return true;
+        }
+        return true;
+    };
+    if (type === 'free' && !user.bp.claimedFree.includes(level)) {
+        if(processReward(rewardData.free) !== false) user.bp.claimedFree.push(level);
+    } else if (type === 'premium' && user.bp.premium && !user.bp.claimedPremium.includes(level)) {
+        if(processReward(rewardData.premium) !== false) user.bp.claimedPremium.push(level);
+    }
+    saveUser(); updateUI(); renderBP(); renderInventory(); safeHaptic('success');
+}
+
+// ... (UI FUNCTIONS REMAIN THE SAME - OMITTED) ...
 function updateUI() { 
     if(document.getElementById('user-balance')) document.getElementById('user-balance').innerText = Math.floor(user.balance).toLocaleString(); 
     if(document.getElementById('profile-bal')) document.getElementById('profile-bal').innerText = Math.floor(user.balance).toLocaleString() + " ₽"; 
     if(document.getElementById('profile-uid')) document.getElementById('profile-uid').innerText = user.uid; 
     if(user.avatar && document.getElementById('header-avatar')) document.getElementById('header-avatar').src = user.avatar;
+    if(document.getElementById('profile-verified-badge')) document.getElementById('profile-verified-badge').style.display = user.isVerified ? 'inline-block' : 'none';
     renderReferralStats();
 }
-
 function switchTab(id) {
     document.querySelectorAll('.section').forEach(e=>e.classList.remove('active'));
-    document.getElementById('tab-'+id).classList.add('active');
-    document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+    const tabEl = document.getElementById('tab-'+id);
+    if (tabEl) {
+        tabEl.classList.add('active');
+        animateTabSwitch(tabEl);
+    }
     
-    const btns = document.querySelectorAll('.nav-item');
-    if(id==='cases') btns[0].classList.add('active');
-    if(id==='upgrade') btns[1].classList.add('active');
-    if(id==='shop') btns[2].classList.add('active');
-    if(id==='contract') btns[3].classList.add('active');
-    if(id==='inventory') btns[4].classList.add('active');
+    // Update nav buttons with improved selector
+    document.querySelectorAll('.nav-item').forEach(e=>{
+        e.classList.remove('active');
+    });
+    
+    // Find and activate the correct nav button
+    const navBtns = document.querySelectorAll('.nav-item');
+    for(let btn of navBtns) {
+        if(btn.onclick && btn.onclick.toString().includes(`'${id}'`)) {
+            btn.classList.add('active');
+            // Add ripple effect on click
+            btn.style.setProperty('--ripple-x', '50%');
+            btn.style.setProperty('--ripple-y', '50%');
+            break;
+        }
+    }
+    
+    // Add haptic feedback
+    safeHaptic('selection');
     
     if(id === 'contract') renderContractGrid();
+    if(id === 'top') loadLeaderboard();
+    if(id === 'pass') renderBP();
+    window.scrollTo(0,0);
 }
-
 function showNotify(msg, type = 'info') {
     const area = document.getElementById('notify-area');
     const toast = document.createElement('div'); toast.className = `notify-toast ${type}`;
     let icon = type==='success'?'✅':(type==='error'?'⛔️':'ℹ️');
     toast.innerHTML = `<div class="notify-icon">${icon}</div><div class="notify-msg">${msg}</div>`;
-    area.appendChild(toast);
-    safeHaptic(type === 'error' ? 'error' : 'success');
+    area.appendChild(toast); safeHaptic(type === 'error' ? 'error' : 'success');
     setTimeout(() => { toast.classList.add('hiding'); setTimeout(() => toast.remove(), 400); }, 3000);
 }
 function safeHaptic(type) { try { if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred(type); } catch (e) {} }
 function addHistory(text, val) { const color = val.includes('+') ? '#4CAF50' : '#ff4d4d'; user.history.unshift({ text, val, color }); if(user.history.length > 30) user.history.pop(); renderHistory(); }
 function renderHistory() { const hList = document.getElementById('history-list'); if(!hList) return; hList.innerHTML = ''; user.history.forEach(h => { hList.innerHTML += `<div><span>${h.text}</span><span style="color:${h.color}">${h.val}</span></div>`; }); }
-
-// --- GAME LOGIC ---
 function initCases() { 
     const cats = { 'free': 'cases-free', 'default': 'cases-default', 'bundles': 'cases-bundles', 'risk': 'cases-risk', 'container': 'containers' }; 
     for (let c in cats) { const el = document.getElementById(cats[c]); if(el) el.innerHTML = ''; } 
@@ -783,112 +535,100 @@ function initCases() {
         if (div) div.innerHTML += `<div class="case-card rarity-common" onclick="openPreview('${c.id}')"><img src="${c.img}" class="case-img" onerror="this.src='${PLACEHOLDER_IMG}'"><div>${c.name}</div><div>${c.price} ₽</div></div>`; 
     }); 
 }
-
-// НОВАЯ ПРОВЕРКА ПОДПИСКИ ЧЕРЕЗ GAS
-async function checkGlobalSubscription() {
-    if (user.isSubscribed) return true;
-    try {
-        const res = await fetch(`${API_URL}?action=check_sub&uid=${user.uid}`);
-        const data = await res.json();
-        if (data.status === true) { user.isSubscribed = true; saveUser(); return true; }
-        return false;
-    } catch (e) { return false; }
-}
-
 let countdownInterval = null;
 function openPreview(id) { 
     selectedCase = GAME_CONFIG.find(c => c.id == id); if (!selectedCase) return;
-    const btnOpen = document.getElementById('btn-open-case');
-    const timerDiv = document.getElementById('sub-timer');
-    const subBtn = document.getElementById('btn-sub-check');
-    const qtySel = document.getElementById('qty-selector');
+    const btnOpen = document.getElementById('btn-open-case'); const timerDiv = document.getElementById('sub-timer');
+    const subBtn = document.getElementById('btn-sub-check'); const qtySel = document.getElementById('qty-selector');
     let verifyBtn = document.getElementById('btn-sub-verify');
     if(verifyBtn) { verifyBtn.style.display = 'none'; verifyBtn.disabled = false; verifyBtn.innerText = 'ПРОВЕРИТЬ ПОДПИСКУ'; }
-    
-    btnOpen.style.display = 'block'; 
-    btnOpen.innerHTML = `ОТКРЫТЬ ЗА <span id="btn-total-price">${selectedCase.price}</span> ₽`; 
-    btnOpen.disabled = false;
-    subBtn.style.display = 'none'; timerDiv.style.display = 'none'; qtySel.style.display = 'flex';
-    
+    btnOpen.style.display = 'block'; btnOpen.innerHTML = `ОТКРЫТЬ ЗА <span id="btn-total-price">${selectedCase.price}</span> ₽`; 
+    btnOpen.disabled = false; subBtn.style.display = 'none'; timerDiv.style.display = 'none'; qtySel.style.display = 'flex';
     if(countdownInterval) clearInterval(countdownInterval);
     setOpenCount(1);
-    
-    document.getElementById('preview-img').src = selectedCase.img; 
-    document.getElementById('preview-title').innerText = selectedCase.name; 
-    document.getElementById('preview-price').innerText = selectedCase.price + " ₽"; 
-
+    document.getElementById('preview-img').src = selectedCase.img; document.getElementById('preview-title').innerText = selectedCase.name; document.getElementById('preview-price').innerText = selectedCase.price + " ₽"; 
     if(selectedCase.category === 'free') {
         qtySel.style.display = 'none'; 
-        const COOLDOWN = 48 * 60 * 60 * 1000; 
-        
-        // Используем getTrueTime() для защиты от перемотки
-        const now = getTrueTime();
-        const diff = now - (user.lastSubCaseTime || 0);
-        
+        const COOLDOWN = 48 * 60 * 60 * 1000; const now = getTrueTime(); const diff = now - (user.lastSubCaseTime || 0);
         if(user.lastSubCaseTime > 0 && diff < COOLDOWN) {
-            btnOpen.style.display = 'none'; timerDiv.style.display = 'block';
-            updateTimer(COOLDOWN - diff);
-            countdownInterval = setInterval(() => {
-                const newDiff = getTrueTime() - (user.lastSubCaseTime || 0);
-                if(newDiff >= COOLDOWN) { clearInterval(countdownInterval); openPreview(id); } else updateTimer(COOLDOWN - newDiff);
-            }, 1000);
-        } else {
-            // Сначала показываем кнопку подписаться, если статус локально false
-            if (!user.isSubscribed) { btnOpen.style.display = 'none'; subBtn.style.display = 'block'; subBtn.innerText = "ПОДПИСАТЬСЯ"; } 
-            else { btnOpen.innerText = "ОТКРЫТЬ БЕСПЛАТНО"; }
-        }
+            btnOpen.style.display = 'none'; timerDiv.style.display = 'block'; updateTimer(COOLDOWN - diff);
+            countdownInterval = setInterval(() => { const newDiff = getTrueTime() - (user.lastSubCaseTime || 0); if(newDiff >= COOLDOWN) { clearInterval(countdownInterval); openPreview(id); } else updateTimer(COOLDOWN - newDiff); }, 1000);
+        } else { if (!user.isSubscribed) { btnOpen.style.display = 'none'; subBtn.style.display = 'block'; subBtn.innerText = "ПОДПИСАТЬСЯ"; } else { btnOpen.innerText = "ОТКРЫТЬ БЕСПЛАТНО"; } }
     }
     const cont = document.getElementById('preview-items-container'); cont.innerHTML = ''; 
     let sorted = [...selectedCase.items].sort((a,b) => b.price - a.price); 
     sorted.forEach(item => { cont.innerHTML += `<div class="preview-item rarity-${item.rarity}"><img src="${item.img}" onerror="this.src='${PLACEHOLDER_IMG}'"><div class="p-name">${item.name}</div><div class="p-price">${item.price} ₽</div></div>`; }); 
     document.getElementById('modal-preview').style.display = 'flex'; 
 }
-
 function updateTimer(ms) { const totalSec = Math.floor(ms / 1000); const h = Math.floor(totalSec / 3600); const m = Math.floor((totalSec % 3600) / 60); const s = totalSec % 60; document.getElementById('sub-timer').innerText = `Доступно через: ${h}:${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`; }
 function checkSubscriptionAction() { tg.openTelegramLink(SUB_CHANNEL_URL); document.getElementById('btn-sub-check').style.display = 'none'; const vBtn = document.getElementById('btn-sub-verify'); if(vBtn) vBtn.style.display = 'block'; }
-async function verifySubscriptionWithBackend() { const vBtn = document.getElementById('btn-sub-verify'); vBtn.disabled = true; vBtn.innerText = "ПРОВЕРКА..."; const isSub = await checkGlobalSubscription(); if (isSub) { showNotify("Подписка активна!", "success"); openPreview(selectedCase.id); } else { showNotify("Не подписаны", "error"); vBtn.disabled = false; vBtn.innerText = "ПРОВЕРИТЬ ЕЩЕ РАЗ"; } }
+async function verifySubscriptionWithBackend() { 
+    const vBtn = document.getElementById('btn-sub-verify'); 
+    if (!vBtn) return showNotify("Ошибка UI", "error");
+    vBtn.disabled = true; vBtn.innerText = "ПРОВЕРКА..."; 
+    
+    try {
+        const response = await fetch(`${API_URL}?action=check_sub&uid=${user.uid}`);
+        const data = await response.json();
+        
+        if (data.is_member) {
+            user.isSubscribed = true;
+            await saveUser();
+            showNotify("Подписка подтверждена!", "success");
+            setTimeout(() => openPreview(selectedCase.id), 500);
+        } else {
+            showNotify("Ты не подписан на канал", "error");
+            vBtn.disabled = false;
+            vBtn.innerText = "ПРОВЕРИТЬ ПОДПИСКУ";
+            safeHaptic('error');
+        }
+    } catch (e) {
+        showNotify("Ошибка проверки", "error");
+        vBtn.disabled = false;
+        vBtn.innerText = "ПРОВЕРИТЬ ПОДПИСКУ";
+    }
+} 
 function setOpenCount(n) { selectedOpenCount = n; document.querySelectorAll('.qty-btn').forEach(b => { b.classList.remove('active'); if (b.innerText === `x${n}`) b.classList.add('active'); }); const priceSpan = document.getElementById('btn-total-price'); if (priceSpan && selectedCase) priceSpan.innerText = (selectedCase.price * n).toLocaleString(); }
 
+// --- GAME LOGIC ---
 async function startRouletteSequence() {
-    // Еще раз обновляем время перед открытием
     syncServerTime();
-
     if(selectedCase.category === 'free') { 
-        const isRealSub = await checkGlobalSubscription(); 
-        if(!isRealSub) return showNotify("Нет подписки!", "error"); 
-        
-        // Проверка времени по серверу
-        const now = getTrueTime();
-        const COOLDOWN = 48 * 60 * 60 * 1000;
-        if (user.lastSubCaseTime > 0 && (now - user.lastSubCaseTime < COOLDOWN)) {
-             return showNotify("Время еще не пришло!", "error");
-        }
+        const now = getTrueTime(); const COOLDOWN = 48 * 60 * 60 * 1000;
+        if (user.lastSubCaseTime > 0 && (now - user.lastSubCaseTime < COOLDOWN)) return showNotify("Время еще не пришло!", "error");
     }
-
     const cost = selectedCase.price * selectedOpenCount;
     if(user.balance < cost) return showNotify("Недостаточно средств!", "error");
+    if(cost < 0) return showNotify("Ошибка стоимости", "error");
     
     if(cost > 0) { 
-        user.balance -= cost; 
+        user.balance -= cost; user.totalSpent += cost; 
         addHistory(`Открытие ${selectedCase.name} x${selectedOpenCount}`, `-${cost}`); 
     } else { 
-        addHistory(`Открытие ${selectedCase.name}`, `Бесплатно`); 
-        user.lastSubCaseTime = getTrueTime(); // Сохраняем "Настоящее" время
+        addHistory(`Открытие ${selectedCase.name}`, `Бесплатно`); user.lastSubCaseTime = getTrueTime(); 
     }
     
+    addBPProgress('open_cases', selectedOpenCount);
     saveUser(); updateUI(); closeModal('modal-preview');
+    
     currentWins = []; for(let i=0; i<selectedOpenCount; i++) currentWins.push(getWinItem(selectedCase));
     
+    // ЛОГ ОТКРЫТИЯ
+    sendAdminLog('ACTIONS', `📦 Открытие: ${selectedCase.name}`, `Кол-во: x${selectedOpenCount}\nПотрачено: ${cost} ₽\nВыпало: ${currentWins.map(i=>i.name).join(', ')}`);
+
     if(document.getElementById('fast-open-check').checked) { showWin(currentWins); } 
     else { if (selectedCase.category === 'container') { playContainerAnim(currentWins[0]); } else { playRouletteAnim(selectedOpenCount, currentWins); } }
 }
 
 function getWinItem(c) { 
+    if (!c || !c.items || c.items.length === 0) {
+        return { name: "Пусто", price: 0, rarity: "consumer", img: PLACEHOLDER_IMG };
+    }
     const weights = c.chances || { consumer: 50, common: 30, rare: 15, epic: 4, legendary: 1, mythical: 0 }; 
     const rand = Math.random() * 100; let sum = 0; let rar = 'consumer'; 
     for(let r in weights) { sum += weights[r]; if(rand <= sum) { rar = r; break; } } 
     const pool = c.items.filter(i => i.rarity === rar); 
-    if (pool.length === 0) return c.items[0] || { name: "Пусто", price: 0, rarity: "consumer", img: "" }; 
+    if (pool.length === 0) return c.items[0]; 
     return pool[Math.floor(Math.random()*pool.length)]; 
 }
 
@@ -896,227 +636,558 @@ function showWin(items) {
     const grid = document.getElementById('win-grid'); grid.innerHTML = ''; 
     if(items.length === 1) grid.classList.add('single-item'); else grid.classList.remove('single-item'); 
     let sum = 0; let bestRarityName = 'consumer'; let bestVal = 0;
-    
     items.forEach(i => { 
         sum += i.price; 
         if(RARITY_VALS[i.rarity] > bestVal) { bestVal = RARITY_VALS[i.rarity]; bestRarityName = i.rarity; }
-        const color = RARITY_COLORS[i.rarity] || '#ccc'; 
-        grid.innerHTML += `<div class="win-item rarity-${i.rarity}" style="border-bottom: 3px solid ${color}"><img src="${i.img}"><div style="font-size:10px; margin-top:5px; color:#fff">${i.name}</div><div style="font-size:9px; color:${color}; font-weight:bold">${i.price} ₽</div></div>`; 
+        const color = RARITY_COLORS[i.rarity] || '#ccc';
+        const glowEffect = (bestRarityName === 'legendary' || bestRarityName === 'mythical') ? `style="box-shadow: 0 0 20px ${color}, inset 0 0 10px ${color}"` : '';
+        grid.innerHTML += `<div class="win-item rarity-${i.rarity}" ${glowEffect} style="border-bottom: 3px solid ${color}"><img src="${i.img}"><div style="font-size:10px; margin-top:5px; color:#fff">${i.name}</div><div style="font-size:9px; color:${color}; font-weight:bold">${i.price} ₽</div></div>`; 
     }); 
-    
     const winContent = document.getElementById('win-modal-content'); winContent.className = 'modal-glass center-modal win-modal ' + bestRarityName; 
-    document.getElementById('win-total-price').innerText = sum; document.getElementById('modal-win').style.display = 'flex'; safeHaptic('success'); 
+    document.getElementById('win-total-price').innerText = sum; 
     
-    items.forEach(i => sb.from('live_drops').insert([{ user_name: user.name, item_name: i.name, item_rarity: i.rarity, item_img: i.img }]).then());
+    const modal = document.getElementById('modal-win');
+    modal.style.display = 'flex';
+    playCoinSound();
+    safeHaptic('success');
+    
+    // Special effects for rare drops
+    if(bestRarityName === 'legendary') {
+        playWinSound('legendary');
+        createConfetti(50);
+        modal.style.animation = 'none';
+        setTimeout(() => { modal.style.animation = ''; }, 10);
+    } else if(bestRarityName === 'mythical') {
+        playWinSound('mythical');
+        createConfetti(60);
+        modal.style.animation = 'none';
+        setTimeout(() => { modal.style.animation = ''; }, 10);
+        // Extra visual effect for mythical
+        const light = document.createElement('div');
+        light.style.cssText = 'position:fixed;inset:0;background:radial-gradient(circle,rgba(255,51,51,0.3),transparent);pointer-events:none;z-index:4999;animation:fadeOut 0.8s ease-out forwards';
+        document.body.appendChild(light);
+        setTimeout(() => light.remove(), 800);
+    } else if(bestRarityName === 'epic') {
+        playWinSound('epic');
+        createConfetti(25);
+    } else if(bestRarityName === 'rare') {
+        playWinSound('rare');
+    } else {
+        playWinSound('common');
+    }
+    
+    // LIVE DROP Insert
+    items.forEach(i => {
+        sb.from('live_drops').insert([{ 
+            user_name: user.gameNick || user.name, 
+            item_name: i.name, 
+            item_rarity: i.rarity, 
+            item_img: i.img, 
+            is_verified: user.isVerified 
+        }]).then();
+    });
 }
 
+// Add fadeOut keyframe if not exists
+const style = document.createElement('style');
+style.textContent = '@keyframes fadeOut { 0% { opacity: 1; } 100% { opacity: 0; } }';
+if(!document.head.querySelector('style:last-child')?.textContent.includes('fadeOut')) {
+    document.head.appendChild(style);
+}
+
+// === CONFETTI & PARTICLE EFFECTS ===
+function createConfetti() {
+    const container = document.getElementById('particle-container') || createParticleContainer();
+    const confettiPieces = 60;
+    for(let i = 0; i < confettiPieces; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'particle';
+        const emojis = ['🎉', '⭐', '💎', '✨', '🏆', '👑', '🔥', '💫'];
+        piece.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        piece.style.left = Math.random() * 100 + '%';
+        piece.style.top = -10 + 'px';
+        piece.style.opacity = Math.random() * 0.7 + 0.3;
+        piece.style.fontSize = (Math.random() * 30 + 15) + 'px';
+        piece.style.animationDelay = (Math.random() * 0.5) + 's';
+        piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+        piece.style.filter = 'drop-shadow(0 0 5px rgba(255, 215, 0, 0.8))';
+        container.appendChild(piece);
+        setTimeout(() => piece.remove(), 2500);
+    }
+}
+
+function createParticleContainer() {
+    let container = document.getElementById('particle-container');
+    if(!container) {
+        container = document.createElement('div');
+        container.id = 'particle-container';
+        document.body.appendChild(container);
+    }
+    return container;
+}
+
+function playWinSound(rarity = 'common') { 
+    try { 
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const sequences = {
+            'common': [523.25, 587.33],
+            'rare': [523.25, 587.33, 659.25],
+            'epic': [659.25, 783.99, 523.25],
+            'legendary': [783.99, 987.77, 523.25, 659.25],
+            'mythical': [987.77, 1174.66, 783.99, 659.25, 523.25]
+        };
+        const notes = sequences[rarity] || sequences.common;
+        notes.forEach((freq, i) => {
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+            osc.frequency.value = freq;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.15, audioContext.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+            osc.start(audioContext.currentTime + i * 0.12);
+            osc.stop(audioContext.currentTime + i * 0.12 + 0.15);
+        });
+    } catch(e) {}
+}
+
+function createClickParticle(x, y) {
+    const container = createParticleContainer();
+    for(let i = 0; i < 12; i++) {
+        const particle = document.createElement('div');
+        const sparkles = ['✨', '⭐', '💫', '🌟'];
+        particle.textContent = sparkles[Math.floor(Math.random() * sparkles.length)];
+        particle.style.position = 'absolute';
+        particle.style.left = x + 'px';
+        particle.style.top = y + 'px';
+        particle.style.fontSize = (Math.random() * 14 + 10) + 'px';
+        particle.style.pointerEvents = 'none';
+        particle.style.animation = 'floatUp 1s ease-out forwards';
+        particle.style.opacity = '1';
+        particle.style.filter = 'drop-shadow(0 0 4px rgba(255, 215, 0, 0.8))';
+        const angle = (i / 12) * Math.PI * 2;
+        particle.style.setProperty('--tx', Math.cos(angle) * 80 + 'px');
+        particle.style.setProperty('--ty', Math.sin(angle) * 80 + 'px');
+        particle.style.transform = `translate(var(--tx), var(--ty)) scale(1)`;
+        particle.style.animationDelay = (i * 0.03) + 's';
+        container.appendChild(particle);
+        setTimeout(() => particle.remove(), 1200);
+    }
+}
+
+// Enhanced sound for drops
+function playCoinSound() {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+        osc.frequency.setValueAtTime(800, audioContext.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0, audioContext.currentTime + 0.1);
+        osc.start();
+        osc.stop(audioContext.currentTime + 0.1);
+    } catch(e) {}
+}
 function finishWin(keep) { 
-    if(keep) { currentWins.forEach(i => user.inventory.push(i)); addHistory(`Дроп: ${currentWins.length} шт.`, "В гараж"); } 
-    else { let sum = currentWins.reduce((a,b)=>a+b.price, 0); user.balance += sum; addHistory(`Продажа дропа`, `+${sum}`); } 
+    if(keep) {
+        currentWins.forEach(i => user.inventory.push(i)); addHistory(`Дроп: ${currentWins.length} шт.`, "В гараж"); 
+    } else { 
+        let sum = currentWins.reduce((a,b)=>a+b.price, 0); user.balance += sum; 
+        addHistory(`Продажа дропа`, `+${sum}`); addBPProgress('sell_item', currentWins.length); 
+        sendAdminLog('ACTIONS', '💸 Быстрая продажа дропа', `Сумма: +${sum} ₽`);
+    } 
     saveUser(); updateUI(); renderInventory(); closeModal('modal-win'); 
 }
 
-// --- ANIMATIONS ---
-function playContainerAnim(winItem) { const overlay = document.getElementById('container-anim-overlay'); const box = document.getElementById('container-box'); const img = document.getElementById('container-reveal-img'); overlay.style.display = 'flex'; box.classList.remove('open'); img.src = winItem.img; safeHaptic('impact'); setTimeout(() => { box.classList.add('open'); safeHaptic('selection'); setTimeout(() => { safeHaptic('success'); setTimeout(() => { overlay.style.display = 'none'; showWin(currentWins); }, 1500); }, 1200); }, 800); }
-function playRouletteAnim(count, wins) { const modal = document.getElementById('modal-roulette'); const container = document.getElementById('roulette-strips-container'); container.innerHTML = ''; modal.style.display = 'flex'; setTimeout(() => modal.classList.add('active'), 10); const isMulti = count > 1; if(isMulti) container.classList.add('grid-mode'); else container.classList.remove('grid-mode'); let ITEM_WIDTH = isMulti ? 76 : 120; const WIN_INDEX = 40; const TOTAL_CARDS = 60; for(let i=0; i<count; i++) { const winItem = wins[i]; const strip = document.createElement('div'); strip.className = 'modern-roulette-track'; const marker = document.createElement('div'); marker.className = 'center-marker'; strip.appendChild(marker); const rail = document.createElement('div'); rail.className = 'modern-rail'; rail.style.paddingLeft = '50%'; rail.style.marginLeft = `-${ITEM_WIDTH / 2}px`; let trackHTML = ''; for(let j=0; j<TOTAL_CARDS; j++) { let randItem = selectedCase.items[Math.floor(Math.random()*selectedCase.items.length)]; if(j === WIN_INDEX) randItem = winItem; trackHTML += `<div class="m-card rarity-${randItem.rarity}"><img src="${randItem.img}" onerror="this.src='${PLACEHOLDER_IMG}'"><div class="m-card-info"><div class="m-name">${randItem.name}</div><div class="m-price">${randItem.price} ₽</div></div></div>`; } rail.innerHTML = trackHTML; strip.appendChild(rail); container.appendChild(strip); setTimeout(() => { const randOffset = Math.floor(Math.random() * (ITEM_WIDTH * 0.4)) - (ITEM_WIDTH * 0.2); const distance = (WIN_INDEX * ITEM_WIDTH) + randOffset; const duration = isMulti ? (4 + Math.random()) : 4.5; rail.style.transition = `transform ${duration}s cubic-bezier(0.15, 0.85, 0.35, 1)`; rail.style.transform = `translateX(-${distance}px)`; }, 100); } safeHaptic('impact'); setTimeout(() => { showWin(wins); modal.classList.remove('active'); setTimeout(() => modal.style.display='none', 400); }, 5000); }
-
-// --- INVENTORY & UPGRADE ---
-function flattenItems() { ALL_ITEMS_POOL = []; if(!GAME_CONFIG) return; GAME_CONFIG.forEach(c => c.items.forEach(i => ALL_ITEMS_POOL.push(i))); }
-
-function renderInventory() { 
-    const grid = document.getElementById('inventory-grid'); 
-    grid.innerHTML = ''; 
-    if(user.inventory.length === 0) { 
-        document.getElementById('empty-inventory').style.display = 'block'; 
-        document.getElementById('btn-sell-all').style.display = 'none'; 
-    } else { 
-        document.getElementById('empty-inventory').style.display = 'none'; 
-        document.getElementById('btn-sell-all').style.display = 'block'; 
-        user.inventory.forEach((i, idx) => { 
-            grid.innerHTML += `<div class="case-card rarity-${i.rarity}" onclick="openInvItem(${idx})" style="padding:10px;"><img src="${i.img}" style="width:100%; height:60px; object-fit:contain;" onerror="this.src='${PLACEHOLDER_IMG}'"><div style="font-size:10px; margin-top:5px;">${i.name}</div><div style="font-size:10px; color:#888;">${i.price} ₽</div></div>`; 
-        }); 
+// ... (ANIMATIONS - OMITTED) ...
+function playContainerAnim(winItem) { 
+    const overlay = document.getElementById('container-anim-overlay'); const box = document.getElementById('container-box'); const img = document.getElementById('container-reveal-img'); 
+    overlay.style.display = 'flex'; box.classList.remove('open'); img.src = winItem.img; safeHaptic('impact'); 
+    setTimeout(() => { box.classList.add('open'); safeHaptic('selection'); setTimeout(() => { safeHaptic('success'); setTimeout(() => { overlay.style.display = 'none'; showWin(currentWins); }, 1500); }, 1200); }, 800); 
+}
+function playRouletteAnim(count, wins) { 
+    const modal = document.getElementById('modal-roulette'); const container = document.getElementById('roulette-strips-container'); 
+    container.innerHTML = ''; modal.style.display = 'flex'; setTimeout(() => modal.classList.add('active'), 10); 
+    const isMulti = count > 1; if(isMulti) container.classList.add('grid-mode'); else container.classList.remove('grid-mode'); 
+    let ITEM_WIDTH = isMulti ? 76 : 120; const WIN_INDEX = 40; const TOTAL_CARDS = 60; 
+    for(let i=0; i<count; i++) { 
+        const winItem = wins[i]; const strip = document.createElement('div'); strip.className = 'modern-roulette-track'; 
+        const marker = document.createElement('div'); marker.className = 'center-marker'; strip.appendChild(marker); 
+        const rail = document.createElement('div'); rail.className = 'modern-rail'; rail.style.paddingLeft = '50%'; rail.style.marginLeft = `-${ITEM_WIDTH / 2}px`; 
+        let trackHTML = ''; 
+        for(let j=0; j<TOTAL_CARDS; j++) { 
+            let randItem = selectedCase.items[Math.floor(Math.random()*selectedCase.items.length)]; 
+            if(j === WIN_INDEX) randItem = winItem; 
+            trackHTML += `<div class="m-card rarity-${randItem.rarity}"><img src="${randItem.img}" onerror="this.src='${PLACEHOLDER_IMG}'"><div class="m-card-info"><div class="m-name">${randItem.name}</div><div class="m-price">${randItem.price} ₽</div></div></div>`; 
+        } 
+        rail.innerHTML = trackHTML; strip.appendChild(rail); container.appendChild(strip); 
+        setTimeout(() => { 
+            const randOffset = Math.floor(Math.random() * (ITEM_WIDTH * 0.4)) - (ITEM_WIDTH * 0.2); 
+            const distance = (WIN_INDEX * ITEM_WIDTH) + randOffset; const duration = isMulti ? (4 + Math.random()) : 4.5; 
+            rail.style.transition = `transform ${duration}s cubic-bezier(0.15, 0.85, 0.35, 1)`; rail.style.transform = `translateX(-${distance}px)`; 
+        }, 100); 
     } 
+    safeHaptic('impact'); setTimeout(() => { showWin(wins); modal.classList.remove('active'); setTimeout(() => modal.style.display='none', 400); }, 5000); 
 }
 
+// --- INVENTORY ---
+function renderInventory() { 
+    const grid = document.getElementById('inventory-grid'); grid.innerHTML = ''; 
+    if(user.inventory.length === 0) { document.getElementById('empty-inventory').style.display = 'block'; document.getElementById('btn-sell-all').style.display = 'none'; } 
+    else { 
+        document.getElementById('empty-inventory').style.display = 'none'; document.getElementById('btn-sell-all').style.display = 'block'; 
+        user.inventory.forEach((i, idx) => { grid.innerHTML += `<div class="case-card rarity-${i.rarity}" onclick="openInvItem(${idx})" style="padding:10px;"><img src="${i.img}" style="width:100%; height:60px; object-fit:contain;" onerror="this.src='${PLACEHOLDER_IMG}'"><div style="font-size:10px; margin-top:5px;">${i.name}</div><div style="font-size:10px; color:#888;">${i.price} ₽</div></div>`; }); 
+    } 
+}
 function openInvItem(idx) { 
-    selectedInventoryIndex = idx; 
-    const i = user.inventory[idx]; 
-    document.getElementById('inv-item-img').src = i.img; 
-    document.getElementById('inv-item-name').innerText = i.name; 
-    document.getElementById('inv-item-price').innerText = i.price; 
-    document.getElementById('sell-btn-price').innerText = i.price; 
-    const badge = document.getElementById('inv-rarity-badge'); 
-    badge.innerText = i.rarity; 
-    badge.className = `item-rarity-badge rarity-${i.rarity}`; 
+    selectedInventoryIndex = idx; const i = user.inventory[idx]; 
+    document.getElementById('inv-item-img').src = i.img; document.getElementById('inv-item-name').innerText = i.name; 
+    document.getElementById('inv-item-price').innerText = i.price; document.getElementById('sell-btn-price').innerText = i.price; 
+    const badge = document.getElementById('inv-rarity-badge'); badge.innerText = i.rarity; badge.className = `item-rarity-badge rarity-${i.rarity}`; 
     document.getElementById('modal-inventory-action').style.display = 'flex'; 
 }
-
 function sellCurrentItem() { 
-    const i = user.inventory[selectedInventoryIndex]; 
-    user.balance += i.price; 
-    user.inventory.splice(selectedInventoryIndex, 1); 
-    addHistory(`Продажа: ${i.name}`, `+${i.price}`); 
-    sendAdminLog(LOG_CONFIG.TOPICS.ACTIONS, "💸 Продажа предмета", `Предмет: <b>${i.name}</b>\nЦена продажи: ${i.price} ₽`);
-    saveUser(); 
-    updateUI(); 
-    renderInventory(); 
-    closeModal('modal-inventory-action'); 
-    showNotify(`Продано`, 'success'); 
+    const i = user.inventory[selectedInventoryIndex]; user.balance += i.price; user.inventory.splice(selectedInventoryIndex, 1); 
+    addHistory(`Продажа: ${i.name}`, `+${i.price}`);
+    addBPProgress('sell_item', 1);
+    sendAdminLog('ACTIONS', '💸 Продажа предмета', `Предмет: ${i.name}\nЦена: +${i.price} ₽`);
+    saveUser(); updateUI(); renderInventory(); closeModal('modal-inventory-action'); showNotify(`Продано`, 'success'); 
 }
-
 function sellAllItems() { 
-    if(!confirm("Продать всё?")) return; 
-    let sum = user.inventory.reduce((a,b)=>a+b.price, 0); 
-    let count = user.inventory.length;
-    user.balance += sum; 
-    user.inventory = []; 
-    addHistory(`Продажа всего`, `+${sum}`); 
-    sendAdminLog(LOG_CONFIG.TOPICS.ACTIONS, "💸 Массовая продажа (Всё)", `Продано предметов: ${count} шт.\nОбщая сумма: ${sum} ₽`);
-    saveUser(); 
-    updateUI(); 
-    renderInventory(); 
-    showNotify(`Продано на ${sum}₽`, 'success'); 
+    if(!confirm("Продать всё?")) return; let sum = user.inventory.reduce((a,b)=>a+b.price, 0); let count = user.inventory.length; 
+    user.balance += sum; user.inventory = []; addHistory(`Продажа всего`, `+${sum}`); 
+    addBPProgress('sell_item', count);
+    sendAdminLog('ACTIONS', '🚮 Продажа ВСЕГО', `Кол-во: ${count} шт.\nСумма: +${sum} ₽`);
+    saveUser(); updateUI(); renderInventory(); showNotify(`Продано на ${sum}₽`, 'success'); 
 }
-
 function withdrawCurrentItem() { 
-    if(!user.gameNick || !user.bankAccount) { 
-        openProfileModal(); 
-        showNotify("Заполни профиль!", "error"); 
-        return; 
-    } 
-    const i = user.inventory[selectedInventoryIndex]; 
-    if(i.price < 100) return showNotify("Вывод от 100 ₽", "error"); 
-    
+    if(!user.gameNick || !user.bankAccount) { openProfileModal(); showNotify("Заполни профиль!", "error"); return; } 
+    const i = user.inventory[selectedInventoryIndex]; if(i.price < 100) return showNotify("Вывод от 100 ₽", "error"); 
     user.inventory.splice(selectedInventoryIndex, 1); 
-    sendAdminLog(LOG_CONFIG.TOPICS.WITHDRAW, "💳 Заявка на вывод предмета", `Предмет: <b>${i.name}</b>\nЦена: ${i.price} ₽\nБанк. счет: <code>${user.bankAccount}</code>`);
-    saveUser(); 
-    updateUI(); 
-    renderInventory(); 
-    closeModal('modal-inventory-action'); 
-    showNotify("Заявка создана!", "success"); 
+    sendAdminLog('WITHDRAW', "💳 Заявка на вывод предмета", `Предмет: <b>${i.name}</b>\nЦена: ${i.price} ₽\nБанк. счет: <code>${user.bankAccount}</code>\nСервер: ${user.gameServer}\nНик: ${user.gameNick}`); 
+    saveUser(); updateUI(); renderInventory(); closeModal('modal-inventory-action'); showNotify("Заявка создана!", "success"); 
 }
 
-// --- UPGRADE (NERFED) ---
-function openUpgradeSelector() { const list = document.getElementById('upg-select-grid'); list.innerHTML = ''; if(user.inventory.length === 0) return showNotify("Пусто", "error"); user.inventory.forEach((item, idx) => { list.innerHTML += `<div class="upg-item-row rarity-${item.rarity}"><div class="upg-row-left"><img src="${item.img}" class="upg-row-img"><div class="upg-row-info"><div class="upg-row-name">${item.name}</div><div class="upg-row-price">${item.price} ₽</div></div></div><button class="btn-upg-select" onclick="selectUpgradeSource(${idx})">ВЫБРАТЬ</button></div>`; }); document.getElementById('modal-upg-select').style.display = 'flex'; }
-function selectUpgradeSource(idx) { upgradeState.sourceIdx = idx; const item = user.inventory[idx]; document.getElementById('upg-source-slot').querySelector('.placeholder-icon').style.display = 'none'; const img = document.getElementById('upg-source-img'); img.src = item.img; img.style.display = 'block'; const pr = document.getElementById('upg-source-price'); pr.innerText = item.price + '₽'; pr.style.display = 'block'; closeModal('modal-upg-select'); updateUpgradeCalculation(); }
+// ... (UPGRADE) ...
+function openUpgradeSelector() { 
+    const list = document.getElementById('upg-select-grid'); list.innerHTML = ''; 
+    if(user.inventory.length === 0) return showNotify("Пусто", "error"); 
+    user.inventory.forEach((item, idx) => { list.innerHTML += `<div class="upg-item-row rarity-${item.rarity}"><div class="upg-row-left"><img src="${item.img}" class="upg-row-img"><div class="upg-row-info"><div class="upg-row-name">${item.name}</div><div class="upg-row-price">${item.price} ₽</div></div></div><button class="btn-upg-select" onclick="selectUpgradeSource(${idx})">ВЫБРАТЬ</button></div>`; }); 
+    document.getElementById('modal-upg-select').style.display = 'flex'; 
+}
+function selectUpgradeSource(idx) { 
+    upgradeState.sourceIdx = idx; const item = user.inventory[idx]; 
+    document.getElementById('upg-source-slot').querySelector('.placeholder-icon').style.display = 'none'; 
+    const img = document.getElementById('upg-source-img'); img.src = item.img; img.style.display = 'block'; 
+    const pr = document.getElementById('upg-source-price'); pr.innerText = item.price + '₽'; pr.style.display = 'block'; 
+    closeModal('modal-upg-select'); updateUpgradeCalculation(); 
+}
 function setUpgradeMultiplier(m) { let ch = Math.floor(100/m); if(ch > 75) ch = 75; if(ch < 1) ch = 1; document.getElementById('upg-chance-slider').value = ch; updateUpgradeCalculation(); }
-function updateUpgradeCalculation() { if(upgradeState.sourceIdx === null) return; const chance = parseInt(document.getElementById('upg-chance-slider').value); upgradeState.chance = chance; document.getElementById('upg-chance-display').innerText = chance + '%'; document.getElementById('roll-win-zone').style.width = chance + '%'; const srcPrice = user.inventory[upgradeState.sourceIdx].price; const targetPrice = Math.floor(srcPrice * (100/chance)); let best = null; for(let i of ALL_ITEMS_POOL) { if(i.price > srcPrice && i.price <= targetPrice) { if(!best || i.price > best.price) best = i; } } const content = document.getElementById('upg-target-content'); const notFound = document.getElementById('upg-not-found'); const ph = document.getElementById('upg-target-placeholder'); const btn = document.getElementById('btn-do-upgrade'); ph.style.display = 'none'; if(best) { upgradeState.targetItem = best; content.style.display = 'block'; notFound.style.display = 'none'; document.getElementById('upg-target-img').src = best.img; document.getElementById('upg-target-price').innerText = best.price + ' ₽'; btn.disabled = false; } else { upgradeState.targetItem = null; content.style.display = 'none'; notFound.style.display = 'block'; btn.disabled = true; } }
-
+function updateUpgradeCalculation() { 
+    if(upgradeState.sourceIdx === null) return; const chance = parseInt(document.getElementById('upg-chance-slider').value); upgradeState.chance = chance; 
+    document.getElementById('upg-chance-display').innerText = chance + '%'; document.getElementById('roll-win-zone').style.width = chance + '%'; 
+    const srcPrice = user.inventory[upgradeState.sourceIdx].price; const targetPrice = Math.floor(srcPrice * (100/chance)); 
+    let best = null; for(let i of ALL_ITEMS_POOL) { if(i.price > srcPrice && i.price <= targetPrice) { if(!best || i.price > best.price) best = i; } } 
+    const content = document.getElementById('upg-target-content'); const notFound = document.getElementById('upg-not-found'); const ph = document.getElementById('upg-target-placeholder'); const btn = document.getElementById('btn-do-upgrade'); 
+    ph.style.display = 'none'; 
+    if(best) { upgradeState.targetItem = best; content.style.display = 'block'; notFound.style.display = 'none'; document.getElementById('upg-target-img').src = best.img; document.getElementById('upg-target-price').innerText = best.price + ' ₽'; btn.disabled = false; } 
+    else { upgradeState.targetItem = null; content.style.display = 'none'; notFound.style.display = 'block'; btn.disabled = true; } 
+}
 function startUpgrade() { 
-    const btn = document.getElementById('btn-do-upgrade'); 
-    btn.disabled = true; 
-    const pointer = document.getElementById('roll-pointer'); 
-    const status = document.getElementById('upg-status-text'); 
-    status.innerText = ''; 
-    pointer.style.transition = 'none'; 
-    pointer.style.left = '0%'; 
-
-    // НЕРФ ШАНСОВ (УМНОЖЕНИЕ НА 0.7)
-    // Визуально шанс: upgradeState.chance (например 50%)
-    // Реальный шанс: upgradeState.chance * 0.7 (например 35%)
-    const NERF_FACTOR = 0.7;
-    const realChance = upgradeState.chance * NERF_FACTOR;
-    const isWin = (Math.random() * 100) <= realChance; 
-    
-    // Визуализация броска
-    // Если выиграл - рулетка останавливается в зоне победы (0..chance)
-    // Если проиграл - рулетка останавливается в зоне поражения (chance..100)
-    let visualRoll;
-    if (isWin) {
-        visualRoll = Math.random() * upgradeState.chance;
-    } else {
-        // Гарантируем, что визуально покажет проигрыш, даже если число выпало между 35 и 50
-        visualRoll = upgradeState.chance + 0.1 + (Math.random() * (100 - upgradeState.chance - 0.1));
-    }
-
-    setTimeout(() => { 
-        pointer.style.transition = 'left 1.5s cubic-bezier(0.1,1,0.3,1)'; 
-        pointer.style.left = visualRoll + '%'; 
-        setTimeout(() => { 
-            if(isWin) { 
-                status.innerText = "УСПЕХ"; status.className = "status-text status-win"; processUpgrade(true); safeHaptic('success'); 
-            } else { 
-                status.innerText = "НЕУДАЧА"; status.className = "status-text status-lose"; processUpgrade(false); safeHaptic('error'); 
-            } 
-            setTimeout(resetUpgradeUI, 2000); 
-        }, 1600); 
-    }, 50); 
+    const btn = document.getElementById('btn-do-upgrade'); btn.disabled = true; const pointer = document.getElementById('roll-pointer'); const status = document.getElementById('upg-status-text'); status.innerText = ''; pointer.style.transition = 'none'; pointer.style.left = '0%'; 
+    const NERF_FACTOR = 0.7; const realChance = upgradeState.chance * NERF_FACTOR; const isWin = (Math.random() * 100) <= realChance; let visualRoll; 
+    if (isWin) { visualRoll = Math.random() * upgradeState.chance; } else { visualRoll = upgradeState.chance + 0.1 + (Math.random() * (100 - upgradeState.chance - 0.1)); } 
+    setTimeout(() => { pointer.style.transition = 'left 1.5s cubic-bezier(0.1,1,0.3,1)'; pointer.style.left = visualRoll + '%'; setTimeout(() => { if(isWin) { status.innerText = "УСПЕХ"; status.className = "status-text status-win"; processUpgrade(true); safeHaptic('success'); } else { status.innerText = "НЕУДАЧА"; status.className = "status-text status-lose"; processUpgrade(false); safeHaptic('error'); } setTimeout(resetUpgradeUI, 2000); }, 1600); }, 50); 
 }
-
 function processUpgrade(win) { 
-    const src = user.inventory[upgradeState.sourceIdx]; 
-    const tgt = upgradeState.targetItem; 
-    
+    const src = user.inventory[upgradeState.sourceIdx]; const tgt = upgradeState.targetItem; 
     if(win) { 
-        user.inventory[upgradeState.sourceIdx] = tgt; 
-        addHistory(`Апгрейд: Успех`, `+${tgt.price - src.price}`); 
-        sendAdminLog(LOG_CONFIG.TOPICS.ACTIONS, "⚙️ Апгрейд (УСПЕХ)", `Отдал: <b>${src.name}</b> (${src.price} ₽)\nСкрафтил: <b>${tgt.name}</b> (${tgt.price} ₽)\nШанс: ${upgradeState.chance}%`);
+        user.inventory[upgradeState.sourceIdx] = tgt; addHistory(`Апгрейд: Успех`, `+${tgt.price - src.price}`); 
+        sendAdminLog('ACTIONS', '⚙️ Апгрейд: УСПЕХ', `${src.name} (${src.price}₽) -> ${tgt.name} (${tgt.price}₽)`);
     } else { 
-        user.inventory.splice(upgradeState.sourceIdx, 1); 
-        addHistory(`Апгрейд: Неудача`, `-${src.price}`); 
-        sendAdminLog(LOG_CONFIG.TOPICS.ACTIONS, "⚙️ Апгрейд (ПРОВАЛ)", `Сгорел: <b>${src.name}</b> (${src.price} ₽)\nПытался сделать: <b>${tgt.name}</b> (${tgt.price} ₽)\nШанс: ${upgradeState.chance}%`);
-    } 
-    saveUser(); 
-    updateUI(); 
-    renderInventory(); 
+        user.inventory.splice(upgradeState.sourceIdx, 1); addHistory(`Апгрейд: Неудача`, `-${src.price}`); addBPProgress('upgrade_fail', 1); 
+        sendAdminLog('ACTIONS', '⚙️ Апгрейд: Сгорело', `${src.name} (${src.price}₽) уничтожен.`);
+    }
+    saveUser(); updateUI(); renderInventory(); 
+}
+function resetUpgradeUI() { 
+    upgradeState.sourceIdx = null; document.getElementById('upg-source-img').style.display = 'none'; document.getElementById('upg-source-price').style.display = 'none'; document.getElementById('upg-source-slot').querySelector('.placeholder-icon').style.display = 'block'; document.getElementById('upg-target-content').style.display = 'none'; document.getElementById('upg-target-placeholder').style.display = 'block'; document.getElementById('upg-not-found').style.display = 'none'; document.getElementById('roll-pointer').style.transition = 'none'; document.getElementById('roll-pointer').style.left = '0%'; document.getElementById('upg-status-text').innerText = ''; document.getElementById('btn-do-upgrade').disabled = true; 
 }
 
-function resetUpgradeUI() { upgradeState.sourceIdx = null; document.getElementById('upg-source-img').style.display = 'none'; document.getElementById('upg-source-price').style.display = 'none'; document.getElementById('upg-source-slot').querySelector('.placeholder-icon').style.display = 'block'; document.getElementById('upg-target-content').style.display = 'none'; document.getElementById('upg-target-placeholder').style.display = 'block'; document.getElementById('upg-not-found').style.display = 'none'; document.getElementById('roll-pointer').style.transition = 'none'; document.getElementById('roll-pointer').style.left = '0%'; document.getElementById('upg-status-text').innerText = ''; document.getElementById('btn-do-upgrade').disabled = true; }
-
-// --- CONTRACTS ---
-function renderContractGrid() { const grid = document.getElementById('contract-grid'); grid.innerHTML = ''; if(user.inventory.length === 0) { document.getElementById('contract-empty').style.display = 'block'; return; } document.getElementById('contract-empty').style.display = 'none'; user.inventory.forEach((i, idx) => { const isSelected = contractSelection.includes(idx); grid.innerHTML += `<div class="case-card rarity-${i.rarity} ${isSelected ? 'contract-selected' : ''}" onclick="toggleContractItem(${idx})" style="padding:10px; position:relative;">${isSelected ? '<div style="position:absolute; top:5px; right:5px; color:#4CAF50; font-weight:bold;">✔</div>' : ''}<img src="${i.img}" style="width:100%; height:60px; object-fit:contain;" onerror="this.src='${PLACEHOLDER_IMG}'"><div style="font-size:10px; margin-top:5px;">${i.name}</div><div style="font-size:10px; color:#888;">${i.price} ₽</div></div>`; }); updateContractStats(); }
+// ... (CONTRACT) ...
+function renderContractGrid() { 
+    const grid = document.getElementById('contract-grid'); grid.innerHTML = ''; 
+    if(user.inventory.length === 0) { document.getElementById('contract-empty').style.display = 'block'; return; } 
+    document.getElementById('contract-empty').style.display = 'none'; 
+    user.inventory.forEach((i, idx) => { const isSelected = contractSelection.includes(idx); grid.innerHTML += `<div class="case-card rarity-${i.rarity} ${isSelected ? 'contract-selected' : ''}" onclick="toggleContractItem(${idx})" style="padding:10px; position:relative;">${isSelected ? '<div style="position:absolute; top:5px; right:5px; color:#4CAF50; font-weight:bold;">✔</div>' : ''}<img src="${i.img}" style="width:100%; height:60px; object-fit:contain;" onerror="this.src='${PLACEHOLDER_IMG}'"><div style="font-size:10px; margin-top:5px;">${i.name}</div><div style="font-size:10px; color:#888;">${i.price} ₽</div></div>`; }); updateContractStats(); 
+}
 function toggleContractItem(idx) { if(contractSelection.includes(idx)) contractSelection = contractSelection.filter(id => id !== idx); else { if(contractSelection.length >= 10) return showNotify("Максимум 10", "error"); contractSelection.push(idx); } renderContractGrid(); }
 function updateContractStats() { let sum = 0; contractSelection.forEach(idx => { if(user.inventory[idx]) sum += user.inventory[idx].price; }); document.getElementById('contract-count').innerText = contractSelection.length; document.getElementById('contract-sum').innerText = sum; document.getElementById('btn-sign-contract').disabled = (contractSelection.length < 5); }
-
 function signContract() { 
-    if(contractSelection.length < 5) return showNotify("Минимум 5", "error"); 
+    if(contractSelection.length < 5) return showNotify("Минимум 5", "error");
+    if(ALL_ITEMS_POOL.length === 0) return showNotify("Ошибка сервера", "error");
     let inputSum = 0; contractSelection.forEach(idx => inputSum += user.inventory[idx].price); 
-    const isWin = Math.random() > 0.7; 
-    let multiplier = isWin ? (1.1 + (Math.random() * 1.9)) : (0.3 + (Math.random() * 0.6)); 
+    const isWin = Math.random() > 0.7; let multiplier = isWin ? (1.1 + (Math.random() * 1.9)) : (0.3 + (Math.random() * 0.6)); 
     const targetPrice = Math.floor(inputSum * multiplier); 
     let bestItem = ALL_ITEMS_POOL[0]; let minDiff = Infinity; 
-    ALL_ITEMS_POOL.forEach(item => { const diff = Math.abs(item.price - targetPrice); if(diff < minDiff) { minDiff = diff; bestItem = item; } });
-    let count = contractSelection.length;
+    ALL_ITEMS_POOL.forEach(item => { const diff = Math.abs(item.price - targetPrice); if(diff < minDiff) { minDiff = diff; bestItem = item; } }); 
+    let count = contractSelection.length; 
+    
+    sendAdminLog('ACTIONS', '📜 Контракт', `Вложено: ${count} предм. (${inputSum} ₽)\nПолучено: ${bestItem.name} (${bestItem.price} ₽)`);
+
     playContractAnimation(contractSelection, bestItem, () => { 
-        contractSelection.sort((a,b) => b-a); contractSelection.forEach(idx => user.inventory.splice(idx, 1)); contractSelection = []; currentWins = [bestItem]; selectedCase = { name: "Контракт" }; 
-        sendAdminLog(LOG_CONFIG.TOPICS.ACTIONS, "📜 Контракт", `Вложено предметов: ${count} шт.\nОбщая сумма вложений: ${inputSum} ₽\nВыпало: <b>${bestItem.name}</b> (${bestItem.price} ₽)`);
+        contractSelection.sort((a,b) => b-a); contractSelection.forEach(idx => user.inventory.splice(idx, 1)); contractSelection = []; 
+        currentWins = [bestItem]; selectedCase = { name: "Контракт" }; 
+        addBPProgress('contract_sign', 1);
         showWin(currentWins); switchTab('contract'); renderContractGrid(); 
     }); 
 }
+function playContractAnimation(indices, winItem, callback) { 
+    const overlay = document.getElementById('contract-anim-overlay'); const vortex = document.getElementById('contract-vortex'); vortex.innerHTML = ''; overlay.style.display = 'flex'; 
+    indices.forEach((invIdx, i) => { const item = user.inventory[invIdx]; const div = document.createElement('div'); div.className = 'c-anim-item'; div.style.backgroundImage = `url(${item.img})`; div.style.animationDelay = `${i * 0.15}s`; vortex.appendChild(div); }); safeHaptic('impact'); setTimeout(() => { safeHaptic('success'); setTimeout(() => { overlay.style.display = 'none'; callback(); }, 2200); }, 0); 
+}
 
-function playContractAnimation(indices, winItem, callback) { const overlay = document.getElementById('contract-anim-overlay'); const vortex = document.getElementById('contract-vortex'); vortex.innerHTML = ''; overlay.style.display = 'flex'; indices.forEach((invIdx, i) => { const item = user.inventory[invIdx]; const div = document.createElement('div'); div.className = 'c-anim-item'; div.style.backgroundImage = `url(${item.img})`; div.style.animationDelay = `${i * 0.15}s`; vortex.appendChild(div); }); safeHaptic('impact'); setTimeout(() => { safeHaptic('success'); setTimeout(() => { overlay.style.display = 'none'; callback(); }, 2200); }, 0); }
-
-// --- SETTINGS ---
+// ... (MISC) ...
 function closeModal(id) { document.getElementById(id).style.display = 'none'; if(id === 'modal-preview' && countdownInterval) clearInterval(countdownInterval); }
-function saveSettings() { 
-    const nick = document.getElementById('setting-nick').value; 
-    const srv = document.getElementById('setting-server').value; 
-    const bank = document.getElementById('setting-bank').value; 
-    if(nick) user.gameNick = nick; if(srv) user.gameServer = srv; if(bank) user.bankAccount = bank; 
-    saveUser(); updateUI(); showNotify("Сохранено", "success"); closeModal('modal-profile'); 
+function saveSettings() { const nick = document.getElementById('setting-nick').value; const srv = document.getElementById('setting-server').value; const bank = document.getElementById('setting-bank').value; if(nick) user.gameNick = nick; if(srv) user.gameServer = srv; if(bank) user.bankAccount = bank; saveUser(); updateUI(); showNotify("Сохранено", "success"); closeModal('modal-profile'); }
+function openProfileModal() { document.getElementById('setting-nick').value = user.gameNick; document.getElementById('setting-server').value = user.gameServer; document.getElementById('setting-bank').value = user.bankAccount; renderHistory(); renderReferralStats(); document.getElementById('modal-profile').style.display = 'flex'; }
+function renderReferralStats() { if(document.getElementById('ref-earn-display')) document.getElementById('ref-earn-display').innerText = user.referralEarnings; if(document.getElementById('ref-count-display')) document.getElementById('ref-count-display').innerText = user.referralsCount; }
+function copyRefLink() { const link = `https://t.me/blackrussiacases_bot/app?startapp=ref_${user.uid}`; if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(link).then(() => showNotify("Скопировано!", "success")).catch(() => fallbackCopyTextToClipboard(link)); } else { fallbackCopyTextToClipboard(link); } }
+function withdrawReferralEarnings() {
+    if(user.referralEarnings <= 0) return showNotify("Нет средств для вывода", "error");
+    if(!user.gameNick || !user.bankAccount) { openProfileModal(); return showNotify("Заполни профиль!", "error"); }
+    const amount = user.referralEarnings;
+    sendAdminLog('WITHDRAW', "💰 Вывод рефератных денег", `Сумма: ${amount} ₽\nБанк. счет: ${user.bankAccount}\nСервер: ${user.gameServer}\nНик: ${user.gameNick}`);
+    user.referralEarnings = 0;
+    showNotify(`Заявка на вывод ${amount}₽ создана!`, "success");
+    saveUser();
+    updateUI();
+    renderReferralStats();
 }
-function openProfileModal() { 
-    document.getElementById('setting-nick').value = user.gameNick; document.getElementById('setting-server').value = user.gameServer; document.getElementById('setting-bank').value = user.bankAccount; 
-    renderHistory(); renderReferralStats(); document.getElementById('modal-profile').style.display = 'flex'; 
-}
-function renderReferralStats() {
-    if(document.getElementById('ref-earn-display')) document.getElementById('ref-earn-display').innerText = user.referralEarnings;
-    if(document.getElementById('ref-count-display')) document.getElementById('ref-count-display').innerText = user.referralsCount;
+function fallbackCopyTextToClipboard(text) { const textArea = document.createElement("textarea"); textArea.value = text; textArea.style.position = "fixed"; textArea.style.top = "0"; textArea.style.left = "0"; document.body.appendChild(textArea); textArea.focus(); textArea.select(); try { const successful = document.execCommand('copy'); if(successful) showNotify("Скопировано!", "success"); else showNotify("Ошибка копирования", "error"); } catch (err) { showNotify("Не удалось скопировать", "error"); } document.body.removeChild(textArea); }
+function flattenItems() { ALL_ITEMS_POOL = []; if(!GAME_CONFIG) return; GAME_CONFIG.forEach(c => c.items.forEach(i => ALL_ITEMS_POOL.push(i))); }
+
+// --- LEADERBOARD ---
+async function loadLeaderboard() {
+    const list = document.getElementById('leaderboard-list'); list.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">Загрузка...</div>';
+    try { const { data, error } = await sb.from('users').select('telegram_id, first_name, total_spent, is_verified').order('total_spent', { ascending: false }).limit(10); renderLeaderboard(data || []); } catch(e) { list.innerHTML = '<div style="text-align:center;">Ошибка</div>'; }
 }
 
-function copyRefLink() {
-    const link = `https://t.me/blackrussiacases_bot/app?startapp=ref_${user.uid}`;
-    if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(link).then(() => showNotify("Скопировано!", "success")).catch(() => fallbackCopyTextToClipboard(link));
-    } else { fallbackCopyTextToClipboard(link); }
+// Показать информацию о верификации
+function showVerificationInfo(playerName, totalSpent) {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay center-modal';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal-glass" style="text-align: center; max-width: 320px; width: 85%; background: linear-gradient(135deg, rgba(26,26,26,0.98), rgba(13,13,19,0.98));
+                                         border: 1px solid rgba(255,215,0,0.15); box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(255,215,0,0.1);">
+            <div style="font-size: 12px; font-weight: 900; color: var(--primary); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1.5px;">
+                ✅ ВЕРИФИЦИРОВАННЫЙ ИГРОК
+            </div>
+            
+            <div style="font-size: 48px; margin: 20px 0; opacity: 0.95;">🟢</div>
+            
+            <div style="background: rgba(76, 175, 80, 0.15); border: 1px solid rgba(76, 175, 80, 0.4); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                <div style="font-size: 14px; color: #fff; font-weight: 700; margin-bottom: 10px;">${playerName}</div>
+                <div style="font-size: 12px; color: #aaa;">Общие траты: <span style="color: var(--primary); font-weight: 700;">${totalSpent.toLocaleString()} ₽</span></div>
+            </div>
+            
+            <div style="text-align: left; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px;">
+                <div style="font-size: 12px; color: #aaa; margin-bottom: 10px; font-weight: 700;">Причины верификации:</div>
+                <ul style="margin: 0; padding-left: 20px; font-size: 12px; color: #bbb; line-height: 1.8;">
+                    <li>🎮 Активный игрок в сообществе</li>
+                    <li>💰 Значительные вложения в развитие аккаунта</li>
+                    <li>⭐ Хорошая репутация и участие в ивентах</li>
+                    <li>🔐 Прошел проверку безопасности</li>
+                </ul>
+            </div>
+            
+            <button onclick="this.parentElement.parentElement.remove();" style="
+                width: 100%;
+                padding: 12px;
+                background: var(--gradient-gold);
+                border: none;
+                color: #000;
+                border-radius: 8px;
+                font-weight: 700;
+                font-size: 13px;
+                cursor: pointer;
+                transition: all 0.3s;
+            " onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 0 20px rgba(255,215,0,0.4)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';">
+                ЗАКРЫТЬ
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (e) => {
+        if(e.target === modal) modal.remove();
+    });
+    safeHaptic('selection');
 }
 
-function fallbackCopyTextToClipboard(text) {
-    const textArea = document.createElement("textarea");
-    textArea.value = text;
-    textArea.style.position = "fixed";  
-    textArea.style.top = "0"; textArea.style.left = "0";
-    document.body.appendChild(textArea); textArea.focus(); textArea.select();
-    try { const successful = document.execCommand('copy'); if(successful) showNotify("Скопировано!", "success"); else showNotify("Ошибка копирования", "error"); } catch (err) { showNotify("Не удалось скопировать", "error"); }
-    document.body.removeChild(textArea);
+
+function renderLeaderboard(data) {
+    const list = document.getElementById('leaderboard-list'); list.innerHTML = '';
+    if(data.length === 0) { list.innerHTML = '<div style="text-align:center;">Пока пусто</div>'; return; }
+    data.forEach((p, index) => {
+        const rank = index + 1; 
+        let rankClass = rank === 1 ? 'rank-1' : (rank === 2 ? 'rank-2' : (rank === 3 ? 'rank-3' : 'rank-other')); 
+        let trophy = rank === 1 ? '🥇' : (rank === 2 ? '🥈' : (rank === 3 ? '🥉' : `#${rank}`)); 
+        const verifBadge = p.is_verified ? `<span class="insta-verified-badge" onclick="event.stopPropagation(); showVerificationInfo('${p.first_name}', ${p.total_spent || 0})" style="cursor: pointer;"></span>` : '';
+        const item = document.createElement('div'); 
+        item.className = `leaderboard-item ${rankClass}`; 
+        item.onclick = () => openOtherUserProfile(p.telegram_id);
+        item.innerHTML = `<div class="lb-rank">${trophy}</div><div class="lb-avatar"><img src="${p.avatar || 'img/avatar_placeholder.png'}" onerror="this.src='https://placehold.co/50x50/333/fff?text=U'"></div><div class="lb-info"><div class="lb-name">${p.first_name} ${verifBadge}</div><div class="lb-spent">Потрачено: <span>${(p.total_spent || 0).toLocaleString()} ₽</span></div></div>`; 
+        list.appendChild(item);
+    });
+}
+async function openOtherUserProfile(targetUid) {
+    document.getElementById('modal-other-profile').style.display = 'flex'; document.getElementById('other-name').innerText = "Загрузка..."; document.getElementById('other-inventory-grid').innerHTML = '...';
+    try {
+        const { data } = await sb.from('users').select('first_name, is_verified, game_server, game_nick, inventory').eq('telegram_id', targetUid).single();
+        document.getElementById('other-name').innerText = (data.game_nick || data.first_name || "Игрок"); document.getElementById('other-server').innerText = "Server: " + (data.game_server || "Не указан"); document.getElementById('other-avatar').src = data.avatar || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT0WgESSJwtojIw-dCfW-hhgWxGSFXFqs3d5w&s"; document.getElementById('other-verified').style.display = data.is_verified ? 'inline-block' : 'none';
+        const grid = document.getElementById('other-inventory-grid'); grid.innerHTML = ''; const inv = data.inventory || [];
+        if(inv.length === 0) document.getElementById('other-inventory-empty').style.display = 'block'; else { document.getElementById('other-inventory-empty').style.display = 'none'; inv.forEach(i => { grid.innerHTML += `<div class="case-card rarity-${i.rarity}" style="padding:10px;"><img src="${i.img}" style="width:100%; height:60px; object-fit:contain;" onerror="this.src='${PLACEHOLDER_IMG}'"><div style="font-size:10px; margin-top:5px;">${i.name}</div><div style="font-size:10px; color:#888;">${i.price} ₽</div></div>`; }); }
+    } catch(e) { closeModal('modal-other-profile'); }
+}
+
+// === DYNAMIC EFFECTS SYSTEM ===
+function createRipple(event) {
+    const btn = event.target.closest('button');
+    if (!btn) return;
+    
+    const rect = btn.getBoundingClientRect();
+    const ripple = document.createElement('span');
+    const size = Math.max(rect.width, rect.height);
+    const x = event.clientX - rect.left - size / 2;
+    const y = event.clientY - rect.top - size / 2;
+    
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = x + 'px';
+    ripple.style.top = y + 'px';
+    ripple.classList.add('ripple-effect');
+    
+    btn.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 600);
+}
+
+function createConfetti(count = 40) {
+    const container = document.getElementById('particle-container');
+    if (!container) {
+        const newContainer = document.createElement('div');
+        newContainer.id = 'particle-container';
+        newContainer.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:2000;';
+        document.body.appendChild(newContainer);
+    }
+    
+    const emojis = ['🎉', '⭐', '💎', '🏆', '🎁', '❤️', '✨', '🔥'];
+    const cont = document.getElementById('particle-container');
+    
+    for (let i = 0; i < count; i++) {
+        const particle = document.createElement('div');
+        particle.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        particle.style.cssText = `
+            position: fixed;
+            left: ${Math.random() * 100}%;
+            top: -20px;
+            font-size: ${15 + Math.random() * 15}px;
+            z-index: 2001;
+            pointer-events: none;
+            animation: confettiFall ${2 + Math.random() * 1.5}s ease-out forwards;
+            transform: rotate(${Math.random() * 360}deg);
+        `;
+        cont.appendChild(particle);
+        setTimeout(() => particle.remove(), 3500);
+    }
+}
+
+function shakeElement(element, intensity = 3, duration = 400) {
+    const startTime = Date.now();
+    const originalTransform = element.style.transform || '';
+    
+    const shake = () => {
+        const elapsed = Date.now() - startTime;
+        if (elapsed < duration) {
+            const progress = elapsed / duration;
+            const shakeAmount = (1 - progress) * intensity;
+            element.style.transform = `translate(${(Math.random() - 0.5) * shakeAmount}px, ${(Math.random() - 0.5) * shakeAmount}px) ${originalTransform}`;
+            requestAnimationFrame(shake);
+        } else {
+            element.style.transform = originalTransform;
+        }
+    };
+    shake();
+}
+
+function addButtonClickEffect(event) {
+    const btn = event.target.closest('button');
+    if (!btn) return;
+    
+    btn.classList.add('btn-click-anim');
+    createRipple(event);
+    safeHaptic('selection');
+    
+    setTimeout(() => btn.classList.remove('btn-click-anim'), 400);
+}
+
+function animateTabSwitch(tabElement) {
+    if (!tabElement) return;
+    tabElement.classList.add('tab-switch-in');
+    setTimeout(() => tabElement.classList.remove('tab-switch-in'), 300);
+}
+
+function addSlideInAnimation(element) {
+    element.classList.add('slide-in');
+}
+
+function addFadeInAnimation(element) {
+    element.classList.add('fade-in-scale');
+}
+
+// Add global click listener for ripple effects on shop buttons
+document.addEventListener('click', (e) => {
+    if (e.target.closest('.shop-btn') || e.target.closest('.btn-primary') || e.target.closest('button[onclick*="buyPack"]')) {
+        addButtonClickEffect(e);
+    }
+}, true);
+
+function initDynamicEffects() {
+    // Add glow effect to shop buttons
+    const shopBtns = document.querySelectorAll('.shop-btn');
+    shopBtns.forEach((btn, idx) => {
+        setTimeout(() => {
+            btn.style.animation = 'shopButtonIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        }, idx * 50);
+    });
+    
+    // Add floating animation to premium badges
+    const badges = document.querySelectorAll('.sb-badge');
+    badges.forEach(badge => {
+        badge.classList.add('float');
+    });
+    
+    // Add hover effect to case cards
+    const caseCards = document.querySelectorAll('.case-card');
+    caseCards.forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            card.style.transform = 'scale(1.05) translateY(-5px)';
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'scale(1) translateY(0)';
+        });
+    });
+    
+    // Add pulse glow to first rank in leaderboard
+    const firstRank = document.querySelector('.rank-1');
+    if (firstRank) {
+        firstRank.classList.add('pulse-glow');
+    }
+    
+    // Smooth scroll behavior
+    document.documentElement.style.scrollBehavior = 'smooth';
 }

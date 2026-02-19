@@ -3,83 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BR Admin Ultimate (Supabase Promos)</title>
+    <title>BR Admin DB</title>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         body { background: #121212; color: #eee; font-family: 'Segoe UI', monospace; padding: 20px; margin: 0; box-sizing: border-box; }
         input, textarea, select { -webkit-user-select: text; user-select: text; }
         h2, h3, h4 { color: #FFD700; margin-top: 0; }
-        
+        #login-overlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .login-box { background: #1e1e1e; padding: 30px; border: 1px solid #333; border-radius: 12px; text-align: center; width: 300px; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
         .container { display: grid; grid-template-columns: 280px 1fr; gap: 20px; }
         @media (max-width: 800px) { .container { grid-template-columns: 1fr; } }
-        
         .sidebar { background: #1e1e1e; padding: 15px; border: 1px solid #333; border-radius: 8px; height: fit-content; max-height: 80vh; overflow-y: auto; }
         .editor { background: #1e1e1e; padding: 20px; border: 1px solid #333; border-radius: 8px; }
-        
         button { cursor: pointer; padding: 10px; border: none; font-weight: bold; width: 100%; margin-bottom: 5px; border-radius: 4px; transition: 0.2s; }
         button:hover { filter: brightness(1.1); }
-        
         .btn-green { background: #4CAF50; color: white; }
         .btn-red { background: #ff4d4d; color: white; }
         .btn-gold { background: #FFD700; color: black; }
         .btn-blue { background: #2196F3; color: white; }
         .btn-gray { background: #444; color: #ccc; font-size: 12px; }
-        
         .btn-item { background: #2a2a2a; color: white; text-align: left; border-bottom: 1px solid #333; padding: 12px; }
         .btn-item:hover { background: #333; }
         .btn-item.active { background: #FFD700; color: black; border-color: #FFD700; }
-
-        input, select { width: 100%; padding: 10px; margin-bottom: 10px; background: #121212; border: 1px solid #444; color: white; box-sizing: border-box; border-radius: 4px; }
+        input, select, textarea { width: 100%; padding: 10px; margin-bottom: 10px; background: #121212; border: 1px solid #444; color: white; box-sizing: border-box; border-radius: 4px; }
         label { display: block; font-size: 12px; color: #aaa; margin-bottom: 4px; font-weight: bold; }
-        
         .items-header { display: grid; grid-template-columns: 50px 2fr 1fr 1.5fr 40px; gap: 10px; padding: 0 10px; font-size: 12px; color: #888; margin-bottom: 5px; }
         .item-row { display: grid; grid-template-columns: 50px 2fr 1fr 1.5fr 40px; gap: 10px; align-items: start; background: #252525; padding: 10px; margin-bottom: 8px; border-left: 4px solid #555; border-radius: 4px; }
-        
-        .item-row input, .item-row select { margin-bottom: 5px; font-size: 13px; padding: 6px; }
         .item-img-preview { width: 40px; height: 40px; object-fit: contain; background: #000; border-radius: 4px; border: 1px solid #333; pointer-events: none; }
-        
-        .export-area { width: 100%; height: 120px; background: #080808; color: #0f0; border: 1px solid #333; font-size: 11px; margin-top: 10px; font-family: monospace; padding: 10px; resize: vertical; }
-
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; background: #1e1e1e; padding: 5px; border-radius: 8px; }
         .tab-btn { background: transparent; color: #aaa; flex: 1; padding: 12px; text-align: center; cursor: pointer; border-radius: 6px; font-weight: 600; }
         .tab-btn.active { background: #333; color: #FFD700; }
-        
         .chances-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 20px; padding: 15px; background: #181818; border: 1px solid #333; border-radius: 6px; }
-        
-        .border-consumer { border-left-color: #B0B0B0; }
-        .border-common { border-left-color: #4CAF50; }
-        .border-rare { border-left-color: #2196F3; }
-        .border-epic { border-left-color: #9C27B0; }
-        .border-legendary { border-left-color: #FFD700; }
-        .border-mythical { border-left-color: #FF0055; }
-        
+        .border-consumer { border-left-color: #B0B0B0; } .border-common { border-left-color: #4CAF50; } .border-rare { border-left-color: #2196F3; } .border-epic { border-left-color: #9C27B0; } .border-legendary { border-left-color: #FFD700; } .border-mythical { border-left-color: #FF0055; }
         .promo-row { display: grid; grid-template-columns: 2fr 1fr 1fr 40px; gap: 10px; background: #252525; padding: 10px; margin-bottom: 5px; border-radius: 4px; border-left: 4px solid gold; }
     </style>
 </head>
 <body>
 
+    <div id="login-overlay">
+        <div class="login-box">
+            <h3>🔐 ADMIN ACCESS</h3>
+            <input type="text" id="admin-user" placeholder="Username">
+            <input type="password" id="admin-pass" placeholder="Password">
+            <button class="btn-gold" onclick="login()">ВОЙТИ</button>
+            <div id="login-error" style="color:red; margin-top:10px; font-size:12px;"></div>
+        </div>
+    </div>
+
     <div class="header">
         <div>
             <h2>⚙️ ADMIN PANEL</h2>
-            <div style="font-size: 12px; color: #666;">Редактор конфигурации (Supabase Promos)</div>
+            <div style="font-size: 12px; color: #666;">Редактирование базы данных в реальном времени</div>
         </div>
         <div style="display:flex; gap:10px;">
-             <button onclick="resetToDefault()" class="btn-gray" style="width: auto;">↺ Сброс кейсов</button>
-             <button onclick="copyConfig()" class="btn-gold" style="width: auto; padding: 10px 30px;" id="copy-btn">СКОПИРОВАТЬ CONFIG.JS</button>
+             <button onclick="logout()" class="btn-gray" style="width: auto;">Выйти</button>
         </div>
     </div>
 
     <div class="tabs">
-        <div class="tab-btn active" onclick="setMode('cases')" id="tab-cases">📦 КЕЙСЫ</div>
-        <div class="tab-btn" onclick="setMode('promos')" id="tab-promos">🎟 ПРОМОКОДЫ (SUPABASE)</div>
+        <div class="tab-btn active" onclick="setMode('cases')" id="tab-cases">📦 КЕЙСЫ (DB)</div>
+        <div class="tab-btn" onclick="setMode('promos')" id="tab-promos">🎟 ПРОМОКОДЫ</div>
+        <div class="tab-btn" onclick="setMode('broadcast')" id="tab-broadcast">📢 РАССЫЛКА</div>
     </div>
 
     <div class="container" id="view-cases">
         <div class="sidebar">
             <h3 style="margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; color: #666;">Список Кейсов</h3>
-            <div id="cases-list"></div>
-            <button class="btn-green" style="margin-top: 10px;" onclick="addNewCase()">+ Новый Кейс</button>
+            <div id="cases-list"><div style="text-align:center; padding:10px;">Загрузка...</div></div>
+            <button class="btn-green" style="margin-top: 10px;" onclick="createNewLocalCase()">+ Новый Кейс</button>
         </div>
 
         <div class="editor" id="editor-area" style="display:none;">
@@ -87,15 +79,15 @@
                 <img id="case-img-preview" src="" style="width: 80px; height: 80px; object-fit: contain; background: #111; border: 1px solid #333; border-radius: 8px;">
                 <div style="flex: 1;">
                     <label>Название кейса:</label>
-                    <input type="text" id="case-name" oninput="updateCaseMeta()">
+                    <input type="text" id="case-name" oninput="updatePreview()">
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
                         <div>
                             <label>Цена (₽):</label>
-                            <input type="number" id="case-price" oninput="updateCaseMeta()">
+                            <input type="number" id="case-price" oninput="updatePreview()">
                         </div>
                         <div>
                             <label>Категория:</label>
-                            <select id="case-category" onchange="updateCaseMeta()">
+                            <select id="case-category">
                                 <option value="default">Обычные</option>
                                 <option value="bundles">Наборы</option>
                                 <option value="risk">Всё или Ничего</option>
@@ -105,7 +97,7 @@
                         </div>
                         <div>
                             <label>Картинка (URL):</label>
-                            <input type="text" id="case-img" oninput="updateCaseMeta()">
+                            <input type="text" id="case-img" oninput="updatePreview()">
                         </div>
                     </div>
                 </div>
@@ -113,38 +105,34 @@
 
             <h4 style="border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 10px;">🎲 Шансы выпадения (%)</h4>
             <div class="chances-grid">
-                <div><label style="color:#B0B0B0">Ширп</label><input type="number" step="0.01" id="chance-consumer" onchange="updateChances()"></div>
-                <div><label style="color:#4CAF50">Обычный</label><input type="number" step="0.01" id="chance-common" onchange="updateChances()"></div>
-                <div><label style="color:#2196F3">Редкий</label><input type="number" step="0.01" id="chance-rare" onchange="updateChances()"></div>
-                <div><label style="color:#9C27B0">Эпик</label><input type="number" step="0.01" id="chance-epic" onchange="updateChances()"></div>
-                <div><label style="color:#FFD700">Легендарный</label><input type="number" step="0.01" id="chance-legendary" onchange="updateChances()"></div>
-                <div><label style="color:#FF0055">МИФИЧЕСКИЙ</label><input type="number" step="0.01" id="chance-mythical" onchange="updateChances()"></div>
+                <div><label style="color:#B0B0B0">Ширп</label><input type="number" step="0.01" id="chance-consumer"></div>
+                <div><label style="color:#4CAF50">Обычный</label><input type="number" step="0.01" id="chance-common"></div>
+                <div><label style="color:#2196F3">Редкий</label><input type="number" step="0.01" id="chance-rare"></div>
+                <div><label style="color:#9C27B0">Эпик</label><input type="number" step="0.01" id="chance-epic"></div>
+                <div><label style="color:#FFD700">Легендарный</label><input type="number" step="0.01" id="chance-legendary"></div>
+                <div><label style="color:#FF0055">МИФИЧЕСКИЙ</label><input type="number" step="0.01" id="chance-mythical"></div>
             </div>
 
             <div style="background: #1a1a1a; padding: 10px; border-radius: 8px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                     <h4 style="margin:0;">Содержимое кейса</h4>
-                    <button class="btn-green" style="width:auto; font-size:12px;" onclick="addItem()">+ Добавить предмет</button>
+                    <button class="btn-green" style="width:auto; font-size:12px;" onclick="addLocalItem()">+ Добавить предмет</button>
                 </div>
-                
-                <div class="items-header">
-                    <span>IMG</span>
-                    <span>Название</span>
-                    <span>Цена (₽)</span>
-                    <span>Редкость</span>
-                    <span>Del</span>
-                </div>
+                <div class="items-header"><span>IMG</span><span>Название</span><span>Цена (₽)</span><span>Редкость</span><span>Del</span></div>
                 <div id="items-container"></div>
             </div>
             
-            <button class="btn-red" style="margin-top: 30px;" onclick="deleteCurrentCase()">Удалить этот Кейс</button>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn-blue" onclick="saveCaseToDB()">💾 СОХРАНИТЬ В БАЗУ ДАННЫХ</button>
+                <button class="btn-red" onclick="deleteCaseFromDB()" id="btn-delete-case">Удалить Кейс</button>
+            </div>
         </div>
     </div>
 
     <div class="container" id="view-promos" style="display:none; grid-template-columns: 1fr;">
         <div class="editor">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
-                <h3>Активные Промокоды (В реальном времени)</h3>
+                <h3>Активные Промокоды (DB)</h3>
                 <button class="btn-blue" style="width:auto; padding: 10px 20px;" onclick="addPromo()">+ Добавить код</button>
             </div>
             <div class="items-header" style="grid-template-columns: 2fr 1fr 1fr 40px;">
@@ -159,281 +147,204 @@
         </div>
     </div>
 
-    <div style="margin-top: 30px;" id="export-box">
-        <h3 style="font-size: 14px; color: #888;">Код кейсов (Для вставки в script.js):</h3>
-        <textarea id="output-json" class="export-area" readonly onclick="this.select()"></textarea>
+    <div class="container" id="view-broadcast" style="display:none; grid-template-columns: 1fr;">
+        <div class="editor" style="max-width: 600px; margin: 0 auto;">
+            <h3 style="margin-bottom: 20px;">📢 Рассылка всем пользователям</h3>
+            <p style="color: #aaa; font-size: 13px; margin-bottom: 20px;">
+                Сообщение будет отправлено всем пользователям из базы данных через бота.
+                Процесс может занять время. Не закрывайте вкладку.
+            </p>
+            
+            <label>Текст сообщения:</label>
+            <textarea id="broadcast-text" rows="5" placeholder="Введите текст новости..."></textarea>
+            
+            <div id="broadcast-status" style="margin: 15px 0; font-size: 13px; color: #FFD700; display:none;">
+                Отправлено: <span id="bc-sent">0</span> / <span id="bc-total">0</span>
+            </div>
+
+            <button class="btn-green" onclick="startBroadcast()" id="btn-broadcast">НАЧАТЬ РАССЫЛКУ</button>
+        </div>
     </div>
 
     <script>
-        // --- SUPABASE SETUP ---
         const SUPABASE_URL = 'https://itqlqsixknkqoggvubrp.supabase.co'; 
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml0cWxxc2l4a25rcW9nZ3Z1YnJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MjE3MDIsImV4cCI6MjA4NjQ5NzcwMn0.mV0As50_W8MBC3kpLYm_mLbExqRRyf8JaJi1eNOtAj4'; 
+        // ВСТАВЬ СЮДА ТОТ ЖЕ API URL ЧТО И В SCRIPT.JS
+        const API_URL = "https://script.google.com/macros/s/AKfycbwCTnYYNY3u9ceNdIxlBd0so2fWxNCzxgmQfuDntr3HuKRu9gK9cmGzkeui_Z-4HGQiqw/exec";
+        
         const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        const STORAGE_KEY_CASES = 'admin_game_config_v7';
         const PLACEHOLDER_IMG = "https://placehold.co/100x100/1a1a1a/ffffff?text=No+Image";
 
-        let gameData = [];
-        let promoData = []; // Теперь подтягивается из БД
-        let currentCaseIdx = -1;
+        let dbCases = [];
+        let dbItems = [];
+        let promoData = [];
+        let editingCaseId = null;
+        let localItems = [];
 
-        async function init() {
-            // Загрузка кейсов из LocalStorage
-            const savedCases = localStorage.getItem(STORAGE_KEY_CASES);
-            if(savedCases && savedCases !== "[]") {
-                gameData = JSON.parse(savedCases);
+        async function login() {
+            const u = document.getElementById('admin-user').value;
+            const p = document.getElementById('admin-pass').value;
+            const { data, error } = await sb.from('admin_users').select('*').eq('username', u).eq('password', p).maybeSingle();
+            if (data) {
+                document.getElementById('login-overlay').style.display = 'none';
+                initDashboard();
             } else {
-                gameData = []; // По умолчанию пусто, если нужно - вставьте JSON по-умолчанию
+                document.getElementById('login-error').innerText = "Неверный логин или пароль";
             }
-            renderCasesList();
-            exportConfig();
+        }
+        function logout() { location.reload(); }
 
-            // Загрузка промокодов из БД
+        async function initDashboard() {
+            await fetchAllData();
             await fetchPromosFromDB();
         }
 
-        // --- ЛОГИКА ПРОМОКОДОВ (SUPABASE) ---
-        async function fetchPromosFromDB() {
-            const { data, error } = await sb.from('admin_promos').select('*').order('id', { ascending: true });
-            if (error) {
-                console.error("Ошибка загрузки промокодов:", error);
-                document.getElementById('promos-container').innerHTML = `<div style="color:red; text-align:center;">Ошибка подключения к БД</div>`;
-                return;
-            }
-            promoData = data || [];
-            renderPromos();
-        }
-
-        function renderPromos() {
-            const container = document.getElementById('promos-container');
-            container.innerHTML = '';
-            
-            if(promoData.length === 0) {
-                container.innerHTML = `<div style="text-align:center; padding: 20px; color:#666;">Нет активных промокодов</div>`;
-                return;
-            }
-
-            promoData.forEach((promo, idx) => {
-                const row = document.createElement('div');
-                row.className = 'promo-row';
-                row.innerHTML = `
-                    <input type="text" value="${promo.code}" placeholder="CODE" onchange="updatePromoDB(${idx}, 'code', this.value.toUpperCase())" style="margin:0; font-weight:bold; color:gold; text-transform: uppercase;">
-                    <input type="number" value="${promo.reward}" placeholder="Сумма" onchange="updatePromoDB(${idx}, 'reward', this.value)" style="margin:0;">
-                    <select onchange="updatePromoDB(${idx}, 'is_active', this.value === 'true')" style="margin:0; color: ${promo.is_active ? '#4CAF50' : '#ff4d4d'}">
-                        <option value="true" ${promo.is_active ? 'selected' : ''}>Включен (Активен)</option>
-                        <option value="false" ${!promo.is_active ? 'selected' : ''}>Отключен</option>
-                    </select>
-                    <button class="btn-red" style="width:100%; margin:0; padding:8px;" onclick="deletePromoDB(${idx})">🗑</button>
-                `;
-                container.appendChild(row);
-            });
-        }
-
-        async function addPromo() {
-            const newCode = "NEW_" + Math.floor(Math.random()*1000);
-            const { data, error } = await sb.from('admin_promos').insert([{ code: newCode, reward: 50, is_active: true }]).select();
-            if (error) {
-                alert("Ошибка создания: " + error.message);
-                return;
-            }
-            if (data) {
-                promoData.push(data[0]);
-                renderPromos();
-            }
-        }
-
-        async function updatePromoDB(idx, field, val) {
-            const promo = promoData[idx];
-            
-            if(field === 'reward') val = parseInt(val) || 0;
-            
-            // Локально обновляем
-            promo[field] = val;
-            
-            // В базе обновляем
-            const updateObj = {};
-            updateObj[field] = val;
-
-            const { error } = await sb.from('admin_promos').update(updateObj).eq('id', promo.id);
-            if (error) {
-                alert("Ошибка сохранения: " + error.message);
-            }
-            
-            if(field === 'is_active') renderPromos(); // Обновить цвета
-        }
-
-        async function deletePromoDB(idx) {
-            if(!confirm("Удалить промокод навсегда?")) return;
-            const promo = promoData[idx];
-            
-            const { error } = await sb.from('admin_promos').delete().eq('id', promo.id);
-            if (error) {
-                alert("Ошибка удаления: " + error.message);
-                return;
-            }
-            
-            promoData.splice(idx, 1);
-            renderPromos();
-        }
-
-        // --- UI ЛОГИКА КЕЙСОВ ---
-        function setMode(mode) {
-            document.getElementById('view-cases').style.display = mode === 'cases' ? 'grid' : 'none';
-            document.getElementById('view-promos').style.display = mode === 'promos' ? 'grid' : 'none';
-            document.getElementById('tab-cases').className = `tab-btn ${mode==='cases'?'active':''}`;
-            document.getElementById('tab-promos').className = `tab-btn ${mode==='promos'?'active':''}`;
-            document.getElementById('export-box').style.display = mode === 'cases' ? 'block' : 'none';
-        }
-
-        function resetToDefault() {
-            if(!confirm("Сбросить все кейсы?")) return;
-            localStorage.removeItem(STORAGE_KEY_CASES);
-            location.reload();
+        async function fetchAllData() {
+            const { data: cData } = await sb.from('cases').select('*').order('id', { ascending: true });
+            dbCases = cData || [];
+            const { data: iData } = await sb.from('case_items').select('*');
+            dbItems = iData || [];
+            renderCasesList();
         }
 
         function renderCasesList() {
-            const list = document.getElementById('cases-list');
-            list.innerHTML = '';
-            gameData.forEach((c, idx) => {
+            const list = document.getElementById('cases-list'); list.innerHTML = '';
+            dbCases.forEach((c) => {
                 const btn = document.createElement('button');
-                btn.className = `btn-item ${idx === currentCaseIdx ? 'active' : ''}`;
-                btn.innerHTML = `<div style="font-size:14px; font-weight:bold;">${c.name}</div><div style="font-size:11px; color:#888;">${c.price} ₽ • [${c.category || 'default'}]</div>`;
-                btn.onclick = () => selectCase(idx);
+                btn.className = `btn-item ${c.id === editingCaseId ? 'active' : ''}`;
+                btn.innerHTML = `<div style="font-size:14px; font-weight:bold;">${c.name}</div><div style="font-size:11px; color:#888;">${c.price} ₽ • [${c.category}] (ID: ${c.id})</div>`;
+                btn.onclick = () => selectCaseForEdit(c.id);
                 list.appendChild(btn);
             });
         }
 
-        function selectCase(idx) {
-            currentCaseIdx = idx;
-            renderCasesList();
-            const c = gameData[idx];
-            
+        function createNewLocalCase() {
+            editingCaseId = null; localItems = []; clearEditor();
             document.getElementById('editor-area').style.display = 'block';
-            document.getElementById('case-name').value = c.name;
-            document.getElementById('case-price').value = c.price;
-            document.getElementById('case-img').value = c.img;
-            document.getElementById('case-category').value = c.category || 'default';
-            document.getElementById('case-img-preview').src = c.img;
-            document.getElementById('case-img-preview').onerror = function() { this.src = PLACEHOLDER_IMG };
-            
-            if(!c.chances) c.chances = { consumer: 50, common: 30, rare: 15, epic: 4, legendary: 1, mythical: 0 };
-            
-            document.getElementById('chance-consumer').value = c.chances.consumer || 0;
-            document.getElementById('chance-common').value = c.chances.common || 0;
-            document.getElementById('chance-rare').value = c.chances.rare || 0;
-            document.getElementById('chance-epic').value = c.chances.epic || 0;
-            document.getElementById('chance-legendary').value = c.chances.legendary || 0;
-            document.getElementById('chance-mythical').value = c.chances.mythical || 0;
-
-            renderItems(c.items);
+            document.getElementById('btn-delete-case').style.display = 'none';
         }
 
-        function renderItems(items) {
-            const container = document.getElementById('items-container');
-            container.innerHTML = '';
-            items.forEach((item, idx) => {
-                const row = document.createElement('div');
-                row.className = `item-row border-${item.rarity}`;
-                row.innerHTML = `
-                    <img src="${item.img}" class="item-img-preview" onerror="this.src='${PLACEHOLDER_IMG}'">
-                    <div>
-                        <input type="text" value="${item.name}" onchange="updateItem(${idx}, 'name', this.value)" placeholder="Название">
-                        <input type="text" value="${item.img}" placeholder="URL картинки" style="font-size:10px; color:#888; margin:0;" onchange="updateItem(${idx}, 'img', this.value)">
-                    </div>
-                    <input type="number" value="${item.price}" onchange="updateItem(${idx}, 'price', this.value)" placeholder="Цена">
-                    <select onchange="updateItem(${idx}, 'rarity', this.value)">
-                        <option value="consumer" ${item.rarity==='consumer'?'selected':''}>Ширп (Серый)</option>
-                        <option value="common" ${item.rarity==='common'?'selected':''}>Обычный (Зеленый)</option>
-                        <option value="rare" ${item.rarity==='rare'?'selected':''}>Редкий (Синий)</option>
-                        <option value="epic" ${item.rarity==='epic'?'selected':''}>Эпик (Фиол)</option>
-                        <option value="legendary" ${item.rarity==='legendary'?'selected':''}>Лега (Золото)</option>
-                        <option value="mythical" ${item.rarity==='mythical'?'selected':''}>МИФ (Красный)</option>
-                    </select>
-                    <button class="btn-red" style="width:100%; padding:8px;" onclick="deleteItem(${idx})">🗑</button>
-                `;
+        function selectCaseForEdit(id) {
+            editingCaseId = id; const c = dbCases.find(x => x.id === id); if(!c) return;
+            localItems = dbItems.filter(i => i.case_id === id).map(i => ({...i}));
+            document.getElementById('case-name').value = c.name; document.getElementById('case-price').value = c.price; document.getElementById('case-category').value = c.category; document.getElementById('case-img').value = c.img; document.getElementById('case-img-preview').src = c.img;
+            const ch = c.chances || {};
+            ['consumer','common','rare','epic','legendary','mythical'].forEach(r => document.getElementById(`chance-${r}`).value = ch[r] || 0);
+            renderEditorItems();
+            document.getElementById('editor-area').style.display = 'block'; document.getElementById('btn-delete-case').style.display = 'block'; renderCasesList();
+        }
+
+        function clearEditor() {
+            document.getElementById('case-name').value = "Новый Кейс"; document.getElementById('case-price').value = 100; document.getElementById('case-category').value = 'default'; document.getElementById('case-img').value = PLACEHOLDER_IMG; document.getElementById('case-img-preview').src = PLACEHOLDER_IMG;
+            ['consumer','common','rare','epic','legendary','mythical'].forEach(r => document.getElementById(`chance-${r}`).value = 0);
+            renderEditorItems();
+        }
+
+        function renderEditorItems() {
+            const container = document.getElementById('items-container'); container.innerHTML = '';
+            localItems.forEach((item, idx) => {
+                const row = document.createElement('div'); row.className = `item-row border-${item.rarity}`;
+                row.innerHTML = `<img src="${item.img}" class="item-img-preview" onerror="this.src='${PLACEHOLDER_IMG}'"><div><input type="text" value="${item.name}" onchange="localItems[${idx}].name = this.value" placeholder="Название"><input type="text" value="${item.img}" placeholder="URL картинки" style="font-size:10px; color:#888; margin:0;" onchange="localItems[${idx}].img = this.value"></div><input type="number" value="${item.price}" onchange="localItems[${idx}].price = parseInt(this.value)" placeholder="Цена"><select onchange="localItems[${idx}].rarity = this.value; renderEditorItems()"><option value="consumer" ${item.rarity==='consumer'?'selected':''}>Ширп (Серый)</option><option value="common" ${item.rarity==='common'?'selected':''}>Обычный (Зеленый)</option><option value="rare" ${item.rarity==='rare'?'selected':''}>Редкий (Синий)</option><option value="epic" ${item.rarity==='epic'?'selected':''}>Эпик (Фиол)</option><option value="legendary" ${item.rarity==='legendary'?'selected':''}>Лега (Золото)</option><option value="mythical" ${item.rarity==='mythical'?'selected':''}>МИФ (Красный)</option></select><button class="btn-red" style="width:100%; padding:8px;" onclick="removeLocalItem(${idx})">🗑</button>`;
                 container.appendChild(row);
             });
         }
 
-        function updateCaseMeta() {
-            if(currentCaseIdx === -1) return;
-            gameData[currentCaseIdx].name = document.getElementById('case-name').value;
-            gameData[currentCaseIdx].price = parseInt(document.getElementById('case-price').value) || 0;
-            gameData[currentCaseIdx].img = document.getElementById('case-img').value;
-            gameData[currentCaseIdx].category = document.getElementById('case-category').value;
-            document.getElementById('case-img-preview').src = gameData[currentCaseIdx].img;
-            renderCasesList(); save();
+        function addLocalItem() { localItems.push({ name: "Предмет", price: 100, img: PLACEHOLDER_IMG, rarity: "common" }); renderEditorItems(); }
+        function removeLocalItem(idx) { localItems.splice(idx, 1); renderEditorItems(); }
+        function updatePreview() { document.getElementById('case-img-preview').src = document.getElementById('case-img').value; }
+
+        async function saveCaseToDB() {
+            const btn = document.querySelector('.btn-blue'); btn.disabled = true; btn.innerText = "Сохранение...";
+            const caseObj = { name: document.getElementById('case-name').value, price: parseInt(document.getElementById('case-price').value) || 0, category: document.getElementById('case-category').value, img: document.getElementById('case-img').value, chances: { consumer: parseFloat(document.getElementById('chance-consumer').value)||0, common: parseFloat(document.getElementById('chance-common').value)||0, rare: parseFloat(document.getElementById('chance-rare').value)||0, epic: parseFloat(document.getElementById('chance-epic').value)||0, legendary: parseFloat(document.getElementById('chance-legendary').value)||0, mythical: parseFloat(document.getElementById('chance-mythical').value)||0 } };
+            let targetId = editingCaseId;
+            try {
+                if (targetId) await sb.from('cases').update(caseObj).eq('id', targetId);
+                else { const { data, error } = await sb.from('cases').insert([caseObj]).select(); if(error) throw error; targetId = data[0].id; }
+                await sb.from('case_items').delete().eq('case_id', targetId);
+                if (localItems.length > 0) { const itemsToInsert = localItems.map(i => ({ case_id: targetId, name: i.name, price: i.price, img: i.img, rarity: i.rarity })); await sb.from('case_items').insert(itemsToInsert); }
+                alert("Успешно сохранено!"); await fetchAllData(); selectCaseForEdit(targetId);
+            } catch(e) { alert("Ошибка: " + e.message); } finally { btn.disabled = false; btn.innerText = "💾 СОХРАНИТЬ В БАЗУ ДАННЫХ"; }
         }
 
-        function updateChances() {
-            if(currentCaseIdx === -1) return;
-            gameData[currentCaseIdx].chances = {
-                consumer: parseFloat(document.getElementById('chance-consumer').value) || 0,
-                common: parseFloat(document.getElementById('chance-common').value) || 0,
-                rare: parseFloat(document.getElementById('chance-rare').value) || 0,
-                epic: parseFloat(document.getElementById('chance-epic').value) || 0,
-                legendary: parseFloat(document.getElementById('chance-legendary').value) || 0,
-                mythical: parseFloat(document.getElementById('chance-mythical').value) || 0
-            };
-            save();
+        async function deleteCaseFromDB() {
+            if(!editingCaseId || !confirm("Удалить этот кейс?")) return;
+            const { error } = await sb.from('cases').delete().eq('id', editingCaseId);
+            if(error) alert("Ошибка: " + error.message); else { alert("Удалено"); document.getElementById('editor-area').style.display = 'none'; fetchAllData(); }
         }
 
-        function updateItem(itemIdx, field, value) {
-            if(field === 'price') value = parseInt(value) || 0;
-            gameData[currentCaseIdx].items[itemIdx][field] = value;
-            if(field === 'rarity') renderItems(gameData[currentCaseIdx].items);
-            save();
+        async function fetchPromosFromDB() {
+            const { data, error } = await sb.from('admin_promos').select('*').order('id', { ascending: true });
+            if (!error) { promoData = data || []; renderPromos(); }
+        }
+        function renderPromos() {
+            const container = document.getElementById('promos-container'); container.innerHTML = '';
+            promoData.forEach((promo, idx) => {
+                const row = document.createElement('div'); row.className = 'promo-row';
+                row.innerHTML = `<input type="text" value="${promo.code}" onchange="updatePromoDB(${idx}, 'code', this.value.toUpperCase())" style="color:gold; font-weight:bold;"><input type="number" value="${promo.reward}" onchange="updatePromoDB(${idx}, 'reward', this.value)"><select onchange="updatePromoDB(${idx}, 'is_active', this.value === 'true')" style="color: ${promo.is_active ? '#4CAF50' : '#ff4d4d'}"><option value="true" ${promo.is_active ? 'selected' : ''}>Вкл</option><option value="false" ${!promo.is_active ? 'selected' : ''}>Выкл</option></select><button class="btn-red" style="margin:0; padding:8px;" onclick="deletePromoDB(${idx})">🗑</button>`;
+                container.appendChild(row);
+            });
+        }
+        async function addPromo() { const { data, error } = await sb.from('admin_promos').insert([{ code: "NEW_CODE", reward: 100, is_active: true }]).select(); if(!error) { promoData.push(data[0]); renderPromos(); } }
+        async function updatePromoDB(idx, field, val) { const p = promoData[idx]; if(field === 'reward') val = parseInt(val); const { error } = await sb.from('admin_promos').update({ [field]: val }).eq('id', p.id); if(!error) { p[field] = val; if(field==='is_active') renderPromos(); } }
+        async function deletePromoDB(idx) { if(!confirm("Удалить?")) return; const p = promoData[idx]; const { error } = await sb.from('admin_promos').delete().eq('id', p.id); if(!error) { promoData.splice(idx, 1); renderPromos(); } }
+
+        // --- BROADCAST LOGIC ---
+        async function startBroadcast() {
+            const text = document.getElementById('broadcast-text').value;
+            if(!text) return alert("Введите текст!");
+            if(!confirm("Отправить сообщение всем пользователям?")) return;
+
+            const btn = document.getElementById('btn-broadcast');
+            const statusDiv = document.getElementById('broadcast-status');
+            const sentSpan = document.getElementById('bc-sent');
+            const totalSpan = document.getElementById('bc-total');
+
+            btn.disabled = true;
+            statusDiv.style.display = 'block';
+
+            // 1. Get all users
+            const { data: users, error } = await sb.from('users').select('telegram_id');
+            if(error || !users) return alert("Ошибка получения списка пользователей");
+
+            totalSpan.innerText = users.length;
+            let sentCount = 0;
+
+            // 2. Loop and send (with delay to avoid limits)
+            for (let i = 0; i < users.length; i++) {
+                const uid = users[i].telegram_id;
+                
+                try {
+                    await fetch(API_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            action: "broadcast",
+                            userId: uid,
+                            text: text
+                        })
+                    });
+                    sentCount++;
+                    sentSpan.innerText = sentCount;
+                } catch(e) {
+                    console.error("Broadcast fail:", uid);
+                }
+
+                // Delay 100ms
+                await new Promise(r => setTimeout(r, 100));
+            }
+
+            alert("Рассылка завершена!");
+            btn.disabled = false;
         }
 
-        function addItem() {
-            if(currentCaseIdx === -1) return;
-            gameData[currentCaseIdx].items.push({ name: "Новый предмет", price: 100, img: PLACEHOLDER_IMG, rarity: "consumer" });
-            renderItems(gameData[currentCaseIdx].items); save();
+        function setMode(mode) {
+            document.getElementById('view-cases').style.display = mode === 'cases' ? 'grid' : 'none';
+            document.getElementById('view-promos').style.display = mode === 'promos' ? 'grid' : 'none';
+            document.getElementById('view-broadcast').style.display = mode === 'broadcast' ? 'grid' : 'none';
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-'+mode).classList.add('active');
         }
-
-        function deleteItem(idx) {
-            if(!confirm("Удалить предмет?")) return;
-            gameData[currentCaseIdx].items.splice(idx, 1);
-            renderItems(gameData[currentCaseIdx].items); save();
-        }
-
-        function addNewCase() {
-            gameData.push({ id: Date.now(), name: "Новый Кейс", price: 100, category: "default", img: PLACEHOLDER_IMG, chances: { consumer: 50, common: 30, rare: 15, epic: 4, legendary: 0.92, mythical: 0.08 }, items: [] });
-            selectCase(gameData.length - 1); save();
-        }
-
-        function deleteCurrentCase() {
-            if(!confirm("Удалить этот кейс полностью?")) return;
-            gameData.splice(currentCaseIdx, 1);
-            currentCaseIdx = -1;
-            document.getElementById('editor-area').style.display = 'none';
-            renderCasesList(); save();
-        }
-
-        function save() {
-            localStorage.setItem(STORAGE_KEY_CASES, JSON.stringify(gameData));
-            exportConfig();
-        }
-
-        function exportConfig() {
-            const jsonCases = JSON.stringify(gameData, null, 4);
-            const str = `/* ==============================================
-   КОНФИГУРАЦИЯ (ВСТАВИТЬ ЭТО В НАЧАЛО SCRIPT.JS)
-   ============================================== */
-const GAME_CONFIG = ${jsonCases};
-`;
-            document.getElementById('output-json').value = str;
-        }
-
-        function copyConfig() {
-            const textarea = document.getElementById('output-json');
-            textarea.select();
-            if(navigator.clipboard) {
-                navigator.clipboard.writeText(textarea.value).then(() => alert("Скопировано!")).catch(() => document.execCommand('copy'));
-            } else { document.execCommand('copy'); alert("Скопировано!"); }
-        }
-
-        init();
     </script>
 </body>
 </html>

@@ -476,6 +476,45 @@ async function activatePromo() {
             btn.classList.remove('btn-click-anim');
             return; 
         }
+        // Если не нашли код в admin_promos — пробуем таблицу promocodes (внешние/Supabase коды)
+        const { data: sbPromo } = await sb.from('promocodes').select('*').eq('code', code).maybeSingle();
+        if (sbPromo) {
+            // Проверяем активность (если есть поле is_active)
+            if (typeof sbPromo.is_active !== 'undefined' && !sbPromo.is_active) {
+                showNotify("Код не активен", "error");
+                shakeElement(btn, 3, 300);
+                return;
+            }
+
+            // Попытка определить поле с наградой (совместимость с разными схемами)
+            let amount = 0;
+            if (typeof sbPromo.reward !== 'undefined') amount = Number(sbPromo.reward);
+            else if (typeof sbPromo.amount !== 'undefined') amount = Number(sbPromo.amount);
+            else if (typeof sbPromo.value !== 'undefined') amount = Number(sbPromo.value);
+            else if (sbPromo.type === 'balance' && typeof sbPromo.val !== 'undefined') amount = Number(sbPromo.val);
+
+            if (isNaN(amount) || amount <= 0) {
+                showNotify("Неподдерживаемый тип промокода", "error");
+                shakeElement(btn, 3, 300);
+                return;
+            }
+
+            applyPromo(amount, code);
+            input.value = "";
+            sendAdminLog('PROMO', '🎟 Активация промокода (promocodes)', `Код: ${code}\nНаграда: ${amount} ₽`);
+
+            // Обновляем статистику использования / деактивируем single-use
+            try {
+                if (sbPromo.single_use) {
+                    await sb.from('promocodes').update({ is_active: false }).eq('id', sbPromo.id);
+                } else if (typeof sbPromo.used_count !== 'undefined') {
+                    await sb.from('promocodes').update({ used_count: (sbPromo.used_count || 0) + 1 }).eq('id', sbPromo.id);
+                }
+            } catch (e) { /* не критично если обновление не прошло */ }
+
+            btn.classList.remove('btn-click-anim');
+            return;
+        }
         showNotify("Код не найден", "error");
         shakeElement(btn, 3, 300);
     } catch(e) { 

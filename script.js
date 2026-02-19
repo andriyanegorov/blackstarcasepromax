@@ -69,13 +69,25 @@ function sendAdminLog(topicKey, actionName, details) {
               `📋 ${details}`
     };
 
-    // Используем navigator.sendBeacon для надежности или fetch
-    fetch(API_URL, {
-        method: 'POST',
-        mode: 'no-cors', // Важно для GAS
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(logData)
-    }).catch(e => {});
+    // Способ 1: sendBeacon (самый надежный для логирования)
+    try {
+        navigator.sendBeacon(API_URL, JSON.stringify(logData));
+    } catch(e1) {
+        // Способ 2: обычный fetch без no-cors
+        try {
+            fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(logData)
+            }).catch(e => {});
+        } catch(e2) {
+            // Способ 3: Image beacon (самый универсальный)
+            try {
+                var img = new Image();
+                img.src = API_URL + '?log=' + encodeURIComponent(JSON.stringify(logData));
+            } catch(e3) {}
+        }
+    }
 }
 
 let GAME_CONFIG = [];

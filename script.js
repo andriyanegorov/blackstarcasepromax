@@ -108,13 +108,95 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // --- DEVICE ID MANAGEMENT (MULTI-ACCOUNT PROTECTION) ---
-function getDeviceId() {
-    let dId = localStorage.getItem('br_device_id');
-    if (!dId) {
-        dId = 'dev_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-        localStorage.setItem('br_device_id', dId);
+function generateDeviceFingerprint() {
+    // Собираем данные об устройстве для создания "отпечатка"
+    const fingerprint = {
+        // Браузер и ОС
+        userAgent: navigator.userAgent,
+        language: navigator.language,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timezoneOffset: new Date().getTimezoneOffset(),
+        
+        // Экран
+        screenWidth: screen.width,
+        screenHeight: screen.height,
+        screenColorDepth: screen.colorDepth,
+        screenPixelDepth: screen.pixelDepth,
+        
+        // Устройство
+        platform: navigator.platform,
+        hardwareConcurrency: navigator.hardwareConcurrency || 0,
+        deviceMemory: navigator.deviceMemory || 0,
+        
+        // WebGL
+        webglVendor: getWebGLVendor()
+    };
+    
+    // Преобразуем в строку и хешируем
+    const fingerprintStr = JSON.stringify(fingerprint);
+    return 'dev_' + simpleHash(fingerprintStr).toString(36) + '_' + Date.now().toString(36).substr(-4);
+}
+
+function getWebGLVendor() {
+    try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (gl) {
+            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            return gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+        }
+    } catch(e) {}
+    return 'unknown';
+}
+
+// Простая функция хеширования
+function simpleHash(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
     }
+    return Math.abs(hash);
+}
+
+function getDeviceId() {
+    // Сначала проверяем все возможные хранилища
+    let dId = localStorage.getItem('br_device_id') || 
+              sessionStorage.getItem('br_device_id') || 
+              getCookie('br_device_id');
+    
+    // Если ничего не нашли, создаём новый ID на основе отпечатка устройства
+    if (!dId) {
+        dId = generateDeviceFingerprint();
+        
+        // Сохраняем в несколько мест для надежности
+        localStorage.setItem('br_device_id', dId);
+        sessionStorage.setItem('br_device_id', dId);
+        setCookie('br_device_id', dId, 365); // На год
+    }
+    
     return dId;
+}
+
+// Вспомогательные функции для работы с cookies
+function setCookie(name, value, days) {
+    const d = new Date();
+    d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
+    const expires = 'expires=' + d.toUTCString();
+    document.cookie = name + '=' + encodeURIComponent(value) + ';' + expires + ';path=/;SameSite=Lax';
+}
+
+function getCookie(name) {
+    const nameEQ = name + '=';
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+        let cookie = cookies[i].trim();
+        if (cookie.indexOf(nameEQ) === 0) {
+            return decodeURIComponent(cookie.substring(nameEQ.length));
+        }
+    }
+    return null;
 }
 
 // --- SUPABASE & USER ---

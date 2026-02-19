@@ -344,10 +344,16 @@ async function initUserSessionSupabase() {
                 // НАЙДЕН МУЛЬТИАККАУНТ - у других аккаунтов есть этот Device ID
                 const otherIds = multiData.map(u => u.telegram_id).join(', ');
                 console.log('🚨 MULTI-ACCOUNT DETECTED:', {currentDeviceId, otherIds, uid});
+                
+                // ✅ Отправляем лог админу
                 sendAdminLog('SECURITY', '⚠️ ПОДОЗРЕНИЕ НА МУЛЬТИАККАУНТ', 
                     `Игрок ${uid} пытается зайти с Device ID <code>${currentDeviceId}</code>, который уже используется у ID: ${otherIds}`);
+                
+                // ✅ Показываем видимое предупреждение на экране игрока
+                showMultiAccountWarning(uid, otherIds, currentDeviceId);
+                
                 // Даём время отправить логи
-                await new Promise(r => setTimeout(r, 500));
+                await new Promise(r => setTimeout(r, 1000));
             }
             
             // Добавляем Device ID в список этого пользователя
@@ -1317,3 +1323,109 @@ function initDynamicEffects() {
     // Smooth scroll behavior
     document.documentElement.style.scrollBehavior = 'smooth';
 }
+
+// ==========================================
+// MULTI-ACCOUNT WARNING SCREEN
+// ==========================================
+function showMultiAccountWarning(currentUid, otherUids, deviceId) {
+    // Создаём экран предупреждения
+    const warningEl = document.createElement('div');
+    warningEl.id = 'multi-account-warning';
+    warningEl.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(139, 0, 0, 0.95), rgba(220, 20, 60, 0.95));
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        padding: 20px;
+        font-family: Arial, sans-serif;
+        color: white;
+    `;
+    
+    warningEl.innerHTML = `
+        <div style="text-align: center; max-width: 400px;">
+            <div style="font-size: 80px; margin-bottom: 20px;">⚠️</div>
+            <h1 style="color: #FF6B6B; margin: 0 0 15px 0; font-size: 28px;">ОБНАРУЖЕНА ПОДОЗРИТЕЛЬНАЯ АКТИВНОСТЬ</h1>
+            
+            <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: left;">
+                <p style="margin: 5px 0; font-size: 14px;">
+                    <strong>🔴 Причина:</strong> Входы с разных аккаунтов с одного устройства
+                </p>
+                <p style="margin: 5px 0; font-size: 14px;">
+                    <strong>🖥 Ваше устройство:</strong> <code style="background: #000; padding: 5px; border-radius: 3px;">${deviceId}</code>
+                </p>
+                <p style="margin: 5px 0; font-size: 14px;">
+                    <strong>👤 Текущий ID:</strong> ${currentUid}
+                </p>
+                <p style="margin: 5px 0; font-size: 14px;">
+                    <strong>⚡ Найдены входы с ID:</strong> ${otherUids}
+                </p>
+            </div>
+            
+            <p style="color: #FFD700; margin-bottom: 20px; font-size: 14px;">
+                💡 Это могло произойти если вы входили с разными Telegram аккаунтами с этого же браузера/устройства.
+            </p>
+            
+            <div style="background: rgba(255, 100, 0, 0.3); border: 1px solid #FF6400; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <strong>⚠️ ВНИМАНИЕ:</strong> Администрация была уведомлена об этой попытке. Если это ошибка - свяжитесь с поддержкой.
+            </div>
+            
+            <button onclick="location.reload()" style="
+                background: #FF6B6B;
+                color: white;
+                border: none;
+                padding: 15px 40px;
+                font-size: 16px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: bold;
+                margin-bottom: 10px;
+            ">Обновить страницу</button>
+            
+            <p style="font-size: 12px; color: #CCC; margin-top: 15px;">
+                Если это ошибка, напишите в поддержку с ID устройства выше.
+            </p>
+        </div>
+    `;
+    
+    // Добавляем на страницу
+    document.body.appendChild(warningEl);
+    
+    // Отправляем сообщение игроку в ЛС
+    sendWarningToPlayer(currentUid, otherUids, deviceId);
+    
+    // Заблокируем скролл
+    document.body.style.overflow = 'hidden';
+}
+
+// === ОТПРАВКА ПРЕДУПРЕЖДЕНИЯ В ЛС ===
+function sendWarningToPlayer(currentUid, otherUids, deviceId) {
+    try {
+        const warningText = 
+            `🚨 <b>ПОДОЗРЕНИЕ НА МУЛЬТИАККАУНТ</b>\n\n` +
+            `Обнаружен вход с вашего аккаунта (${currentUid}) с устройства, которое уже использовалось другим аккаунтом.\n\n` +
+            `📱 Устройство: <code>${deviceId}</code>\n` +
+            `👤 Ваш ID: ${currentUid}\n` +
+            `⚡ Другие ID: ${otherUids}\n\n` +
+            `Если это ошибка, напишите в поддержку с этим кодом устройства.`;
+        
+        // Отправляем через Google Script
+        fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: "send_warning",
+                userId: currentUid,
+                text: warningText
+            }),
+            keepalive: true
+        }).catch(e => console.error('Ошибка отправки предупреждения:', e));
+    } catch(err) {
+        console.error('sendWarningToPlayer:', err);
+    }

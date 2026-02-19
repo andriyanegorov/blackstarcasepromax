@@ -204,17 +204,25 @@ async function initUserSessionSupabase() {
                 return; 
             }
 
-            // Проверка мультиаккаунта (упрощенная)
+            // Проверка мультиаккаунта ДО добавления
             let knownDevices = data.device_ids || [];
+            
+            // Сначала проверяем, есть ли этот Device ID у ДРУГИХ юзеров
+            const { data: multiData } = await sb.from('users')
+                .select('telegram_id')
+                .contains('device_ids', currentDeviceId)
+                .neq('telegram_id', uid);  // Исключаем самого себя!
+            
+            if (multiData && multiData.length > 0) {
+                // НАЙДЕН МУЛЬТИАККАУНТ - у других аккаунтов есть этот Device ID
+                const otherIds = multiData.map(u => u.telegram_id).join(', ');
+                sendAdminLog('SECURITY', '⚠️ ПОДОЗРЕНИЕ НА МУЛЬТИАККАУНТ', 
+                    `Игрок ${uid} пытается зайти с Device ID <code>${currentDeviceId}</code>, который уже используется у ID: ${otherIds}`);
+            }
+            
+            // Добавляем Device ID в список этого пользователя
             if (!knownDevices.includes(currentDeviceId)) {
-                // Новое устройство для этого юзера
                 knownDevices.push(currentDeviceId);
-                // Тут можно проверить, есть ли этот deviceId у других юзеров
-                const { data: multiData } = await sb.from('users').select('telegram_id').contains('device_ids', [currentDeviceId]);
-                if (multiData && multiData.length > 0) {
-                    // НАЙДЕН МУЛЬТИАККАУНТ
-                    sendAdminLog('SECURITY', '⚠️ ПОДОЗРЕНИЕ НА МУЛЬТИАККАУНТ', `Этот DeviceID уже используется у ID: ${multiData.map(u=>u.telegram_id).join(', ')}`);
-                }
                 await sb.from('users').update({ device_ids: knownDevices }).eq('telegram_id', uid);
             }
 

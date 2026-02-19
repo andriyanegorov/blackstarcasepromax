@@ -58,10 +58,18 @@ const BP_TASKS = {
 
 // === GLOBAL LOGGING FUNCTION (VIA GAS) ===
 function sendAdminLog(topicKey, actionName, details) {
-    // TopicKey соответствует ключам в GAS скрипте: ACTIONS, WITHDRAW, PROMO, SECURITY
+    // TopicKey: ACTIONS, WITHDRAW, PROMO, SECURITY
+    
+    // Проверяем что user инициализирован
+    if (!user || !user.uid) {
+        console.warn('⚠️ sendAdminLog: user не инициализирован!', {user});
+        return;
+    }
+    
     const logData = {
         action: "log_event",
         topicKey: topicKey,
+        timestamp: new Date().toISOString(),
         text: `🔔 <b>${actionName}</b>\n` +
               `👤 ${user.name} (ID: <code>${user.uid}</code>)\n` +
               `💰 Баланс: ${Math.floor(user.balance)} ₽\n` +
@@ -69,24 +77,36 @@ function sendAdminLog(topicKey, actionName, details) {
               `📋 ${details}`
     };
 
+    console.log('📤 Отправка лога:', logData);
+    
     // Способ 1: sendBeacon (самый надежный для логирования)
-    try {
-        navigator.sendBeacon(API_URL, JSON.stringify(logData));
-    } catch(e1) {
-        // Способ 2: обычный fetch без no-cors
+    if (navigator.sendBeacon) {
         try {
-            fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(logData)
-            }).catch(e => {});
-        } catch(e2) {
-            // Способ 3: Image beacon (самый универсальный)
-            try {
-                var img = new Image();
-                img.src = API_URL + '?log=' + encodeURIComponent(JSON.stringify(logData));
-            } catch(e3) {}
+            const result = navigator.sendBeacon(API_URL, JSON.stringify(logData));
+            console.log('✅ sendBeacon успешно отправлен:', result);
+            return;
+        } catch(e1) {
+            console.warn('⚠️ sendBeacon ошибка:', e1);
         }
+    }
+    
+    // Способ 2: обычный fetch 
+    try {
+        fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(logData),
+            keepalive: true
+        }).then(r => {
+            console.log('✅ Fetch ответ:', r.status);
+            return r.json();
+        }).then(data => {
+            console.log('✅ Лог принят сервером:', data);
+        }).catch(e => {
+            console.error('❌ Fetch ошибка:', e);
+        });
+    } catch(e2) {
+        console.error('❌ Fetch исключение:', e2);
     }
 }
 
@@ -301,25 +321,7 @@ async function initUserSessionSupabase() {
             // Проверка мультиаккаунта ДО добавления
             let knownDevices = data.device_ids || [];
             
-            // Сначала проверяем, есть ли этот Device ID у ДРУГИХ юзеров
-            const { data: multiData } = await sb.from('users')
-                .select('telegram_id')
-                .contains('device_ids', currentDeviceId)
-                .neq('telegram_id', uid);  // Исключаем самого себя!
-            
-            if (multiData && multiData.length > 0) {
-                // НАЙДЕН МУЛЬТИАККАУНТ - у других аккаунтов есть этот Device ID
-                const otherIds = multiData.map(u => u.telegram_id).join(', ');
-                sendAdminLog('SECURITY', '⚠️ ПОДОЗРЕНИЕ НА МУЛЬТИАККАУНТ', 
-                    `Игрок ${uid} пытается зайти с Device ID <code>${currentDeviceId}</code>, который уже используется у ID: ${otherIds}`);
-            }
-            
-            // Добавляем Device ID в список этого пользователя
-            if (!knownDevices.includes(currentDeviceId)) {
-                knownDevices.push(currentDeviceId);
-                await sb.from('users').update({ device_ids: knownDevices }).eq('telegram_id', uid);
-            }
-
+            // СНАЧАЛА создаём временный user объект для логирования
             user = {
                 uid: data.telegram_id, name: first_name, tgUsername: username,
                 balance: Number(data.balance), inventory: data.inventory || [], history: data.history || [],
@@ -331,6 +333,28 @@ async function initUserSessionSupabase() {
                 bp: data.bp || DEFAULT_USER.bp,
                 deviceIds: knownDevices
             };
+            
+            // Теперь проверяем, есть ли этот Device ID у ДРУГИХ юзеров
+            const { data: multiData } = await sb.from('users')
+                .select('telegram_id')
+                .contains('device_ids', currentDeviceId)
+                .neq('telegram_id', uid);  // Исключаем самого себя!
+            
+            if (multiData && multiData.length > 0) {
+                // НАЙДЕН МУЛЬТИАККАУНТ - у других аккаунтов есть этот Device ID
+                const otherIds = multiData.map(u => u.telegram_id).join(', ');
+                console.log('🚨 MULTI-ACCOUNT DETECTED:', {currentDeviceId, otherIds, uid});
+                sendAdminLog('SECURITY', '⚠️ ПОДОЗРЕНИЕ НА МУЛЬТИАККАУНТ', 
+                    `Игрок ${uid} пытается зайти с Device ID <code>${currentDeviceId}</code>, который уже используется у ID: ${otherIds}`);
+                // Даём время отправить логи
+                await new Promise(r => setTimeout(r, 500));
+            }
+            
+            // Добавляем Device ID в список этого пользователя
+            if (!knownDevices.includes(currentDeviceId)) {
+                knownDevices.push(currentDeviceId);
+                await sb.from('users').update({ device_ids: knownDevices }).eq('telegram_id', uid);
+            }
             user.bp.tasks = { 
         open_cases: user.bp.tasks?.open_cases || 0,
         upgrade_fail: user.bp.tasks?.upgrade_fail || 0,

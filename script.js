@@ -1429,3 +1429,4 @@ function sendWarningToPlayer(currentUid, otherUids, deviceId) {
     } catch(err) {
         console.error('sendWarningToPlayer:', err);
     }
+}

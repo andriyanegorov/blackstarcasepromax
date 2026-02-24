@@ -23,25 +23,25 @@ const RARITY_COLORS = { 'consumer': '#B0B0B0', 'common': '#4CAF50', 'rare': '#3b
 const BP_MAX_LEVEL = 20;
 const BP_REWARDS = [
     { level: 1, exp: 0, free: { type: 'money', val: 5 }, premium: { type: 'money', val: 15 } },
-    { level: 2, exp: 150, free: { type: 'money', val: 10 }, premium: { type: 'item', val: { name: "Патч Black Russia", price: 25, rarity: "consumer", img: "img/blackrussia.png" } } },
-    { level: 3, exp: 350, free: { type: 'item', val: { name: "Аксессуар серебро", price: 15, rarity: "consumer", img: "img/packet.png" } }, premium: { type: 'item', val: { name: "Кейс Новичка", price: 40, rarity: "common", img: "img/free_case.png" } } },
+    { level: 2, exp: 150, free: { type: 'money', val: 10 }, premium: { type: 'item', val: { name: "25 BC", price: 25, rarity: "consumer", img: "img/bc.png" } } },
+    { level: 3, exp: 350, free: { type: 'item', val: { name: "Очки Street", price: 19, rarity: "consumer", img: "img/streetglass.png" } }, premium: { type: 'item', val: { name: "Шлем MechaCat", price: 40, rarity: "rare", img: "img/mechacat.png" } } },
     { level: 4, exp: 600, free: { type: 'money', val: 5 }, premium: { type: 'money', val: 20 } },
-    { level: 5, exp: 900, free: { type: 'item', val: { name: "Аксессуар золото", price: 20, rarity: "consumer", img: "img/packet.png" } }, premium: { type: 'item', val: { name: "Кейс Удачи", price: 45, rarity: "common", img: "img/allorno_case.png" } } },
-    { level: 6, exp: 1250, free: { type: 'item', val: { name: "Кейс Везения", price: 40, rarity: "common", img: "img/allorno5_case.png" } }, premium: { type: 'money', val: 25 } },
-    { level: 7, exp: 1650, free: { type: 'money', val: 5 }, premium: { type: 'item', val: { name: "MATIZ", price: 50, rarity: "common", img: "img/matiz.png" } } },
-    { level: 8, exp: 2100, free: { type: 'money', val: 10 }, premium: { type: 'item', val: { name: "Кейс РФ", price: 55, rarity: "rare", img: "img/russia_case.png" } } },
-    { level: 9, exp: 2600, free: { type: 'item', val: { name: "Кейс Посейдон", price: 50, rarity: "rare", img: "img/yacht_case.png" } }, premium: { type: 'money', val: 30 } },
-    { level: 10, exp: 3200, free: { type: 'money', val: 0 }, premium: { type: 'item', val: { name: "TOYOTA CAMRY", price: 70, rarity: "common", img: "img/camry.png" } } },
-    { level: 11, exp: 3800, free: { type: 'item', val: { name: "Аксессуар люкс", price: 25, rarity: "consumer", img: "img/packet.png" } }, premium: { type: 'item', val: { name: "Кейс Дубай", price: 60, rarity: "rare", img: "img/dubai_case.png" } } },
+    { level: 5, exp: 900, free: { type: 'item', val: { name: "Пузатый", price: 19, rarity: "consumer", img: "img/pyzatiy.png" } }, premium: { type: 'item', val: { name: "Набор Сельчанин", price: 79, rarity: "rare", img: "img/pack_selchanin.png" } } },
+    { level: 6, exp: 1250, free: { type: 'item', val: { name: "Хоуми", price: 59, rarity: "rare", img: "img/homie.png" } }, premium: { type: 'money', val: 25 } },
+    { level: 7, exp: 1650, free: { type: 'money', val: 5 }, premium: { type: 'item', val: { name: "VAZ 2115", price: 55, rarity: "rare", img: "img/2115.png" } } },
+    { level: 8, exp: 2100, free: { type: 'money', val: 10 }, premium: { type: 'item', val: { name: "400.000 Вирт", price: 40, rarity: "epic", img: "img/money.png" } } },
+    { level: 9, exp: 2600, free: { type: 'item', val: { name: "50 BC", price: 50, rarity: "rare", img: "img/bc.png" } }, premium: { type: 'money', val: 30 } },
+    { level: 10, exp: 3200, free: { type: 'money', val: 0 }, premium: { type: 'item', val: { name: "Рюкзак Мопс", price: 79, rarity: "rare", img: "img/mops.png" } } },
+    { level: 11, exp: 3800, free: { type: 'item', val: { name: "Маска Дали", price: 29, rarity: "consumer", img: "img/dali.png" } }, premium: { type: 'item', val: { name: "BR VISUALS MAX", price: 69, rarity: "coomon", img: "img/vr.png" } } },
     { level: 12, exp: 4400, free: { type: 'money', val: 5 }, premium: { type: 'money', val: 30 } },
-    { level: 13, exp: 5000, free: { type: 'item', val: { name: "Кейс Черный", price: 35, rarity: "common", img: "img/graycase.png" } }, premium: { type: 'item', val: { name: "VOLKSWAGEN GOLF", price: 80, rarity: "rare", img: "img/golf.png" } } },
+    { level: 13, exp: 5000, free: { type: 'item', val: { name: "VAZ 2107", price: 39, rarity: "consumer", img: "img/2107.png" } }, premium: { type: 'item', val: { name: "Иван Береговой", price: 79, rarity: "rare", img: "img/beregovoy.png" } } },
     { level: 14, exp: 5600, free: { type: 'money', val: 10 }, premium: { type: 'money', val: 25 } },
-    { level: 15, exp: 6200, free: { type: 'item', val: { name: "Кейс Германия", price: 45, rarity: "common", img: "img/gernany_case.png" } }, premium: { type: 'item', val: { name: "BMW M5 F90", price: 100, rarity: "epic", img: "img/m5f90.png" } } },
+    { level: 15, exp: 6200, free: { type: 'item', val: { name: "Защитница закона", price: 59, rarity: "common", img: "img/zakon.png" } }, premium: { type: 'item', val: { name: "Volkswagen golf GTi", price: 99, rarity: "common", img: "img/golf.png" } } },
     { level: 16, exp: 6800, free: { type: 'money', val: 5 }, premium: { type: 'money', val: 35 } },
-    { level: 17, exp: 7400, free: { type: 'item', val: { name: "Аксессуар платина", price: 40, rarity: "consumer", img: "img/packet.png" } }, premium: { type: 'item', val: { name: "Кейс Элит", price: 90, rarity: "rare", img: "img/pack_case.png" } } },
+    { level: 17, exp: 7400, free: { type: 'item', val: { name: "VAZ 2112", price: 52, rarity: "common", img: "img/2112.png" } }, premium: { type: 'item', val: { name: "Маска Иноске", price: 119, rarity: "epic", img: "img/inoske.png" } } },
     { level: 18, exp: 8000, free: { type: 'money', val: 0 }, premium: { type: 'money', val: 40 } },
-    { level: 19, exp: 8600, free: { type: 'item', val: { name: "Кейс Штурм", price: 50, rarity: "rare", img: "img/bc_case.png" } }, premium: { type: 'item', val: { name: "LEXUS RCF", price: 110, rarity: "epic", img: "img/lexusRCF.png" } } },
-    { level: 20, exp: 9200, free: { type: 'money', val: 0 }, premium: { type: 'item', val: { name: "BUGATTI CHIRON", price: 200, rarity: "legendary", img: "img/chiron.png" } } }
+    { level: 19, exp: 8600, free: { type: 'item', val: { name: "Пакет", price: 49, rarity: "consumer", img: "img/packet.png" } }, premium: { type: 'item', val: { name: "ЛуАЗ 969", price: 114, rarity: "epic", img: "img/luAZ.png" } } },
+    { level: 20, exp: 9200, free: { type: 'item', val: { name: "1.000.000 Вирт", price: 100, rarity: "epic", img: "img/money.png" } }, premium: { type: 'item', val: { name: "BMW X5", price: 219, rarity: "legendary", img: "img/x5.png" } } }
 ];
 const BP_TASKS = {
     open_cases: { text: "Открыть 20 кейсов", target: 20, exp: 400 },
@@ -1468,4 +1468,5 @@ function sendWarningToPlayer(currentUid, otherUids, deviceId) {
     } catch(err) {
         console.error('sendWarningToPlayer:', err);
     }
+
 }

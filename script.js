@@ -40,7 +40,7 @@ const BP_REWARDS = [
     { level: 16, exp: 6800, free: { type: 'money', val: 5 }, premium: { type: 'money', val: 35 } },
     { level: 17, exp: 7400, free: { type: 'item', val: { name: "VAZ 2112", price: 52, rarity: "common", img: "img/2112.png" } }, premium: { type: 'item', val: { name: "Маска Иноске", price: 119, rarity: "epic", img: "img/inoske.png" } } },
     { level: 18, exp: 8000, free: { type: 'money', val: 0 }, premium: { type: 'money', val: 40 } },
-    { level: 19, exp: 8600, free: { type: 'item', val: { name: "Пакет", price: 49, rarity: "consumer", img: "img/packet.png" } }, premium: { type: 'item', val: { name: "ЛуАЗ 969", price: 114, rarity: "epic", img: "img/luAZ.png" } } },
+    { level: 19, exp: 8600, free: { type: 'item', val: { name: "Пакет", price: 49, rarity: "consumer", img: "img/packet.png" } }, premium: { type: 'item', val: { name: "ЛуАЗ 969", price: 114, rarity: "epic", img: "img/LuAZ.png" } } },
     { level: 20, exp: 9200, free: { type: 'item', val: { name: "1.000.000 Вирт", price: 100, rarity: "epic", img: "img/money.png" } }, premium: { type: 'item', val: { name: "BMW X5", price: 219, rarity: "legendary", img: "img/x5.png" } } }
 ];
 const BP_TASKS = {
@@ -1470,3 +1470,4 @@ function sendWarningToPlayer(currentUid, otherUids, deviceId) {
     }
 
 }
+

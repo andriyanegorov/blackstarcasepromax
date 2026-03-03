@@ -70,6 +70,10 @@
         </header>
 
         <main>
+            <div id="x2-indicator" class="x2-indicator" style="display:none;">
+                <div class="x2-text">⚡ X2 ДРОП ⚡</div>
+            </div>
+
             <div id="tab-cases" class="section active">
                 <div class="hero-section"><h1>Black Russia Cases</h1><p>Испытай удачу прямо сейчас</p></div>
                 <div class="section-divider"><span>БЕСПЛАТНО</span></div><div class="cases-grid" id="cases-free"></div>
@@ -201,15 +205,13 @@
                 <div class="inventory-header"><h2>Гараж</h2><button id="btn-sell-all" class="btn-danger-small" onclick="sellAllItems()">Продать всё</button></div>
                 <div id="inventory-grid" class="inventory-grid"></div>
                 <div id="empty-inventory" class="empty-state" style="display:none;"><div class="empty-icon">🚘</div><p>Ваш гараж пуст</p></div>
+                <div class="section-divider"><span>Выведенные предметы</span></div>
+                <div id="withdrawn-grid" class="inventory-grid"></div>
+                <div id="empty-withdrawn" class="empty-state" style="display:none;"><p>Выведенных нет</p></div>
             </div>
         </main>
     </div>
 
-    <!-- Floating Action Buttons -->
-    <div id="fab-container" style="position:fixed; bottom:90px; right:20px; z-index:99; display:flex; flex-direction:column; gap:12px; pointer-events:none;">
-        <button style="width:50px; height:50px; border-radius:50%; background:linear-gradient(135deg,#4CAF50,#1B5E20); border:none; color:#fff; font-size:24px; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.3); pointer-events:auto; transition:all 0.3s ease;" onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 0 20px rgba(76,175,80,0.5)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.3)'" onclick="switchTab('pass'); createClickParticle(event.clientX, event.clientY)">🎫</button>
-        <button style="width:50px; height:50px; border-radius:50%; background:linear-gradient(135deg,#FF9800,#FF6F00); border:none; color:#fff; font-size:24px; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.3); pointer-events:auto; transition:all 0.3s ease;" onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 0 20px rgba(255,152,0,0.5)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.3)'" onclick="switchTab('shop'); createClickParticle(event.clientX, event.clientY)">🛍️</button>
-    </div> 
 
     <nav class="bottom-nav">
         <button class="nav-item" onclick="switchTab('shop')"><div class="nav-icon">🛒</div><span>Магазин</span></button>
@@ -326,9 +328,11 @@
                 <div class="section-divider"><span>РЕФЕРАЛКА</span></div>
                 <div class="ref-card glass-panel">
                     <div class="ref-header">Заработано</div><div class="ref-balance"><span id="ref-earn-display">0</span> ₽</div>
+                    <div id="ref-pending-display" style="font-size:12px; color:#f90; display:none;">В ожидании: <span id="ref-pending-val">0</span> ₽</div>
                     <div class="ref-stats-row"><div class="ref-stat"><div class="rs-val" id="ref-count-display">0</div><div class="rs-label">Друзей</div></div><div class="ref-stat"><div class="rs-val">10 ₽</div><div class="rs-label">За друга</div></div></div>
                 </div>
                 <button class="btn-secondary" onclick="copyRefLink()" style="margin-top:10px;">Копировать ссылку</button>
+                <button class="btn-secondary" id="btn-ref-withdraw" onclick="withdrawReferralEarnings()" style="margin-top:10px;">Вывести рефералы</button>
                 <div class="history-block" style="margin-top:20px;"><h4>История</h4><div class="history-scroll-container"><div id="history-list"></div></div></div>
             </div>
         </div>
@@ -342,7 +346,11 @@
                 <h3 style="margin:0; display:flex; align-items:center; justify-content:center;"><span id="other-name">User</span><span id="other-verified" class="insta-verified-badge large" style="display:none;"></span></h3>
                 <div id="other-server" style="color:#666; font-size:12px; margin-top: 5px;">Server: Red</div>
             </div>
-            <div class="profile-scroll-area"><div id="other-inventory-grid" class="inventory-grid"></div><div id="other-inventory-empty" class="empty-state" style="display:none;"><p>Пусто</p></div></div>
+            <div class="profile-scroll-area"><div id="other-inventory-grid" class="inventory-grid"></div><div id="other-inventory-empty" class="empty-state" style="display:none;"><p>Пусто</p></div>
+                <div class="section-divider"><span>Выведено</span></div>
+                <div id="other-withdrawn-grid" class="inventory-grid"></div>
+                <div id="other-withdrawn-empty" class="empty-state" style="display:none;"><p>Ничего</p></div>
+            </div>
         </div>
     </div>
 

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BR Admin DB</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         body { background: #121212; color: #eee; font-family: 'Segoe UI', monospace; padding: 20px; margin: 0; box-sizing: border-box; }
@@ -30,6 +31,8 @@
         label { display: block; font-size: 12px; color: #aaa; margin-bottom: 4px; font-weight: bold; }
         .items-header { display: grid; grid-template-columns: 50px 2fr 1fr 1.5fr 40px; gap: 10px; padding: 0 10px; font-size: 12px; color: #888; margin-bottom: 5px; }
         .item-row { display: grid; grid-template-columns: 50px 2fr 1fr 1.5fr 40px; gap: 10px; align-items: start; background: #252525; padding: 10px; margin-bottom: 8px; border-left: 4px solid #555; border-radius: 4px; }
+        .withdraws-header { display: grid; grid-template-columns: 1fr 2fr 1fr 1fr 1fr 60px; gap: 10px; padding: 0 10px; font-size: 12px; color: #888; margin-bottom: 5px; }
+        .withdraw-row { display: grid; grid-template-columns: 1fr 2fr 1fr 1fr 1fr 60px; gap: 10px; align-items: start; background: #252525; padding: 10px; margin-bottom: 8px; border-left: 4px solid #555; border-radius: 4px; }
         .item-img-preview { width: 40px; height: 40px; object-fit: contain; background: #000; border-radius: 4px; border: 1px solid #333; pointer-events: none; }
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; background: #1e1e1e; padding: 5px; border-radius: 8px; }
         .tab-btn { background: transparent; color: #aaa; flex: 1; padding: 12px; text-align: center; cursor: pointer; border-radius: 6px; font-weight: 600; }
@@ -42,7 +45,7 @@
 <body>
 
     <div id="login-overlay">
-        <div class="login-box">
+        <div class="login-box glass-panel">
             <h3>🔐 ADMIN ACCESS</h3>
             <input type="text" id="admin-user" placeholder="Username">
             <input type="password" id="admin-pass" placeholder="Password">
@@ -51,7 +54,7 @@
         </div>
     </div>
 
-    <div class="header">
+    <div class="header glass-panel">
         <div>
             <h2>⚙️ ADMIN PANEL</h2>
             <div style="font-size: 12px; color: #666;">Редактирование базы данных в реальном времени</div>
@@ -65,16 +68,18 @@
         <div class="tab-btn active" onclick="setMode('cases')" id="tab-cases">📦 КЕЙСЫ (DB)</div>
         <div class="tab-btn" onclick="setMode('promos')" id="tab-promos">🎟 ПРОМОКОДЫ</div>
         <div class="tab-btn" onclick="setMode('broadcast')" id="tab-broadcast">📢 РАССЫЛКА</div>
+        <div class="tab-btn" onclick="setMode('withdraws')" id="tab-withdraws">💸 ВЫВОД</div>
+        <div class="tab-btn" onclick="setMode('settings')" id="tab-settings">⚡ НАСТРОЙКИ</div>
     </div>
 
     <div class="container" id="view-cases">
-        <div class="sidebar">
+        <div class="sidebar glass-panel">
             <h3 style="margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; color: #666;">Список Кейсов</h3>
             <div id="cases-list"><div style="text-align:center; padding:10px;">Загрузка...</div></div>
             <button class="btn-green" style="margin-top: 10px;" onclick="createNewLocalCase()">+ Новый Кейс</button>
         </div>
 
-        <div class="editor" id="editor-area" style="display:none;">
+        <div class="editor glass-panel" id="editor-area" style="display:none;">
             <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 20px;">
                 <img id="case-img-preview" src="" style="width: 80px; height: 80px; object-fit: contain; background: #111; border: 1px solid #333; border-radius: 8px;">
                 <div style="flex: 1;">
@@ -130,7 +135,7 @@
     </div>
 
     <div class="container" id="view-promos" style="display:none; grid-template-columns: 1fr;">
-        <div class="editor">
+        <div class="editor glass-panel">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
                 <h3>Активные Промокоды (DB)</h3>
                 <button class="btn-blue" style="width:auto; padding: 10px 20px;" onclick="addPromo()">+ Добавить код</button>
@@ -148,7 +153,7 @@
     </div>
 
     <div class="container" id="view-broadcast" style="display:none; grid-template-columns: 1fr;">
-        <div class="editor" style="max-width: 600px; margin: 0 auto;">
+        <div class="editor glass-panel" style="max-width: 600px; margin: 0 auto;">
             <h3 style="margin-bottom: 20px;">📢 Рассылка всем пользователям</h3>
             <p style="color: #aaa; font-size: 13px; margin-bottom: 20px;">
                 Сообщение будет отправлено всем пользователям из базы данных через бота.
@@ -163,6 +168,35 @@
             </div>
 
             <button class="btn-green" onclick="startBroadcast()" id="btn-broadcast">НАЧАТЬ РАССЫЛКУ</button>
+        </div>
+    </div>
+
+    <!-- вывод заявок -->
+    <div class="container" id="view-withdraws" style="display:none; grid-template-columns: 1fr;">
+        <div class="editor glass-panel" style="max-width: 800px; margin: 0 auto;">
+            <h3 style="margin-bottom: 20px;">💸 Заявки на вывод</h3>
+            <div id="withdraws-container">
+                <div style="text-align:center; padding: 20px; color:#666;">Загрузка заявок...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" id="view-settings" style="display:none; grid-template-columns: 1fr;">
+        <div class="editor glass-panel" style="max-width: 600px; margin: 0 auto;">
+            <h3 style="margin-bottom: 30px;">⚡ Системные настройки</h3>
+            
+            <div style="background: #1a1a1a; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid rgba(255, 215, 0, 0.2);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div>
+                        <h4 style="margin: 0 0 5px 0; font-size: 16px;">🎲 X2 ДРОП</h4>
+                        <p style="color: #888; font-size: 12px; margin: 0;">Удваивает шансы выпадения редких предметов</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <span id="x2-status" style="font-size: 12px; color: #666;">ЗАГРУЗКА...</span>
+                        <button class="btn-blue" style="margin-top: 10px; width: auto; padding: 8px 20px;" onclick="toggleX2FromAdmin()">ПЕРЕКЛЮЧИТЬ</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -197,6 +231,7 @@
         async function initDashboard() {
             await fetchAllData();
             await fetchPromosFromDB();
+            await fetchWithdrawsFromDB();
         }
 
         async function fetchAllData() {
@@ -288,6 +323,92 @@
         async function updatePromoDB(idx, field, val) { const p = promoData[idx]; if(field === 'reward') val = parseInt(val); const { error } = await sb.from('admin_promos').update({ [field]: val }).eq('id', p.id); if(!error) { p[field] = val; if(field==='is_active') renderPromos(); } }
         async function deletePromoDB(idx) { if(!confirm("Удалить?")) return; const p = promoData[idx]; const { error } = await sb.from('admin_promos').delete().eq('id', p.id); if(!error) { promoData.splice(idx, 1); renderPromos(); } }
 
+        // --- WITHDRAWALS (заявки на вывод) ---
+        let withdrawData = [];
+        async function fetchWithdrawsFromDB() {
+            const { data, error } = await sb.from('withdraws').select('*').order('created_at', { ascending: false });
+            if (error) {
+                console.warn('Ошибка получения заявок на вывод:', error.message);
+                const container = document.getElementById('withdraws-container');
+                container.innerHTML = '<div style="text-align:center; padding:20px; color:red;">Ошибка доступа к таблице withdraws</div>';
+                withdrawData = [];
+                return;
+            }
+            withdrawData = data || [];
+            renderWithdraws();
+        }
+
+        function renderWithdraws() {
+            const container = document.getElementById('withdraws-container');
+            container.innerHTML = '';
+            if (withdrawData.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">Нет заявок на вывод</div>';
+                return;
+            }
+            // header row
+            const header = document.createElement('div');
+            header.className = 'withdraws-header';
+            header.innerHTML = '<span>Пользователь (ID)</span><span>Что выводит</span><span>Банк</span><span>Сервер/ник</span><span>Статус</span><span>Действие</span>';
+            container.appendChild(header);
+            withdrawData.forEach((w, idx) => {
+                const row = document.createElement('div');
+                row.className = 'withdraw-row';
+                if (w.status && w.status !== 'pending') row.style.opacity = '0.6';
+                const userInfo = `${w.user_name||'-'} (${w.user_id})`;
+                let what = '';
+                if (w.type === 'item') what = `${w.item_name} – ${w.amount} ₽`;
+                else if (w.type === 'referral') what = `Реферальные ${w.amount} ₽`;
+                else what = `${w.amount} ₽`;
+                const bank = w.bank_account || '';
+                const servNick = `${w.server||''} ${w.gameNick||''}`.trim();
+                const statusText = w.status || '';
+                let actionBtn = '';
+                if (w.status === 'pending') {
+                    actionBtn = `<button class="btn-green" onclick="confirmWithdraw(${idx})">✓</button> <button class=\"btn-red\" onclick=\"rejectWithdraw(${idx})\">✕</button>`;
+                } else if (w.status === 'confirmed') {
+                    actionBtn = `<button class="btn-gray" disabled>OK</button>`;
+                } else if (w.status === 'rejected') {
+                    actionBtn = `<button class="btn-gray" disabled>ОТКЛОНЕНО</button>`;
+                }
+                row.innerHTML = `<span>${userInfo}</span><span>${what}</span><span>${bank}</span><span>${servNick}</span><span>${statusText}</span><span>${actionBtn}</span>`;
+                container.appendChild(row);
+            });
+        }
+
+        async function confirmWithdraw(idx) {
+            const w = withdrawData[idx];
+            if (!w || w.status !== 'pending') return;
+            if (!confirm('Подтвердить вывод?')) return;
+            const { error } = await sb.from('withdraws').update({ status: 'confirmed' }).eq('id', w.id);
+            if (!error) {
+                w.status = 'confirmed';
+                renderWithdraws();
+                alert('Заявка помечена как выполненная');
+                if (typeof sendAdminLog === 'function') {
+                    sendAdminLog('WITHDRAW', '✅ Вывод подтверждён', `ID заявки: ${w.id}\nПользователь: ${w.user_name} (ID: ${w.user_id})\nСумма: ${w.amount} ₽`);
+                }
+            } else {
+                alert('Ошибка: ' + error.message);
+            }
+        }
+
+        async function rejectWithdraw(idx) {
+            const w = withdrawData[idx];
+            if (!w || w.status !== 'pending') return;
+            if (!confirm('Отклонить вывод?')) return;
+            const { error } = await sb.from('withdraws').update({ status: 'rejected' }).eq('id', w.id);
+            if (!error) {
+                w.status = 'rejected';
+                renderWithdraws();
+                alert('Заявка отклонена');
+                if (typeof sendAdminLog === 'function') {
+                    sendAdminLog('WITHDRAW', '❌ Вывод отклонён', `ID заявки: ${w.id}\nПользователь: ${w.user_name} (ID: ${w.user_id})\nСумма: ${w.amount} ₽`);
+                }
+            } else {
+                alert('Ошибка: ' + error.message);
+            }
+        }
+
         // --- BROADCAST LOGIC ---
         async function startBroadcast() {
             const text = document.getElementById('broadcast-text').value;
@@ -342,8 +463,37 @@
             document.getElementById('view-cases').style.display = mode === 'cases' ? 'grid' : 'none';
             document.getElementById('view-promos').style.display = mode === 'promos' ? 'grid' : 'none';
             document.getElementById('view-broadcast').style.display = mode === 'broadcast' ? 'grid' : 'none';
+            document.getElementById('view-withdraws').style.display = mode === 'withdraws' ? 'grid' : 'none';
+            document.getElementById('view-settings').style.display = mode === 'settings' ? 'grid' : 'none';
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('tab-'+mode).classList.add('active');
+            if (mode === 'withdraws') fetchWithdrawsFromDB();
+            if (mode === 'settings') loadSettingsPanel();
+        }
+        
+        async function loadSettingsPanel() {
+            try {
+                const { data } = await sb.from('game_settings').select('x2_drop_active').eq('id', 1).maybeSingle();
+                const status = data && data.x2_drop_active ? 'АКТИВЕН ✅' : 'ОТКЛЮЧЕН ❌';
+                const color = data && data.x2_drop_active ? '#4CAF50' : '#ff4d4d';
+                document.getElementById('x2-status').innerText = status;
+                document.getElementById('x2-status').style.color = color;
+            } catch(e) {
+                console.error('Error loading settings:', e);
+            }
+        }
+        
+        async function toggleX2FromAdmin() {
+            try {
+                const { data } = await sb.from('game_settings').select('x2_drop_active').eq('id', 1).maybeSingle();
+                const newState = !(data && data.x2_drop_active);
+                await sb.from('game_settings').upsert({ id: 1, x2_drop_active: newState });
+                loadSettingsPanel();
+                alert(newState ? 'X2 ДРОП ВКЛЮЧЕН! ⚡' : 'X2 дроп отключен');
+            } catch(e) {
+                console.error('Error toggling X2:', e);
+                alert('Ошибка при переключении X2');
+            }
         }
     </script>
 </body>

@@ -111,16 +111,18 @@ function sendAdminLog(topicKey, actionName, details) {
 }
 
 let GAME_CONFIG = [];
+let isX2DropActive = false; // Хранит статус X2 дропа
 const DEFAULT_USER = { 
-    balance: 0, inventory: [], uid: 0, name: "Гость", tgUsername: "", gameNick: "", 
+    balance: 0, inventory: [], withdrawnItems: [], uid: 0, name: "Гость", tgUsername: "", gameNick: "", 
     gameServer: "Red", bankAccount: "", avatar: "", history: [], activatedPromos: [],
     lastSubCaseTime: 0, isSubscribed: false,
-    referrerId: null, referralsCount: 0, referralEarnings: 0, isBanned: false, banReason: "",
+    referrerId: null, referralsCount: 0, referralEarnings: 0, pendingReferralAmount: 0, isBanned: false, banReason: "",
     totalSpent: 0, isVerified: false,
     bp: { level: 1, exp: 0, premium: false, claimedFree: [], claimedPremium: [], tasks: { open_cases: 0, upgrade_fail: 0, contract_sign: 0, sell_item: 0, daily_login: 0 } },
     deviceIds: [] // Для мультиаккаунта
 };
 let user = { ...DEFAULT_USER };
+user.pendingReferralAmount = 0; // add property for pending referral withdrawals
 
 let selectedCase = null, currentWins = [], selectedOpenCount = 1; 
 let selectedInventoryIndex = null, upgradeState = { sourceIdx: null, targetItem: null, chance: 50 };
@@ -247,7 +249,52 @@ async function loadCasesFromDB() {
             items: caseItems.map(i => ({ name: i.name, price: i.price, img: i.img, rarity: i.rarity }))
         };
     });
+    
+    // Загружаем статус X2 дропа
+    await loadX2Status();
+    
     initCases(); flattenItems();
+}
+
+// Загружает статус X2 из базы
+async function loadX2Status() {
+    try {
+        const { data } = await sb.from('game_settings').select('x2_drop_active').eq('id', 1).maybeSingle();
+        if (data) {
+            isX2DropActive = data.x2_drop_active || false;
+            updateX2Indicator();
+        }
+    } catch(e) {
+        console.warn('Failed to load X2 status:', e);
+    }
+}
+
+// Обновляет индикатор X2 на сайте
+function updateX2Indicator() {
+    const indicator = document.getElementById('x2-indicator');
+    if (indicator) {
+        if (isX2DropActive) {
+            indicator.style.display = 'flex';
+            indicator.innerHTML = '<div style="animation: pulse 1s infinite;">⚡ X2 ДРОП</div>';
+        } else {
+            indicator.style.display = 'none';
+        }
+    }
+}
+
+// Переключает X2 дроп (для админа)
+async function toggleX2Drop() {
+    try {
+        isX2DropActive = !isX2DropActive;
+        const { error } = await sb.from('game_settings').upsert({ id: 1, x2_drop_active: isX2DropActive });
+        if (error) throw error;
+        updateX2Indicator();
+        showNotify(isX2DropActive ? 'X2 ДРОП ВКЛЮЧЕН ⚡' : 'X2 дроп выключен', 'success');
+    } catch(e) {
+        console.error('Failed to toggle X2:', e);
+        isX2DropActive = !isX2DropActive; // откатываем если ошибка
+        showNotify('Ошибка при переключении X2', 'error');
+    }
 }
 
 function initRealtime() {
@@ -259,6 +306,55 @@ function initRealtime() {
     }).subscribe((status) => {
 
     });
+
+    // отдельный канал для заявок на вывод, чтобы пользователь видел изменения
+    const wchan = sb.channel('public:withdraws');
+    wchan.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'withdraws' }, (payload) => {
+        handleWithdrawRow(payload.new);
+    }).on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'withdraws' }, (payload) => {
+        handleWithdrawRow(payload.new);
+    }).subscribe();
+}
+
+// реакция клиента на изменение/создание записи в "withdraws"
+function handleWithdrawRow(w) {
+    if(!user || w.user_id !== user.uid) return;
+    if(w.type === 'item') {
+        let idx = user.inventory.findIndex(it => it.withdrawId === w.id);
+        if(idx === -1 && w.status === 'pending') {
+            idx = user.inventory.findIndex(it => it.name === w.item_name && it.price === w.amount && !it.pendingWithdraw);
+        }
+        if(idx === -1) return;
+        const item = user.inventory[idx];
+        if(w.status === 'pending') {
+            item.pendingWithdraw = true;
+            item.withdrawId = w.id;
+        } else if(w.status === 'confirmed') {
+            // перемещаем в выводимые
+            const moved = user.inventory.splice(idx, 1)[0];
+            delete moved.pendingWithdraw;
+            delete moved.withdrawId;
+            user.withdrawnItems = user.withdrawnItems || [];
+            user.withdrawnItems.push(moved);
+            showNotify(`Вывод "${item.name}" подтверждён`, 'success');
+        } else if(w.status === 'rejected') {
+            item.pendingWithdraw = false;
+            delete item.withdrawId;
+            showNotify(`Вывод "${item.name}" отклонён`, 'error');
+        }
+        saveUser(); updateUI(); renderInventory(); renderWithdrawn();
+    } else if(w.type === 'referral') {
+        if(w.status === 'confirmed') {
+            showNotify(`Запрос на вывод рефералов ${w.amount}₽ подтверждён`, 'success');
+            user.pendingReferralAmount = 0;
+            saveUser(); updateUI(); renderReferralStats();
+        } else if(w.status === 'rejected') {
+            showNotify(`Запрос на вывод рефералов ${w.amount}₽ отклонён`, 'error');
+            user.referralEarnings += w.amount;
+            user.pendingReferralAmount = 0;
+            saveUser(); updateUI(); renderReferralStats();
+        }
+    }
 }
 
 function addLiveFeedItem(item) {
@@ -329,6 +425,8 @@ async function initUserSessionSupabase() {
                 activatedPromos: data.activated_promos || [], isSubscribed: data.is_subscribed || false,
                 lastSubCaseTime: data.last_sub_case_time || 0, referrerId: data.referrer_id,
                 referralsCount: data.referrals_count || 0, referralEarnings: data.referral_earnings || 0,
+                pendingReferralAmount: data.pending_referral_amount || 0,
+                withdrawnItems: data.withdrawn_items || [],
                 avatar: photo_url, totalSpent: Number(data.total_spent) || 0, isVerified: data.is_verified || false,
                 bp: data.bp || DEFAULT_USER.bp,
                 deviceIds: knownDevices
@@ -337,7 +435,8 @@ async function initUserSessionSupabase() {
             // Теперь проверяем, есть ли этот Device ID у ДРУГИХ юзеров
             const { data: multiData } = await sb.from('users')
                 .select('telegram_id')
-                .contains('device_ids', currentDeviceId)
+                // supabase expects an array for contains; wrap string into array
+                .contains('device_ids', [currentDeviceId])
                 .neq('telegram_id', uid);  // Исключаем самого себя!
             
             if (multiData && multiData.length > 0) {
@@ -359,7 +458,12 @@ async function initUserSessionSupabase() {
             // Добавляем Device ID в список этого пользователя
             if (!knownDevices.includes(currentDeviceId)) {
                 knownDevices.push(currentDeviceId);
-                await sb.from('users').update({ device_ids: knownDevices }).eq('telegram_id', uid);
+                try {
+                    const { error } = await sb.from('users').update({ device_ids: knownDevices }).eq('telegram_id', uid);
+                    if(error) console.warn('Unable to update device_ids', error);
+                } catch(updErr) {
+                    console.error('Exception when updating device_ids', updErr);
+                }
             }
             user.bp.tasks = { 
         open_cases: user.bp.tasks?.open_cases || 0,
@@ -383,8 +487,9 @@ async function initUserSessionSupabase() {
             }
             const newUser = { 
                 telegram_id: uid, username: username, first_name: first_name, 
-                balance: 0, inventory: [], history: [], referrer_id: refId, 
+                balance: 0, inventory: [], withdrawn_items: [], history: [], referrer_id: refId, 
                 total_spent: 0, is_verified: false, bp: DEFAULT_USER.bp,
+                pending_referral_amount: 0,
                 device_ids: [currentDeviceId] 
             };
             await sb.from('users').insert([newUser]);
@@ -404,25 +509,48 @@ async function initUserSessionSupabase() {
             }
         }
         document.getElementById('loading-screen').style.display = 'none';
-        updateUI(); renderInventory(); renderHistory(); renderBP();
+        await syncPendingWithdraws();
+        updateUI(); renderInventory(); renderWithdrawn(); renderHistory(); renderBP();
     } catch(err) {
         document.getElementById('loading-screen').style.display = 'none';
         document.getElementById('vpn-overlay').style.display = 'flex';
     }
 }
 
+// проверяем на подтверждённые/отклонённые заявки после загрузки
+async function syncPendingWithdraws() {
+    if(!user || !user.uid) return;
+    try {
+        const { data, error } = await sb.from('withdraws')
+            .select('*')
+            .eq('user_id', user.uid)
+            .in('status', ['confirmed','rejected']);
+        if(!error && data && data.length) {
+            data.forEach(handleWithdrawRow);
+        }
+    } catch(e) { console.warn('syncPendingWithdraws error', e); }
+}
+
 async function saveUser() {
     if (!user.uid) return;
     try {
-        await sb.from('users').update({
-            balance: user.balance, inventory: user.inventory, history: user.history,
+        const { error } = await sb.from('users').update({
+            balance: user.balance, inventory: user.inventory, withdrawn_items: user.withdrawnItems, history: user.history,
             game_nick: user.gameNick, game_server: user.gameServer, bank_account: user.bankAccount,
             activated_promos: user.activatedPromos, is_subscribed: user.isSubscribed,
             last_sub_case_time: user.lastSubCaseTime, total_spent: user.totalSpent,
             referral_earnings: user.referralEarnings, referrals_count: user.referralsCount,
+            pending_referral_amount: user.pendingReferralAmount,
             bp: user.bp
         }).eq('telegram_id', user.uid);
-    } catch (e) { }
+        if(error) {
+            console.error('❌ saveUser error:', error);
+        } else {
+            console.log('✅ saveUser успешно сохранено');
+        }
+    } catch (e) {
+        console.error('❌ saveUser exception:', e);
+    }
 }
 
 // --- SHOP ---
@@ -652,6 +780,8 @@ function updateUI() {
     if(user.avatar && document.getElementById('header-avatar')) document.getElementById('header-avatar').src = user.avatar;
     if(document.getElementById('profile-verified-badge')) document.getElementById('profile-verified-badge').style.display = user.isVerified ? 'inline-block' : 'none';
     renderReferralStats();
+    renderInventory();
+    renderWithdrawn();
 }
 function switchTab(id) {
     document.querySelectorAll('.section').forEach(e=>e.classList.remove('active'));
@@ -795,7 +925,23 @@ function getWinItem(c) {
     if (!c || !c.items || c.items.length === 0) {
         return { name: "Пусто", price: 0, rarity: "consumer", img: PLACEHOLDER_IMG };
     }
-    const weights = c.chances || { consumer: 50, common: 30, rare: 15, epic: 4, legendary: 1, mythical: 0 }; 
+    let weights = c.chances || { consumer: 50, common: 30, rare: 15, epic: 4, legendary: 1, mythical: 0 };
+    
+    // Применяем X2 множитель для дропа (улучшаем шансы редких предметов)
+    if (isX2DropActive) {
+        weights = { 
+            consumer: weights.consumer * 0.5, 
+            common: weights.common * 0.8, 
+            rare: weights.rare * 1.8,
+            epic: weights.epic * 2.5,
+            legendary: weights.legendary * 3,
+            mythical: weights.mythical * 3
+        };
+        // Нормализуем, чтобы сумма была 100
+        const total = Object.values(weights).reduce((a,b) => a+b, 0);
+        for(let r in weights) weights[r] = (weights[r] / total) * 100;
+    }
+    
     const rand = Math.random() * 100; let sum = 0; let rar = 'consumer'; 
     for(let r in weights) { sum += weights[r]; if(rand <= sum) { rar = r; break; } } 
     const pool = c.items.filter(i => i.rarity === rar); 
@@ -1011,34 +1157,124 @@ function renderInventory() {
     if(user.inventory.length === 0) { document.getElementById('empty-inventory').style.display = 'block'; document.getElementById('btn-sell-all').style.display = 'none'; } 
     else { 
         document.getElementById('empty-inventory').style.display = 'none'; document.getElementById('btn-sell-all').style.display = 'block'; 
-        user.inventory.forEach((i, idx) => { grid.innerHTML += `<div class="case-card rarity-${i.rarity}" onclick="openInvItem(${idx})" style="padding:10px;"><img src="${i.img}" style="width:100%; height:60px; object-fit:contain;" onerror="this.src='${PLACEHOLDER_IMG}'"><div style="font-size:10px; margin-top:5px;">${i.name}</div><div style="font-size:10px; color:#888;">${i.price} ₽</div></div>`; }); 
+        user.inventory.forEach((i, idx) => {
+            let badgeHtml = '';
+            let extraStyle = '';
+            if(i.pendingWithdraw) {
+                badgeHtml = '<div class="pending-badge">ВЫВОД</div>';
+                extraStyle = 'opacity:0.5;';
+            }
+            grid.innerHTML += `<div class="case-card rarity-${i.rarity}" onclick="openInvItem(${idx})" style="padding:10px;${extraStyle}">${badgeHtml}<img src="${i.img}" style="width:100%; height:60px; object-fit:contain;" onerror="this.src='${PLACEHOLDER_IMG}'"><div style="font-size:10px; margin-top:5px;">${i.name}</div><div style="font-size:10px; color:#888;">${i.price} ₽</div></div>`;
+        }); 
     } 
+    renderWithdrawn();
 }
-function openInvItem(idx) { 
+
+function renderWithdrawn() {
+    const grid = document.getElementById('withdrawn-grid');
+    const empty = document.getElementById('empty-withdrawn');
+    if(!grid) return;
+    grid.innerHTML = '';
+    const list = user.withdrawnItems || [];
+    if(list.length === 0) {
+        empty.style.display = 'block';
+    } else {
+        empty.style.display = 'none';
+        list.forEach((i) => {
+            grid.innerHTML += `<div class="case-card rarity-${i.rarity}" style="padding:10px;opacity:0.6;pointer-events:none;"><img src="${i.img}" style="width:100%; height:60px; object-fit:contain;" onerror="this.src='${PLACEHOLDER_IMG}'"><div style="font-size:10px; margin-top:5px;">${i.name}</div><div style="font-size:10px; color:#888;">${i.price} ₽</div></div>`;
+        });
+    }
+}function openInvItem(idx) { 
     selectedInventoryIndex = idx; const i = user.inventory[idx]; 
     document.getElementById('inv-item-img').src = i.img; document.getElementById('inv-item-name').innerText = i.name; 
     document.getElementById('inv-item-price').innerText = i.price; document.getElementById('sell-btn-price').innerText = i.price; 
     const badge = document.getElementById('inv-rarity-badge'); badge.innerText = i.rarity; badge.className = `item-rarity-badge rarity-${i.rarity}`; 
+    // color the glowing background element by rarity instead of fixed green
+    const glowEl = document.getElementById('inv-bg-glow');
+    if (glowEl) {
+        const rarityVal = (i.rarity||'common').toLowerCase();
+        const colorMap = {
+            consumer: 'var(--c-consumer)',
+            common: 'var(--c-common)',
+            rare: 'var(--c-rare)',
+            epic: 'var(--c-epic)',
+            legendary: 'var(--c-legendary)',
+            mythical: 'var(--c-mythical)',
+        };
+        const col = colorMap[rarityVal] || colorMap.common;
+        glowEl.style.background = `radial-gradient(circle, ${col}, transparent 70%)`;
+    }
+    // disable withdraw button if pending
+    const withdrawBtn = document.querySelector('.btn-withdraw-modern');
+    const sellBtn = document.querySelector('.btn-sell-modern');
+    if(i.pendingWithdraw) {
+        withdrawBtn.disabled = true;
+        withdrawBtn.innerHTML = `<span>ВЫВОД...</span>`;
+        sellBtn.disabled = true;
+    } else {
+        withdrawBtn.disabled = false;
+        withdrawBtn.innerHTML = `<span>ЗАБРАТЬ</span><span class="btn-subtext">В ИГРУ</span>`;
+        sellBtn.disabled = false;
+    }
     document.getElementById('modal-inventory-action').style.display = 'flex'; 
 }
 function sellCurrentItem() { 
-    const i = user.inventory[selectedInventoryIndex]; user.balance += i.price; user.inventory.splice(selectedInventoryIndex, 1); 
+    const i = user.inventory[selectedInventoryIndex];
+    if(i.pendingWithdraw) return showNotify("Нельзя продавать — предмет на выводе", "error");
+    user.balance += i.price; user.inventory.splice(selectedInventoryIndex, 1); 
     addHistory(`Продажа: ${i.name}`, `+${i.price}`);
     addBPProgress('sell_item', 1);
     sendAdminLog('ACTIONS', '💸 Продажа предмета', `Предмет: ${i.name}\nЦена: +${i.price} ₽`);
     saveUser(); updateUI(); renderInventory(); closeModal('modal-inventory-action'); showNotify(`Продано`, 'success'); 
 }
 function sellAllItems() { 
+    if(user.inventory.some(i=>i.pendingWithdraw)) return showNotify("Есть предметы на выводе, их нельзя продать", "error");
     if(!confirm("Продать всё?")) return; let sum = user.inventory.reduce((a,b)=>a+b.price, 0); let count = user.inventory.length; 
     user.balance += sum; user.inventory = []; addHistory(`Продажа всего`, `+${sum}`); 
     addBPProgress('sell_item', count);
     sendAdminLog('ACTIONS', '🚮 Продажа ВСЕГО', `Кол-во: ${count} шт.\nСумма: +${sum} ₽`);
     saveUser(); updateUI(); renderInventory(); showNotify(`Продано на ${sum}₽`, 'success'); 
 }
-function withdrawCurrentItem() { 
+async function withdrawCurrentItem() { 
     if(!user.gameNick || !user.bankAccount) { openProfileModal(); showNotify("Заполни профиль!", "error"); return; } 
-    const i = user.inventory[selectedInventoryIndex]; if(i.price < 100) return showNotify("Вывод от 100 ₽", "error"); 
-    user.inventory.splice(selectedInventoryIndex, 1); 
+    const i = user.inventory[selectedInventoryIndex]; 
+    if(i.price < 100) return showNotify("Вывод от 100 ₽", "error"); 
+    if(i.pendingWithdraw) return showNotify("Заявка уже в обработке", "error");
+    // помечаем локально как ожидающая
+    i.pendingWithdraw = true;
+    saveUser(); updateUI(); renderInventory();
+    // добавляем в таблицу заявок
+    try {
+        const payload = {
+            user_id: user.uid,
+            user_name: user.name,
+            type: 'item',
+            item_name: i.name,
+            amount: i.price,
+            bank_account: user.bankAccount,
+            server: user.gameServer,
+            gameNick: user.gameNick,
+            status: 'pending'
+        };
+        console.log('attempting withdraw insert payload', payload);
+        const { data, error } = await sb.from('withdraws').insert([payload]).select();
+        if(error) {
+            console.error('withdraw insert error details', error);
+            throw error;
+        }
+        console.log('withdraw insert result', data);
+        if(data && data[0]) {
+            i.withdrawId = data[0].id;
+        }
+    } catch(e) {
+        console.warn('Начальный запрос на вывод не записан в БД', e);
+        // откатываем метку
+        i.pendingWithdraw = false;
+        delete i.withdrawId;
+        saveUser(); updateUI(); renderInventory();
+        showNotify('Ошибка при записи заявки: ' + (e.message||e), 'error');
+        return;
+    }
     sendAdminLog('WITHDRAW', "💳 Заявка на вывод предмета", `Предмет: <b>${i.name}</b>\nЦена: ${i.price} ₽\nБанк. счет: <code>${user.bankAccount}</code>\nСервер: ${user.gameServer}\nНик: ${user.gameNick}`); 
     saveUser(); updateUI(); renderInventory(); closeModal('modal-inventory-action'); showNotify("Заявка создана!", "success"); 
 }
@@ -1126,18 +1362,61 @@ function playContractAnimation(indices, winItem, callback) {
 function closeModal(id) { document.getElementById(id).style.display = 'none'; if(id === 'modal-preview' && countdownInterval) clearInterval(countdownInterval); }
 function saveSettings() { const nick = document.getElementById('setting-nick').value; const srv = document.getElementById('setting-server').value; const bank = document.getElementById('setting-bank').value; if(nick) user.gameNick = nick; if(srv) user.gameServer = srv; if(bank) user.bankAccount = bank; saveUser(); updateUI(); showNotify("Сохранено", "success"); closeModal('modal-profile'); }
 function openProfileModal() { document.getElementById('setting-nick').value = user.gameNick; document.getElementById('setting-server').value = user.gameServer; document.getElementById('setting-bank').value = user.bankAccount; renderHistory(); renderReferralStats(); document.getElementById('modal-profile').style.display = 'flex'; }
-function renderReferralStats() { if(document.getElementById('ref-earn-display')) document.getElementById('ref-earn-display').innerText = user.referralEarnings; if(document.getElementById('ref-count-display')) document.getElementById('ref-count-display').innerText = user.referralsCount; }
+function renderReferralStats() {
+    if(document.getElementById('ref-earn-display')) document.getElementById('ref-earn-display').innerText = user.referralEarnings;
+    if(document.getElementById('ref-count-display')) document.getElementById('ref-count-display').innerText = user.referralsCount;
+    if(document.getElementById('ref-pending-display')) {
+        if(user.pendingReferralAmount && user.pendingReferralAmount > 0) {
+            document.getElementById('ref-pending-val').innerText = user.pendingReferralAmount;
+            document.getElementById('ref-pending-display').style.display = 'block';
+        } else {
+            document.getElementById('ref-pending-display').style.display = 'none';
+        }
+    }
+    if(document.getElementById('btn-ref-withdraw')) {
+        document.getElementById('btn-ref-withdraw').disabled = user.pendingReferralAmount && user.pendingReferralAmount > 0;
+    }
+}
 function copyRefLink() { const link = `https://t.me/blackrussiacases_bot/app?startapp=ref_${user.uid}`; if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(link).then(() => showNotify("Скопировано!", "success")).catch(() => fallbackCopyTextToClipboard(link)); } else { fallbackCopyTextToClipboard(link); } }
-function withdrawReferralEarnings() {
+async function withdrawReferralEarnings() {
+    if(user.pendingReferralAmount && user.pendingReferralAmount > 0) return showNotify("Уже есть заявка в обработке", "error");
     if(user.referralEarnings <= 0) return showNotify("Нет средств для вывода", "error");
     if(!user.gameNick || !user.bankAccount) { openProfileModal(); return showNotify("Заполни профиль!", "error"); }
     const amount = user.referralEarnings;
-    sendAdminLog('WITHDRAW', "💰 Вывод рефератных денег", `Сумма: ${amount} ₽\nБанк. счет: ${user.bankAccount}\nСервер: ${user.gameServer}\nНик: ${user.gameNick}`);
+    // резервируем сумму и зануляем основной счёт
+    user.pendingReferralAmount = amount;
     user.referralEarnings = 0;
+    saveUser(); updateUI(); renderReferralStats();
+    // записываем заявку на вывод рефералов
+    try {
+        const payload = {
+            user_id: user.uid,
+            user_name: user.name,
+            type: 'referral',
+            amount: amount,
+            bank_account: user.bankAccount,
+            server: user.gameServer,
+            gameNick: user.gameNick,
+            status: 'pending'
+        };
+        console.log('attempting referral withdraw insert payload', payload);
+        const { data, error } = await sb.from('withdraws').insert([payload]).select();
+        if(error) {
+            console.error('referral withdraw insert error details', error);
+            throw error;
+        }
+        console.log('referral withdraw insert result', data);
+    } catch(e) {
+        console.warn('Не удалось записать заявку рефералов:', e);
+        // откат
+        user.referralEarnings += amount;
+        user.pendingReferralAmount = 0;
+        saveUser(); updateUI(); renderReferralStats();
+        showNotify('Ошибка при записи заявки рефералов: ' + (e.message||e), 'error');
+        return;
+    }
+    sendAdminLog('WITHDRAW', "💰 Вывод рефератных денег", `Сумма: ${amount} ₽\nБанк. счет: ${user.bankAccount}\nСервер: ${user.gameServer}\nНик: ${user.gameNick}`);
     showNotify(`Заявка на вывод ${amount}₽ создана!`, "success");
-    saveUser();
-    updateUI();
-    renderReferralStats();
 }
 function fallbackCopyTextToClipboard(text) { const textArea = document.createElement("textarea"); textArea.value = text; textArea.style.position = "fixed"; textArea.style.top = "0"; textArea.style.left = "0"; document.body.appendChild(textArea); textArea.focus(); textArea.select(); try { const successful = document.execCommand('copy'); if(successful) showNotify("Скопировано!", "success"); else showNotify("Ошибка копирования", "error"); } catch (err) { showNotify("Не удалось скопировать", "error"); } document.body.removeChild(textArea); }
 function flattenItems() { ALL_ITEMS_POOL = []; if(!GAME_CONFIG) return; GAME_CONFIG.forEach(c => c.items.forEach(i => ALL_ITEMS_POOL.push(i))); }
@@ -1220,10 +1499,14 @@ function renderLeaderboard(data) {
 async function openOtherUserProfile(targetUid) {
     document.getElementById('modal-other-profile').style.display = 'flex'; document.getElementById('other-name').innerText = "Загрузка..."; document.getElementById('other-inventory-grid').innerHTML = '...';
     try {
-        const { data } = await sb.from('users').select('first_name, is_verified, game_server, game_nick, inventory').eq('telegram_id', targetUid).single();
+        const { data } = await sb.from('users').select('first_name, is_verified, game_server, game_nick, inventory, withdrawn_items').eq('telegram_id', targetUid).single();
         document.getElementById('other-name').innerText = (data.game_nick || data.first_name || "Игрок"); document.getElementById('other-server').innerText = "Server: " + (data.game_server || "Не указан"); document.getElementById('other-avatar').src = data.avatar || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT0WgESSJwtojIw-dCfW-hhgWxGSFXFqs3d5w&s"; document.getElementById('other-verified').style.display = data.is_verified ? 'inline-block' : 'none';
         const grid = document.getElementById('other-inventory-grid'); grid.innerHTML = ''; const inv = data.inventory || [];
         if(inv.length === 0) document.getElementById('other-inventory-empty').style.display = 'block'; else { document.getElementById('other-inventory-empty').style.display = 'none'; inv.forEach(i => { grid.innerHTML += `<div class="case-card rarity-${i.rarity}" style="padding:10px;"><img src="${i.img}" style="width:100%; height:60px; object-fit:contain;" onerror="this.src='${PLACEHOLDER_IMG}'"><div style="font-size:10px; margin-top:5px;">${i.name}</div><div style="font-size:10px; color:#888;">${i.price} ₽</div></div>`; }); }
+        // withdrawn
+        const wgrid = document.getElementById('other-withdrawn-grid'); wgrid.innerHTML = '';
+        const winv = data.withdrawn_items || [];
+        if(winv.length === 0) document.getElementById('other-withdrawn-empty').style.display = 'block'; else { document.getElementById('other-withdrawn-empty').style.display = 'none'; winv.forEach(i => { wgrid.innerHTML += `<div class="case-card rarity-${i.rarity}" style="padding:10px;opacity:0.6;"><img src="${i.img}" style="width:100%; height:60px; object-fit:contain;" onerror="this.src='${PLACEHOLDER_IMG}'"><div style="font-size:10px; margin-top:5px;">${i.name}</div><div style="font-size:10px; color:#888;">${i.price} ₽</div></div>`; }); }
     } catch(e) { closeModal('modal-other-profile'); }
 }
 

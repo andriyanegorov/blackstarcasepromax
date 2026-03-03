@@ -28,26 +28,102 @@ body {
 
 /* Enhanced Glass Panel with glow */
 .glass-panel { 
-    background: var(--glass-bg); 
-    border: 1px solid var(--glass-border); 
-    backdrop-filter: blur(10px); 
-    -webkit-backdrop-filter: blur(10px);
-    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1); 
+    backdrop-filter: blur(20px); 
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
     position: relative;
     transition: all 0.3s ease;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    padding: 1px;
 }
 .glass-panel::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at top-left, rgba(255,215,0,0.05), transparent);
-    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+    border-radius: 20px;
     pointer-events: none;
 }
 .glass-panel:hover {
-    border-color: rgba(255,215,0,0.2);
-    box-shadow: 0 0 20px rgba(255,215,0,0.1);
+    border-color: rgba(255,215,0,0.3);
+    box-shadow: 0 12px 40px rgba(255,215,0,0.15), 0 8px 32px rgba(31, 38, 135, 0.2);
+    transform: translateY(-3px);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* iOS Glass morphism - тонкие рамки */
+.glass-frame {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2), inset 0 0 20px rgba(255, 255, 255, 0.08);
+    transition: all 0.3s ease;
+}
+.glass-frame:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 0 25px rgba(255, 255, 255, 0.1);
+}
+
+/* Glass Card - для карточек предметов */
+.glass-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+}
+.glass-card:hover {
+    border-color: rgba(255, 215, 0, 0.4);
+    box-shadow: 0 8px 28px rgba(255, 215, 0, 0.2);
     transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Glass Button */
+.glass-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 14px;
+    color: #fff;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+.glass-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 215, 0, 0.4);
+    box-shadow: 0 6px 24px rgba(255, 215, 0, 0.15);
+    transform: translateY(-1px);
+}
+.glass-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Premium Glass Border */
+.premium-glass {
+    background: linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,255,255,0.05));
+    border: 2px solid;
+    border-image: linear-gradient(135deg, rgba(255,215,0,0.4), rgba(255,255,255,0.2)) 1;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(255,215,0,0.08), inset 0 0 25px rgba(255,255,255,0.05);
+    transition: all 0.3s ease;
+}
+.premium-glass:hover {
+    box-shadow: 0 12px 48px rgba(255,215,0,0.15), inset 0 0 30px rgba(255,255,255,0.1);
+    background: linear-gradient(135deg, rgba(255,215,0,0.12), rgba(255,255,255,0.08));
 }
 
 /* HERO SECTION - PREMIUM */
@@ -105,49 +181,9 @@ body {
 }
 .hero-section.small h1 { font-size: 24px; }
 
-/* Case card neon border effect */
-.case-card {
-    border: 2px solid;
-    position: relative;
-    background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(0,0,0,0.1));
-    border-radius: 18px;
-    padding: 15px;
-    text-align: center;
-    overflow: hidden;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    cursor: pointer;
-}
-.case-card::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at top-right, rgba(255,215,0,0.1), transparent);
-    border-radius: 18px;
-    opacity: 0;
-    transition: opacity 0.3s;
-}
-.case-card:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 12px 30px rgba(255,215,0,0.15), 0 0 20px rgba(255,215,0,0.08);
-    border-color: rgba(255,215,0,0.3);
-}
-.case-card:hover::after { 
-    opacity: 1; 
-}
-.case-card:active { 
-    transform: scale(0.96); 
-}
-.case-img { 
-    width: 100%; 
-    height: 90px; 
-    object-fit: contain; 
-    margin-bottom: 10px; 
-    filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3)); 
-    transition: transform 0.3s;
-}
-.case-card:hover .case-img {
-    transform: scale(1.1);
-}
+/* Case card base (actual style defined later) */
+.case-card { }
+
 .case-card div:nth-child(2) { 
     font-size: 13px; 
     font-weight: 700; 
@@ -219,27 +255,30 @@ body {
     align-items: center; 
     gap: 15px; 
     padding: 20px; 
-    background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,215,0,0.02));
-    border: 1px solid rgba(255,215,0,0.15);
-    border-radius: 16px; 
+    background: linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,215,0,0.03));
+    border: 1px solid rgba(255,215,0,0.2);
+    border-radius: 18px; 
     cursor: pointer; 
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     position: relative; 
     overflow: hidden;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2), inset 0 0 20px rgba(255,255,255,0.04);
 }
 .game-hub-card::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at top-right, rgba(255,215,0,0.08), transparent);
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
     opacity: 0;
     transition: opacity 0.3s;
 }
 .game-hub-card:hover {
-    transform: translateY(-6px) scale(1.01);
-    background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,215,0,0.04));
-    box-shadow: 0 12px 30px rgba(255,215,0,0.12);
-    border-color: rgba(255,215,0,0.3);
+    transform: translateY(-6px) scale(1.02);
+    background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,215,0,0.06));
+    box-shadow: 0 16px 40px rgba(255,215,0,0.15), inset 0 0 25px rgba(255,255,255,0.06);
+    border-color: rgba(255,215,0,0.4);
 }
 .game-hub-card:hover::before {
     opacity: 1;
@@ -293,10 +332,10 @@ body {
 }
 .modal-glass {
     background: linear-gradient(135deg, rgba(26,26,26,0.95), rgba(13,13,19,0.95));
-    border: 1px solid rgba(255,215,0,0.1);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(255,215,0,0.05);
+    border: 1px solid rgba(255,215,0,0.15);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 50px rgba(255,215,0,0.08), inset 0 0 30px rgba(255,255,255,0.05);
 }
 
 @keyframes fadeDown {
@@ -501,24 +540,27 @@ header {
 
 /* Balance Display */
 .balance-glass {
-    background: linear-gradient(135deg, rgba(255,215,0,0.12), rgba(255,215,0,0.04));
-    border: 1px solid rgba(255,215,0,0.2);
-    padding: 8px 16px;
-    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,215,0,0.05));
+    border: 1px solid rgba(255,215,0,0.25);
+    padding: 10px 18px;
+    border-radius: 16px;
     color: var(--primary);
     font-weight: 800;
-    font-size: 13px;
+    font-size: 14px;
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
-    gap: 6px;
-    box-shadow: 0 0 15px rgba(255,215,0,0.1);
+    gap: 8px;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 8px 20px rgba(255,215,0,0.15), inset 0 0 15px rgba(255,255,255,0.05);
 }
 .balance-glass:hover {
-    box-shadow: 0 0 25px rgba(255,215,0,0.2);
-    border-color: rgba(255,215,0,0.4);
+    box-shadow: 0 12px 28px rgba(255,215,0,0.25), inset 0 0 20px rgba(255,255,255,0.08);
+    border-color: rgba(255,215,0,0.45);
     transform: translateY(-2px);
+    background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,215,0,0.08));
 }
 .btn-add-balance {
     font-size: 16px;
@@ -706,14 +748,51 @@ header {
 .back-nav { color: #888; font-size: 12px; font-weight: 600; margin-bottom: 15px; cursor: pointer; display: inline-block; padding: 5px 0; }
 
 .cases-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-.case-card { background: linear-gradient(160deg, rgba(255,255,255,0.03), rgba(0,0,0,0.2)); border: 1px solid var(--glass-border); border-radius: 18px; padding: 15px; text-align: center; position: relative; overflow: hidden; transition: transform 0.2s; }
-.case-card:active { transform: scale(0.96); }
+.case-card {
+    /* clean modern glass card */
+    position: relative;
+    background: rgba(255,255,255,0.015);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-radius: 20px;
+    padding: 15px;
+    text-align: center;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.case-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--c-common);
+    border-radius: 0 0 20px 20px;
+    pointer-events: none;
+    transition: background 0.3s;
+}
+.case-card:active { 
+    transform: scale(0.98); 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4), 0 0 15px var(--rarity-glow, var(--primary-glow));
+}
 .case-img { width: 100%; height: 90px; object-fit: contain; margin-bottom: 10px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3)); }
 .case-card div:nth-child(2) { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
 .case-card div:last-child { font-size: 12px; color: var(--primary); font-weight: 600; }
-.rarity-consumer { border-color: var(--c-consumer) !important; } .rarity-common { border-color: var(--c-common) !important; } .rarity-rare { border-color: var(--c-rare) !important; } .rarity-epic { border-color: var(--c-epic) !important; } .rarity-legendary { border-color: var(--c-legendary) !important; } .rarity-mythical { border-color: var(--c-mythical) !important; }
+/* rarity color rules now handled via ::after accent bar below */
 
-.glass-panel { background: var(--glass-bg); border: 1px solid var(--glass-border); backdrop-filter: blur(10px); border-radius: 16px; }
+/* override green case borders – common should look neutral */
+.case-card.rarity-consumer::after { background: var(--c-consumer); }
+.case-card.rarity-common::after { background: var(--c-common); }
+.case-card.rarity-rare::after { background: var(--c-rare); }
+.case-card.rarity-epic::after { background: var(--c-epic); }
+.case-card.rarity-legendary::after { background: var(--c-legendary); }
+.case-card.rarity-mythical::after { background: var(--c-mythical); }
+
+
+/* duplicate glass-panel definition removed; use enhanced style at top */
 
 /* GAMES HUB */
 .games-hub-grid { display: grid; gap: 15px; }
@@ -766,14 +845,14 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px;
 .c-anim-item { position: absolute; top: 50%; left: 50%; width: 50px; height: 50px; margin-left: -25px; margin-top: -25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.5); background-size: contain; background-repeat: no-repeat; background-position: center; background-color: #1a1a1a; box-shadow: 0 0 15px rgba(255,255,255,0.2); animation: vortexSpin 2s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards; }
 @keyframes vortexSpin { 0% { transform: rotate(0deg) translateX(120px) rotate(0deg) scale(1); opacity: 1; } 50% { opacity: 0.8; } 100% { transform: rotate(720deg) translateX(0px) rotate(-720deg) scale(0.1); opacity: 0; } }
 
-/* BUTTONS - Premium Style */
+/* BUTTONS - Premium Style with Glass */
 .btn-primary { 
-    background: var(--gradient-gold); 
+    background: linear-gradient(135deg, rgba(255,215,0,0.9), rgba(255,200,0,0.8)); 
     color: #000; 
-    border: none; 
+    border: 1px solid rgba(255,255,255,0.3);
     width: 100%; 
     padding: 14px; 
-    border-radius: 12px; 
+    border-radius: 14px; 
     font-weight: 800; 
     font-size: 14px; 
     text-transform: uppercase; 
@@ -782,40 +861,54 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px;
     position: relative; 
     overflow: hidden; 
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    box-shadow: 0 4px 15px rgba(255,215,0,0.3), 0 0 20px rgba(255,215,0,0.1);
-    border: 2px solid rgba(255,255,255,0.1);
+    box-shadow: 0 8px 24px rgba(255,215,0,0.35), 0 0 20px rgba(255,215,0,0.15);
+}
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+    border-radius: 14px;
+    pointer-events: none;
 }
 .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(255,215,0,0.4), 0 0 30px rgba(255,215,0,0.2);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(255,215,0,0.4), 0 0 40px rgba(255,215,0,0.25);
+    background: linear-gradient(135deg, rgba(255,215,0,1), rgba(255,200,0,0.9));
 }
 .btn-primary:active { 
-    transform: scale(0.98); 
+    transform: scale(0.96); 
 }
 .btn-primary:disabled { 
     background: #333; 
     color: #666; 
     cursor: not-allowed;
-    box-shadow: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    border-color: rgba(255,255,255,0.1);
 }
 .btn-secondary { 
-    background: rgba(255,255,255,0.08); 
+    background: rgba(255,255,255,0.06); 
     color: #fff; 
-    border: 1px solid rgba(255,255,255,0.15); 
+    border: 1px solid rgba(255,255,255,0.18); 
     padding: 12px; 
-    border-radius: 10px; 
+    border-radius: 12px; 
     font-weight: 600; 
     width: 100%; 
     cursor: pointer;
     transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
 }
 .btn-secondary:hover {
     background: rgba(255,255,255,0.12);
-    border-color: rgba(255,215,0,0.3);
+    border-color: rgba(255,215,0,0.35);
+    box-shadow: 0 6px 24px rgba(255,215,0,0.1);
+    transform: translateY(-1px);
 }
 .btn-secondary:active {
     transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 .btn-danger-small { 
     background: rgba(239,68,68,0.2); 
@@ -1136,10 +1229,45 @@ input:checked + .toggle-track::after { transform: translateX(14px); background: 
 .btn-sub-verify { background: #4CAF50; color: white; margin-bottom: 10px; display: none; }
 
 /* MODERN INV MODAL */
-.modern-item-modal { padding: 0 !important; overflow: hidden; position: relative; border: 1px solid #333; background: #000; }
+.modern-item-modal {
+    padding: 0 !important;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-radius: 20px;
+}
 .modern-card-bg { position: absolute; top: 0; left: 0; right: 0; height: 250px; z-index: 0; opacity: 0.2; background: radial-gradient(circle, var(--c-common), transparent 70%); transition: 0.3s; }
-.inv-action-content { position: relative; z-index: 2; padding: 25px; display: flex; flex-direction: column; width: 100%; height: 100%; }
-.item-showcase { display: flex; flex-direction: column; align-items: center; margin: 20px 0 30px; position: relative; }
+.inv-action-content {
+    position: relative;
+    z-index: 2;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+.item-showcase {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 20px 0 30px;
+    position: relative;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 18px;
+    padding: 20px;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2), inset 0 0 15px rgba(255,255,255,0.05);
+}
 .item-showcase img { width: 160px; height: 100px; object-fit: contain; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5)); transition: transform 0.3s; }
 .item-showcase:hover img { transform: scale(1.1); }
 .item-rarity-badge { margin-top: 10px; font-size: 10px; font-weight: 800; letter-spacing: 2px; color: #fff; background: rgba(0,0,0,0.4); padding: 4px 10px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; }
@@ -1152,6 +1280,9 @@ input:checked + .toggle-track::after { transform: translateX(14px); background: 
 .btn-sell-modern:active { background: rgba(239,68,68,0.2); }
 .btn-withdraw-modern { background: var(--primary); border: none; color: #000; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.2s; font-weight: 800; }
 .btn-withdraw-modern:active { transform: scale(0.98); }
+
+/* badge for pending withdrawal items */
+.pending-badge { position: absolute; top: 4px; right: 4px; background: rgba(255,165,0,0.9); color: #000; font-size: 10px; padding: 2px 4px; border-radius: 3px; z-index: 1; font-weight: bold; }
 .btn-subtext { font-size: 10px; opacity: 0.8; font-weight: 600; margin-top: 2px; }
 
 /* WIN SCREEN */
@@ -1406,9 +1537,19 @@ input:checked + .toggle-track::after { transform: translateX(14px); background: 
 /* Case cards with enhanced glow */
 .case-card { position: relative; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
 .case-card::before { content: ''; position: absolute; inset: 0; border-radius: 18px; padding: 1px; background: linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0) 100%); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity: 0; transition: opacity 0.3s; }
-.case-card:hover::before { opacity: 1; }
-.case-card:hover { transform: translateY(-8px); box-shadow: 0 15px 40px rgba(0,0,0,0.3), 0 0 20px rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.3); }
+.case-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 12px 36px rgba(0,0,0,0.4), 0 0 20px var(--rarity-glow, var(--primary-glow));
+}
 .case-card:hover .case-img { animation: bounce 0.6s ease-in-out; filter: drop-shadow(0 8px 20px rgba(0,0,0,0.4)); }
+
+/* set glow color variable per rarity */
+.case-card.rarity-consumer { --rarity-glow: var(--c-consumer); }
+.case-card.rarity-common   { --rarity-glow: var(--c-common); }
+.case-card.rarity-rare     { --rarity-glow: var(--c-rare); }
+.case-card.rarity-epic     { --rarity-glow: var(--c-epic); }
+.case-card.rarity-legendary{ --rarity-glow: var(--c-legendary); }
+.case-card.rarity-mythical { --rarity-glow: var(--c-mythical); }
 
 /* Game hub cards with enhanced effects */
 .game-hub-card { position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
@@ -1760,4 +1901,37 @@ input:focus, textarea:focus {
 
 .float {
     animation: float 3s ease-in-out infinite;
+}
+
+/* X2 DROP INDICATOR */
+.x2-indicator {
+    position: fixed;
+    bottom: 100px;
+    left: 15px;
+    background: rgba(255, 215, 0, 0.15);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 8px;
+    padding: 4px 12px;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+    animation: x2Subtle 2s ease-in-out infinite;
+}
+
+.x2-text {
+    font-weight: 700;
+    font-size: 10px;
+    color: #FFD700;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+@keyframes x2Subtle {
+    0%, 100% { 
+        opacity: 0.7;
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+    }
+    50% { 
+        opacity: 1;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+    }
 }

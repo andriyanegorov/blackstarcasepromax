@@ -929,13 +929,14 @@ function getWinItem(c) {
     
     // Применяем X2 множитель для дропа (улучшаем шансы редких предметов)
     if (isX2DropActive) {
-        weights = { 
-            consumer: weights.consumer * 0.5, 
-            common: weights.common * 0.8, 
-            rare: weights.rare * 1.8,
-            epic: weights.epic * 2.5,
-            legendary: weights.legendary * 3,
-            mythical: weights.mythical * 3
+        // Minimal X2 boost: only a slight increase in rarer chances
+        weights = {
+            consumer: weights.consumer * 0.95,
+            common: weights.common * 0.98,
+            rare: weights.rare * 1.08,
+            epic: weights.epic * 1.12,
+            legendary: weights.legendary * 1.15,
+            mythical: weights.mythical * 1.15
         };
         // Нормализуем, чтобы сумма была 100
         const total = Object.values(weights).reduce((a,b) => a+b, 0);

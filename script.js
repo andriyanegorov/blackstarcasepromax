@@ -5,7 +5,8 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const tg = window.Telegram && window.Telegram.WebApp 
     ? window.Telegram.WebApp 
     : { 
-        initDataUnsafe: { user: { id: 123456, first_name: "TestUser", username: "browser_test" }, start_param: "" }, 
+                initDataUnsafe: { start_param: "" }, 
+                initData: '',
         expand: () => {}, 
         HapticFeedback: { notificationOccurred: (t) => {} },
         openLink: (url) => window.open(url, '_blank'),
@@ -17,6 +18,9 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwCTnYYNY3u9ceNdIxlBd0s
 const SUB_CHANNEL_URL = "https://t.me/blackrussiacases_news"; 
 const PLACEHOLDER_IMG = "https://placehold.co/150x150/1a1a1a/ffffff?text=No+Image";
 const PAYMENT_BASE_URL = "https://funpay.com/lots/offer?id=64078084"; 
+const TG_BOT_USERNAME = "blackrussiacases_bot";
+const BROWSER_TG_AUTH_KEY = "br_tg_browser_auth_v1";
+const ALLOW_BROWSER_AUTH_WITHOUT_SERVER_VERIFY = true;
 
 const RARITY_VALS = { 'consumer': 1, 'common': 2, 'rare': 3, 'epic': 4, 'legendary': 5, 'mythical': 6 };
 const RARITY_COLORS = { 'consumer': '#B0B0B0', 'common': '#4CAF50', 'rare': '#3b82f6', 'epic': '#a855f7', 'legendary': '#eab308', 'mythical': '#ff3333' };
@@ -32,7 +36,7 @@ const BP_REWARDS = [
     { level: 8, exp: 2100, free: { type: 'money', val: 10 }, premium: { type: 'item', val: { name: "400.000 Вирт", price: 40, rarity: "epic", img: "img/money.png" } } },
     { level: 9, exp: 2600, free: { type: 'item', val: { name: "50 BC", price: 50, rarity: "rare", img: "img/bc.png" } }, premium: { type: 'money', val: 30 } },
     { level: 10, exp: 3200, free: { type: 'money', val: 0 }, premium: { type: 'item', val: { name: "Рюкзак Мопс", price: 79, rarity: "rare", img: "img/mops.png" } } },
-    { level: 11, exp: 3800, free: { type: 'item', val: { name: "Маска Дали", price: 29, rarity: "consumer", img: "img/dali.png" } }, premium: { type: 'item', val: { name: "BR VISUALS MAX", price: 69, rarity: "coomon", img: "img/vr.png" } } },
+    { level: 11, exp: 3800, free: { type: 'item', val: { name: "Маска Дали", price: 29, rarity: "consumer", img: "img/dali.png" } }, premium: { type: 'item', val: { name: "BR VISUALS MAX", price: 69, rarity: "common", img: "img/vr.png" } } },
     { level: 12, exp: 4400, free: { type: 'money', val: 5 }, premium: { type: 'money', val: 30 } },
     { level: 13, exp: 5000, free: { type: 'item', val: { name: "VAZ 2107", price: 39, rarity: "consumer", img: "img/2107.png" } }, premium: { type: 'item', val: { name: "Иван Береговой", price: 79, rarity: "rare", img: "img/beregovoy.png" } } },
     { level: 14, exp: 5600, free: { type: 'money', val: 10 }, premium: { type: 'money', val: 25 } },
@@ -55,6 +59,16 @@ const BP_TASKS = {
     inventory_full: { text: "Собрать инвентарь из 20 предметов", target: 20, exp: 200 },
     level_battle_pass: { text: "Поднять боевой пасс на 5 уровней", target: 5, exp: 300 }
 };
+const ACTIVITY_CASE_REWARDS = [
+    { day: 1, type: 'money', value: 9, label: '9 ₽', img: 'img/money.png' },
+    { day: 2, type: 'money', value: 13, label: '13 ₽', img: 'img/money.png' },
+    { day: 3, type: 'money', value: 17, label: '17 ₽', img: 'img/money.png' },
+    { day: 4, type: 'item', value: { name: 'Очки "Street"', price: 19, rarity: 'consumer', img: 'img/streetglass.png' }, label: 'Очки "Street"', img: 'img/streetglass.png' },
+    { day: 5, type: 'item', value: { name: 'Маска "Дали"', price: 29, rarity: 'consumer', img: 'img/dali.png' }, label: 'Маска "Дали"', img: 'img/dali.png' },
+    { day: 6, type: 'money', value: 29, label: '29 ₽', img: 'img/money.png' },
+    { day: 7, type: 'item', value: { name: 'Скин "Защитница закона"', price: 59, rarity: 'common', img: 'img/zakon.png' }, label: 'Скин "Защитница закона"', img: 'img/zakon.png' }
+];
+const DEFAULT_ACTIVITY_CASE_STATE = { streak: 0, lastClaimDay: '', completed: false };
 
 // === GLOBAL LOGGING FUNCTION (VIA GAS) ===
 function sendAdminLog(topicKey, actionName, details) {
@@ -117,8 +131,8 @@ const DEFAULT_USER = {
     gameServer: "Red", bankAccount: "", avatar: "", history: [], activatedPromos: [],
     lastSubCaseTime: 0, isSubscribed: false,
     referrerId: null, referralsCount: 0, referralEarnings: 0, pendingReferralAmount: 0, isBanned: false, banReason: "",
-    totalSpent: 0, isVerified: false,
-    bp: { level: 1, exp: 0, premium: false, claimedFree: [], claimedPremium: [], tasks: { open_cases: 0, upgrade_fail: 0, contract_sign: 0, sell_item: 0, daily_login: 0 } },
+    totalSpent: 0, isVerified: false, isAdmin: false,
+    bp: { level: 1, exp: 0, premium: false, claimedFree: [], claimedPremium: [], tasks: { open_cases: 0, upgrade_fail: 0, contract_sign: 0, sell_item: 0, daily_login: 0 }, activityCase: { streak: 0, lastClaimDay: '', completed: false } },
     deviceIds: [] // Для мультиаккаунта
 };
 let user = { ...DEFAULT_USER };
@@ -128,9 +142,446 @@ let selectedCase = null, currentWins = [], selectedOpenCount = 1;
 let selectedInventoryIndex = null, upgradeState = { sourceIdx: null, targetItem: null, chance: 50 };
 let ALL_ITEMS_POOL = [], contractSelection = [];
 let serverTimeOffset = 0; 
+let browserAuthResolve = null;
+let secretAuthTapCount = 0;
+let secretAuthTapTimer = null;
+let activityCaseState = { ...DEFAULT_ACTIVITY_CASE_STATE };
+let activityCaseTimerInterval = null;
+let adminSessionAuthorized = false;
+let adminCases = [];
+let adminCaseItems = [];
+let adminPromos = [];
+let adminWithdraws = [];
+let adminUsers = [];
+let adminEditingCaseId = null;
+let adminLocalItems = [];
+let adminSelectedUser = null;
+let adminCurrentMode = 'cases';
+let adminUserInventoryDraft = [];
+let adminUserWithdrawnDraft = [];
+let adminUserHistoryDraft = [];
+let adminCaseCategories = [];
+
+const CASE_CATEGORY_META = {
+    free: { label: 'БЕСПЛАТНО', order: 0 },
+    'дешевые': { label: 'ДЕШЕВЫЕ', order: 1 },
+    default: { label: 'КЕЙСЫ', order: 2 },
+    bundles: { label: 'НАБОРЫ', order: 3 },
+    risk: { label: 'РИСК', order: 4 },
+    container: { label: 'КОНТЕЙНЕРЫ', order: 5 }
+};
+const ADMIN_EXTRA_CASE_CATEGORIES_KEY = 'admin_extra_case_categories_v1';
+
+function isMobilePerfMode() {
+    return window.matchMedia('(max-width: 768px)').matches;
+}
+
+function isTelegramWebAppContext() {
+    return !!(window.Telegram && window.Telegram.WebApp && tg.initData && tg.initDataUnsafe && tg.initDataUnsafe.user);
+}
+
+function getTodayStamp() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function getDiffDays(fromStamp, toStamp) {
+    if (!fromStamp || !toStamp) return 0;
+    const from = new Date(`${fromStamp}T00:00:00`);
+    const to = new Date(`${toStamp}T00:00:00`);
+    return Math.floor((to - from) / 86400000);
+}
+
+function getMsUntilNextDay() {
+    const now = new Date();
+    const nextDay = new Date(now);
+    nextDay.setHours(24, 0, 0, 0);
+    return Math.max(0, nextDay.getTime() - now.getTime());
+}
+
+function formatDuration(ms) {
+    const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+    const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+    const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+    const seconds = String(totalSeconds % 60).padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
+}
+
+function getLegacyActivityCaseState() {
+    if (!user.bp || !user.bp.activityCase) return { ...DEFAULT_ACTIVITY_CASE_STATE };
+    return {
+        streak: Number(user.bp.activityCase.streak || 0),
+        lastClaimDay: user.bp.activityCase.lastClaimDay || '',
+        completed: !!user.bp.activityCase.completed
+    };
+}
+
+async function saveActivityCaseProgress() {
+    if (!user || !user.uid) return false;
+    try {
+        const { error } = await sb.from('activity_case_progress').upsert({
+            user_id: user.uid,
+            streak: Number(activityCaseState.streak || 0),
+            last_claim_day: activityCaseState.lastClaimDay || null,
+            completed: !!activityCaseState.completed,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
+        return !error;
+    } catch (e) {
+        return false;
+    }
+}
+
+async function loadActivityCaseProgress() {
+    activityCaseState = { ...DEFAULT_ACTIVITY_CASE_STATE };
+    if (!user || !user.uid) return activityCaseState;
+
+    try {
+        const { data, error } = await sb.from('activity_case_progress')
+            .select('*')
+            .eq('user_id', user.uid)
+            .maybeSingle();
+
+        if (!error && data) {
+            activityCaseState = {
+                streak: Number(data.streak || 0),
+                lastClaimDay: data.last_claim_day || '',
+                completed: !!data.completed
+            };
+        } else {
+            const legacyState = getLegacyActivityCaseState();
+            activityCaseState = { ...legacyState };
+            if (legacyState.streak > 0 || legacyState.completed || legacyState.lastClaimDay) {
+                await saveActivityCaseProgress();
+            }
+        }
+    } catch (e) {
+        activityCaseState = getLegacyActivityCaseState();
+    }
+
+    await ensureActivityCaseFreshness();
+    return activityCaseState;
+}
+
+async function ensureActivityCaseFreshness() {
+    const state = activityCaseState || { ...DEFAULT_ACTIVITY_CASE_STATE };
+    if (state.completed) return state;
+    const today = getTodayStamp();
+    if (state.lastClaimDay) {
+        const diffDays = getDiffDays(state.lastClaimDay, today);
+        if (diffDays > 1) {
+            const prevStreak = state.streak;
+            state.streak = 0;
+            state.lastClaimDay = '';
+            if (prevStreak > 0) {
+                sendAdminLog('GENERAL', '📉 Сброс кейса активности', `Пропущен день активности. Было дней подряд: ${prevStreak}`);
+            }
+            await saveActivityCaseProgress();
+        }
+    }
+    activityCaseState = state;
+    return state;
+}
+
+function getActivityCaseState() {
+    return activityCaseState || { ...DEFAULT_ACTIVITY_CASE_STATE };
+}
+
+function canClaimActivityCase() {
+    const state = getActivityCaseState();
+    if (state.completed) return false;
+    const today = getTodayStamp();
+    return state.lastClaimDay !== today;
+}
+
+function getNextActivityReward() {
+    const state = getActivityCaseState();
+    const day = Math.min(state.streak + 1, ACTIVITY_CASE_REWARDS.length);
+    return ACTIVITY_CASE_REWARDS.find((reward) => reward.day === day) || ACTIVITY_CASE_REWARDS[ACTIVITY_CASE_REWARDS.length - 1];
+}
+
+function renderActivityCase() {
+    const statusEl = document.getElementById('activity-case-status');
+    const progressFill = document.getElementById('activity-case-progress-fill');
+    const progressText = document.getElementById('activity-case-progress-text');
+    const timerEl = document.getElementById('activity-case-timer');
+    const daysEl = document.getElementById('activity-case-days');
+    const claimBtn = document.getElementById('activity-case-claim');
+    if (!statusEl || !progressFill || !progressText || !daysEl || !claimBtn || !timerEl) return;
+
+    const state = getActivityCaseState();
+    const nextReward = getNextActivityReward();
+    const canClaim = canClaimActivityCase();
+    const today = getTodayStamp();
+
+    progressFill.style.width = `${(Math.min(state.streak, 7) / 7) * 100}%`;
+    progressText.innerText = `${Math.min(state.streak, 7)} / 7 дней`;
+
+    if (state.completed) {
+        statusEl.innerText = 'Цепочка завершена. Повторно пройти ее нельзя.';
+        claimBtn.disabled = true;
+        claimBtn.innerText = 'ЗАВЕРШЕНО';
+        timerEl.innerText = 'Таймер отключен: цепочка завершена.';
+    } else if (!canClaim && state.lastClaimDay === today) {
+        statusEl.innerText = `Сегодня уже забрано. Следующая награда: день ${nextReward.day} — ${nextReward.label}.`;
+        claimBtn.disabled = true;
+        claimBtn.innerText = 'УЖЕ ЗАБРАНО';
+        startActivityCaseTimer();
+    } else {
+        statusEl.innerText = `Следующая награда: день ${nextReward.day} — ${nextReward.label}. Пропуск дня сбрасывает прогресс.`;
+        claimBtn.disabled = false;
+        claimBtn.innerText = `ЗАБРАТЬ ДЕНЬ ${nextReward.day}`;
+        stopActivityCaseTimer();
+        timerEl.innerText = 'Награда доступна прямо сейчас.';
+    }
+
+    daysEl.innerHTML = '';
+    ACTIVITY_CASE_REWARDS.forEach((reward) => {
+        const card = document.createElement('div');
+        let stateClass = 'locked';
+        if (state.completed) stateClass = reward.day <= 7 ? 'completed' : 'locked';
+        else if (reward.day <= state.streak) stateClass = 'done';
+        else if (reward.day === state.streak + 1) stateClass = 'current';
+        card.className = `activity-day ${stateClass}`;
+        card.innerHTML = `
+            <div class="activity-day-label">День ${reward.day}</div>
+            <div class="activity-day-thumb"><img src="${reward.img || PLACEHOLDER_IMG}" alt="${reward.label}" onerror="this.src='${PLACEHOLDER_IMG}'"></div>
+            <div class="activity-day-reward">${reward.label}</div>
+            <div class="activity-day-meta">${reward.type === 'money' ? 'Баланс' : `${reward.value.price} ₽`}</div>
+        `;
+        daysEl.appendChild(card);
+    });
+}
+
+function stopActivityCaseTimer() {
+    if (activityCaseTimerInterval) {
+        clearInterval(activityCaseTimerInterval);
+        activityCaseTimerInterval = null;
+    }
+}
+
+function startActivityCaseTimer() {
+    const timerEl = document.getElementById('activity-case-timer');
+    if (!timerEl) return;
+    stopActivityCaseTimer();
+
+    const tick = () => {
+        const remaining = getMsUntilNextDay();
+        timerEl.innerText = `До следующего дня: ${formatDuration(remaining)}`;
+        if (remaining <= 0) {
+            stopActivityCaseTimer();
+            renderActivityCase();
+        }
+    };
+
+    tick();
+    activityCaseTimerInterval = setInterval(tick, 1000);
+}
+
+function playActivityRewardAnimation(reward) {
+    const overlay = document.getElementById('activity-reward-overlay');
+    if (!overlay) return;
+
+    const rewardLabel = reward.type === 'money' ? `${reward.value} ₽` : reward.value.name;
+    const rewardMeta = reward.type === 'money' ? 'Деньги зачислены на баланс' : `Предмет добавлен в гараж • ${reward.value.price} ₽`;
+    overlay.innerHTML = `
+        <div class="activity-reward-card">
+            <div class="activity-reward-day">Награда за день ${reward.day}</div>
+            <div class="activity-reward-thumb"><img src="${reward.img || PLACEHOLDER_IMG}" alt="${rewardLabel}" onerror="this.src='${PLACEHOLDER_IMG}'"></div>
+            <h4>Награда получена</h4>
+            <div class="activity-reward-name">${rewardLabel}</div>
+            <div class="activity-reward-meta">${rewardMeta}</div>
+        </div>
+    `;
+    overlay.style.display = 'flex';
+    createConfetti(reward.day >= 7 ? 40 : 24);
+    setTimeout(() => {
+        overlay.style.display = 'none';
+        overlay.innerHTML = '';
+    }, 1800);
+}
+
+async function claimActivityCaseReward() {
+    if (!user || !user.uid) return showNotify('Профиль еще загружается', 'error');
+    const state = await ensureActivityCaseFreshness();
+    if (state.completed) return showNotify('Цепочка уже завершена', 'error');
+    if (!canClaimActivityCase()) return showNotify('Сегодня награда уже получена', 'error');
+
+    const reward = getNextActivityReward();
+    if (!reward) return showNotify('Награда не найдена', 'error');
+
+    if (reward.type === 'money') {
+        user.balance += reward.value;
+        addHistory(`Кейс за активность: день ${reward.day}`, `+${reward.value}`);
+    } else {
+        user.inventory.push({ ...reward.value });
+        addHistory(`Кейс за активность: день ${reward.day}`, reward.value.name);
+    }
+
+    activityCaseState.streak = reward.day;
+    activityCaseState.lastClaimDay = getTodayStamp();
+    if (reward.day >= ACTIVITY_CASE_REWARDS.length) activityCaseState.completed = true;
+
+    sendAdminLog('GENERAL', '🎁 Кейс за активность', `День: ${reward.day}\nНаграда: ${reward.label}\nСтатус цепочки: ${activityCaseState.completed ? 'Завершена' : `${activityCaseState.streak}/7`}`);
+
+    await saveActivityCaseProgress();
+    await saveUser();
+    updateUI();
+    renderInventory();
+    renderActivityCase();
+    playActivityRewardAnimation(reward);
+    showNotify(activityCaseState.completed ? 'Финальная награда получена!' : `Награда за день ${reward.day} получена`, 'success');
+}
+
+function hasAdminAccess() {
+    return !!(user && user.isAdmin);
+}
+
+function getBrowserAuthProfile() {
+    try {
+        const raw = localStorage.getItem(BROWSER_TG_AUTH_KEY);
+        if (!raw) return null;
+        const profile = JSON.parse(raw);
+        return (profile && profile.id) ? profile : null;
+    } catch(e) {
+        return null;
+    }
+}
+
+function setBrowserAuthProfile(profile) {
+    localStorage.setItem(BROWSER_TG_AUTH_KEY, JSON.stringify(profile));
+}
+
+function showBrowserAuthOverlay(visible) {
+    const overlay = document.getElementById('browser-auth-overlay');
+    if (!overlay) return;
+    overlay.style.display = visible ? 'flex' : 'none';
+}
+
+function mountTelegramLoginWidget() {
+    const mount = document.getElementById('tg-login-widget');
+    if (!mount) return;
+    mount.innerHTML = '';
+
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = 'https://telegram.org/js/telegram-widget.js?22';
+    script.setAttribute('data-telegram-login', TG_BOT_USERNAME);
+    script.setAttribute('data-size', 'large');
+    script.setAttribute('data-userpic', 'false');
+    script.setAttribute('data-request-access', 'write');
+    script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+    script.setAttribute('data-lang', 'ru');
+    mount.appendChild(script);
+}
+
+async function verifyTelegramWidgetAuth(authData) {
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'verify_telegram_login', authData })
+        });
+        const data = await response.json();
+        return !!(data && (data.valid === true || data.status === 'ok' || data.status === true));
+    } catch(e) {
+        return false;
+    }
+}
+
+async function ensureBrowserTelegramAuth() {
+    const stored = getBrowserAuthProfile();
+    if (stored && stored.id) return stored;
+
+    const loading = document.getElementById('loading-screen');
+    if (loading) loading.style.display = 'none';
+
+    showBrowserAuthOverlay(true);
+    mountTelegramLoginWidget();
+
+    return new Promise((resolve) => {
+        browserAuthResolve = resolve;
+    });
+}
+
+function triggerSecretTestAuth() {
+    if (isTelegramWebAppContext()) return;
+
+    if (secretAuthTapTimer) clearTimeout(secretAuthTapTimer);
+    secretAuthTapCount += 1;
+
+    secretAuthTapTimer = setTimeout(() => {
+        secretAuthTapCount = 0;
+    }, 1700);
+
+    // Require fast 5 taps to prevent accidental activation.
+    if (secretAuthTapCount < 5) return;
+    secretAuthTapCount = 0;
+
+    const profile = {
+        id: 999000111,
+        first_name: 'BrowserTester',
+        username: '@browsertester',
+        photo_url: '',
+        auth_date: Math.floor(Date.now() / 1000),
+        hash: 'secret_test_bypass'
+    };
+
+    setBrowserAuthProfile(profile);
+    showBrowserAuthOverlay(false);
+    showNotify('Тестовый вход: BrowserTester', 'info');
+
+    const loading = document.getElementById('loading-screen');
+    if (loading) loading.style.display = 'flex';
+
+    if (browserAuthResolve) {
+        const resolve = browserAuthResolve;
+        browserAuthResolve = null;
+        resolve(profile);
+    }
+}
+
+window.onTelegramAuth = async function onTelegramAuth(tgUser) {
+    if (!tgUser || !tgUser.id) return;
+
+    const verified = await verifyTelegramWidgetAuth(tgUser);
+    if (!verified && !ALLOW_BROWSER_AUTH_WITHOUT_SERVER_VERIFY) {
+        showNotify('Не удалось подтвердить вход через Telegram', 'error');
+        return;
+    }
+    if (!verified && ALLOW_BROWSER_AUTH_WITHOUT_SERVER_VERIFY) {
+        showNotify('Вход выполнен без серверной проверки подписи', 'info');
+    }
+
+    const profile = {
+        id: tgUser.id,
+        first_name: tgUser.first_name || 'User',
+        username: tgUser.username ? `@${tgUser.username}` : '',
+        photo_url: tgUser.photo_url || '',
+        auth_date: tgUser.auth_date || null,
+        hash: tgUser.hash || null
+    };
+
+    setBrowserAuthProfile(profile);
+    showBrowserAuthOverlay(false);
+
+    const loading = document.getElementById('loading-screen');
+    if (loading) loading.style.display = 'flex';
+
+    if (browserAuthResolve) {
+        const resolve = browserAuthResolve;
+        browserAuthResolve = null;
+        resolve(profile);
+    }
+};
 
 document.addEventListener('DOMContentLoaded', () => {
     try { if(tg) tg.expand(); } catch(e) {}
+    if (isMobilePerfMode()) document.body.classList.add('mobile-perf-mode');
+    initAdminUiState();
     // Set default active tab to 'cases'
     switchTab('cases');
     loadCasesFromDB().then(() => {
@@ -211,6 +662,25 @@ function getDeviceId() {
     }
     
     return dId;
+}
+
+function getReferralPendingWithdrawId() {
+    if (!user || !user.uid) return null;
+    const raw = localStorage.getItem(`br_ref_pending_wid_${user.uid}`);
+    const id = Number(raw);
+    return Number.isFinite(id) && id > 0 ? id : null;
+}
+
+function setReferralPendingWithdrawId(id) {
+    if (!user || !user.uid) return;
+    const num = Number(id);
+    if (!Number.isFinite(num) || num <= 0) return;
+    localStorage.setItem(`br_ref_pending_wid_${user.uid}`, String(num));
+}
+
+function clearReferralPendingWithdrawId() {
+    if (!user || !user.uid) return;
+    localStorage.removeItem(`br_ref_pending_wid_${user.uid}`);
 }
 
 // Вспомогательные функции для работы с cookies
@@ -344,14 +814,29 @@ function handleWithdrawRow(w) {
         }
         saveUser(); updateUI(); renderInventory(); renderWithdrawn();
     } else if(w.type === 'referral') {
+        const pendingReferralId = getReferralPendingWithdrawId();
+        const pendingAmount = Number(user.pendingReferralAmount || 0);
+        const rowAmount = Number(w.amount || 0);
+
         if(w.status === 'confirmed') {
+            if(pendingAmount <= 0) return;
+            if(pendingReferralId && Number(w.id) !== pendingReferralId) return;
+            // Legacy fallback: if no stored id, accept only same amount.
+            if(!pendingReferralId && rowAmount !== pendingAmount) return;
+            user.balance += pendingAmount;
+            addHistory('Реферальный вывод подтверждён', `+${pendingAmount}`);
             showNotify(`Запрос на вывод рефералов ${w.amount}₽ подтверждён`, 'success');
             user.pendingReferralAmount = 0;
+            clearReferralPendingWithdrawId();
             saveUser(); updateUI(); renderReferralStats();
         } else if(w.status === 'rejected') {
+            if(pendingAmount <= 0) return;
+            if(pendingReferralId && Number(w.id) !== pendingReferralId) return;
+            if(!pendingReferralId && rowAmount !== pendingAmount) return;
             showNotify(`Запрос на вывод рефералов ${w.amount}₽ отклонён`, 'error');
             user.referralEarnings += w.amount;
             user.pendingReferralAmount = 0;
+            clearReferralPendingWithdrawId();
             saveUser(); updateUI(); renderReferralStats();
         }
     }
@@ -393,12 +878,19 @@ function getTrueTime() { return Date.now() - serverTimeOffset; }
 
 async function initUserSessionSupabase() {
     let uid = 0, first_name = "User", username = "", photo_url = "";
-    if (tg.initDataUnsafe && tg.initDataUnsafe.user) { 
+    if (isTelegramWebAppContext()) { 
         uid = tg.initDataUnsafe.user.id; 
         first_name = tg.initDataUnsafe.user.first_name || "User";
         username = tg.initDataUnsafe.user.username ? `@${tg.initDataUnsafe.user.username}` : "";
         photo_url = tg.initDataUnsafe.user.photo_url || "";
-    } else { uid = 123456; first_name = "BrowserTester"; }
+    } else {
+        const browserAuth = await ensureBrowserTelegramAuth();
+        if (!browserAuth || !browserAuth.id) return;
+        uid = browserAuth.id;
+        first_name = browserAuth.first_name || "User";
+        username = browserAuth.username || "";
+        photo_url = browserAuth.photo_url || "";
+    }
 
     const currentDeviceId = getDeviceId();
 
@@ -427,7 +919,7 @@ async function initUserSessionSupabase() {
                 referralsCount: data.referrals_count || 0, referralEarnings: data.referral_earnings || 0,
                 pendingReferralAmount: data.pending_referral_amount || 0,
                 withdrawnItems: data.withdrawn_items || [],
-                avatar: photo_url, totalSpent: Number(data.total_spent) || 0, isVerified: data.is_verified || false,
+                avatar: photo_url, totalSpent: Number(data.total_spent) || 0, isVerified: data.is_verified || false, isAdmin: !!data.admin,
                 bp: data.bp || DEFAULT_USER.bp,
                 deviceIds: knownDevices
             };
@@ -490,10 +982,11 @@ async function initUserSessionSupabase() {
                 balance: 0, inventory: [], withdrawn_items: [], history: [], referrer_id: refId, 
                 total_spent: 0, is_verified: false, bp: DEFAULT_USER.bp,
                 pending_referral_amount: 0,
+                admin: false,
                 device_ids: [currentDeviceId] 
             };
             await sb.from('users').insert([newUser]);
-            user = { ...DEFAULT_USER, ...newUser, uid: uid, avatar: photo_url };
+            user = { ...DEFAULT_USER, ...newUser, uid: uid, avatar: photo_url, isAdmin: false };
             
             sendAdminLog('GENERAL', '🆕 Новый игрок', `Регистрация. Рефер: ${refId || 'Нет'}`);
 
@@ -509,7 +1002,9 @@ async function initUserSessionSupabase() {
             }
         }
         document.getElementById('loading-screen').style.display = 'none';
+        await loadActivityCaseProgress();
         await syncPendingWithdraws();
+        syncAdminUiAccess();
         updateUI(); renderInventory(); renderWithdrawn(); renderHistory(); renderBP();
     } catch(err) {
         document.getElementById('loading-screen').style.display = 'none';
@@ -524,7 +1019,8 @@ async function syncPendingWithdraws() {
         const { data, error } = await sb.from('withdraws')
             .select('*')
             .eq('user_id', user.uid)
-            .in('status', ['confirmed','rejected']);
+            .in('status', ['confirmed','rejected'])
+            .order('id', { ascending: false });
         if(!error && data && data.length) {
             data.forEach(handleWithdrawRow);
         }
@@ -661,7 +1157,8 @@ function applyPromo(amount, code) {
 // ... (BATTLE PASS FUNCTIONS REMAIN THE SAME - OMITTED FOR BREVITY BUT KEEP THEM) ...
 function renderBP() {
     // Вставь сюда код renderBP из старого файла (он без изменений)
-    if (!user.bp) user.bp = { level: 1, exp: 0, premium: false, claimedFree: [], claimedPremium: [], tasks: { open_cases: 0, upgrade_fail: 0, contract_sign: 0, sell_item: 0, daily_login: 0 } };
+    if (!user.bp) user.bp = { ...DEFAULT_USER.bp };
+    if (!user.bp.activityCase) user.bp.activityCase = { ...DEFAULT_USER.bp.activityCase };
     document.getElementById('bp-current-level').innerText = user.bp.level;
     const nextLevelData = BP_REWARDS.find(r => r.level === user.bp.level + 1);
     const needExp = nextLevelData ? nextLevelData.exp : BP_REWARDS[BP_REWARDS.length-1].exp;
@@ -779,11 +1276,16 @@ function updateUI() {
     if(document.getElementById('profile-uid')) document.getElementById('profile-uid').innerText = user.uid; 
     if(user.avatar && document.getElementById('header-avatar')) document.getElementById('header-avatar').src = user.avatar;
     if(document.getElementById('profile-verified-badge')) document.getElementById('profile-verified-badge').style.display = user.isVerified ? 'inline-block' : 'none';
+    renderActivityCase();
     renderReferralStats();
     renderInventory();
     renderWithdrawn();
 }
 function switchTab(id) {
+    if (id === 'admin' && !hasAdminAccess()) {
+        showNotify('Доступ к админ-панели запрещен', 'error');
+        return;
+    }
     document.querySelectorAll('.section').forEach(e=>e.classList.remove('active'));
     const tabEl = document.getElementById('tab-'+id);
     if (tabEl) {
@@ -814,6 +1316,8 @@ function switchTab(id) {
     if(id === 'contract') renderContractGrid();
     if(id === 'top') loadLeaderboard();
     if(id === 'pass') renderBP();
+    if(id === 'cases') renderActivityCase();
+    if(id === 'admin') adminSetMode(adminCurrentMode);
     window.scrollTo(0,0);
 }
 function showNotify(msg, type = 'info') {
@@ -827,14 +1331,104 @@ function showNotify(msg, type = 'info') {
 function safeHaptic(type) { try { if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred(type); } catch (e) {} }
 function addHistory(text, val) { const color = val.includes('+') ? '#4CAF50' : '#ff4d4d'; user.history.unshift({ text, val, color }); if(user.history.length > 30) user.history.pop(); renderHistory(); }
 function renderHistory() { const hList = document.getElementById('history-list'); if(!hList) return; hList.innerHTML = ''; user.history.forEach(h => { hList.innerHTML += `<div><span>${h.text}</span><span style="color:${h.color}">${h.val}</span></div>`; }); }
-function initCases() { 
-    const cats = { 'free': 'cases-free', 'default': 'cases-default', 'bundles': 'cases-bundles', 'risk': 'cases-risk', 'container': 'containers' }; 
-    for (let c in cats) { const el = document.getElementById(cats[c]); if(el) el.innerHTML = ''; } 
-    GAME_CONFIG.forEach(c => { 
-        let targetId = cats[c.category] || 'cases-default';
-        const div = document.getElementById(targetId); 
-        if (div) div.innerHTML += `<div class="case-card rarity-common" onclick="openPreview('${c.id}')"><img src="${c.img}" class="case-img" onerror="this.src='${PLACEHOLDER_IMG}'"><div>${c.name}</div><div>${c.price} ₽</div></div>`; 
-    }); 
+function normalizeCaseCategoryValue(value) {
+    return String(value || 'default').trim().toLowerCase() || 'default';
+}
+
+function getStoredAdminExtraCaseCategories() {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(ADMIN_EXTRA_CASE_CATEGORIES_KEY) || '[]');
+        return Array.isArray(parsed) ? parsed.map((item) => normalizeCaseCategoryValue(item)).filter(Boolean) : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function setStoredAdminExtraCaseCategories(categories) {
+    localStorage.setItem(ADMIN_EXTRA_CASE_CATEGORIES_KEY, JSON.stringify(Array.from(new Set(categories.map((item) => normalizeCaseCategoryValue(item)).filter(Boolean)))));
+}
+
+function getCaseCategoryLabel(category) {
+    const normalized = normalizeCaseCategoryValue(category);
+    if (CASE_CATEGORY_META[normalized]) return CASE_CATEGORY_META[normalized].label;
+    return normalized.replace(/[_-]+/g, ' ').trim().toUpperCase();
+}
+
+function getOrderedCaseCategories(categories) {
+    return [...categories].sort((a, b) => {
+        const aMeta = CASE_CATEGORY_META[a];
+        const bMeta = CASE_CATEGORY_META[b];
+        if (aMeta && bMeta) return aMeta.order - bMeta.order;
+        if (aMeta) return -1;
+        if (bMeta) return 1;
+        return getCaseCategoryLabel(a).localeCompare(getCaseCategoryLabel(b), 'ru');
+    });
+}
+
+function rebuildAdminCaseCategories() {
+    const fromCases = [...adminCases, ...GAME_CONFIG].map((item) => normalizeCaseCategoryValue(item.category));
+    const extra = getStoredAdminExtraCaseCategories();
+    adminCaseCategories = getOrderedCaseCategories(Array.from(new Set([...Object.keys(CASE_CATEGORY_META), ...fromCases, ...extra].filter(Boolean))));
+}
+
+function renderAdminCaseCategories() {
+    rebuildAdminCaseCategories();
+    const datalist = document.getElementById('admin-case-category-list');
+    const tags = document.getElementById('admin-case-category-tags');
+    const currentValue = normalizeCaseCategoryValue(document.getElementById('admin-case-category')?.value);
+    if (datalist) {
+        datalist.innerHTML = adminCaseCategories.map((category) => `<option value="${category}">${getCaseCategoryLabel(category)}</option>`).join('');
+    }
+    if (tags) {
+        tags.innerHTML = adminCaseCategories.map((category) => `<button class="admin-category-tag ${currentValue === category ? 'active' : ''}" type="button" onclick="adminUseCaseCategory('${category}')">${getCaseCategoryLabel(category)}</button>`).join('');
+    }
+}
+
+function adminUseCaseCategory(category) {
+    const input = document.getElementById('admin-case-category');
+    if (input) input.value = normalizeCaseCategoryValue(category);
+    renderAdminCaseCategories();
+}
+
+function adminAddCaseCategory(silent = false) {
+    const input = document.getElementById('admin-case-category');
+    if (!input) return;
+    const value = normalizeCaseCategoryValue(input.value);
+    if (!value) return showNotify('Введите название категории', 'error');
+    const stored = getStoredAdminExtraCaseCategories();
+    if (!stored.includes(value) && !CASE_CATEGORY_META[value]) {
+        stored.push(value);
+        setStoredAdminExtraCaseCategories(stored);
+    }
+    input.value = value;
+    renderAdminCaseCategories();
+    if (!silent) showNotify(`Категория "${getCaseCategoryLabel(value)}" добавлена`, 'success');
+}
+
+function initCases() {
+    const container = document.getElementById('cases-categories');
+    if (!container) return;
+    const groups = new Map();
+    GAME_CONFIG.forEach((caseItem) => {
+        const category = normalizeCaseCategoryValue(caseItem.category);
+        if (!groups.has(category)) groups.set(category, []);
+        groups.get(category).push(caseItem);
+    });
+    container.innerHTML = '';
+    getOrderedCaseCategories(Array.from(groups.keys())).forEach((category) => {
+        const items = groups.get(category);
+        if (!items || !items.length) return;
+        const divider = document.createElement('div');
+        divider.className = 'section-divider';
+        divider.innerHTML = `<span>${getCaseCategoryLabel(category)}</span>`;
+        const grid = document.createElement('div');
+        grid.className = 'cases-grid';
+        items.forEach((caseItem) => {
+            grid.innerHTML += `<div class="case-card rarity-common" onclick="openPreview('${caseItem.id}')"><img src="${caseItem.img}" class="case-img" onerror="this.src='${PLACEHOLDER_IMG}'"><div>${caseItem.name}</div><div>${caseItem.price} ₽</div></div>`;
+        });
+        container.appendChild(divider);
+        container.appendChild(grid);
+    });
 }
 let countdownInterval = null;
 function openPreview(id) { 
@@ -848,7 +1442,7 @@ function openPreview(id) {
     if(countdownInterval) clearInterval(countdownInterval);
     setOpenCount(1);
     document.getElementById('preview-img').src = selectedCase.img; document.getElementById('preview-title').innerText = selectedCase.name; document.getElementById('preview-price').innerText = selectedCase.price + " ₽"; 
-    if(selectedCase.category === 'free') {
+    if(normalizeCaseCategoryValue(selectedCase.category) === 'free') {
         qtySel.style.display = 'none'; 
         const COOLDOWN = 48 * 60 * 60 * 1000; const now = getTrueTime(); const diff = now - (user.lastSubCaseTime || 0);
         if(user.lastSubCaseTime > 0 && diff < COOLDOWN) {
@@ -894,7 +1488,7 @@ function setOpenCount(n) { selectedOpenCount = n; document.querySelectorAll('.qt
 // --- GAME LOGIC ---
 async function startRouletteSequence() {
     syncServerTime();
-    if(selectedCase.category === 'free') { 
+    if(normalizeCaseCategoryValue(selectedCase.category) === 'free') { 
         const now = getTrueTime(); const COOLDOWN = 48 * 60 * 60 * 1000;
         if (user.lastSubCaseTime > 0 && (now - user.lastSubCaseTime < COOLDOWN)) return showNotify("Время еще не пришло!", "error");
     }
@@ -918,7 +1512,7 @@ async function startRouletteSequence() {
     sendAdminLog('ACTIONS', `📦 Открытие: ${selectedCase.name}`, `Кол-во: x${selectedOpenCount}\nПотрачено: ${cost} ₽\nВыпало: ${currentWins.map(i=>i.name).join(', ')}`);
 
     if(document.getElementById('fast-open-check').checked) { showWin(currentWins); } 
-    else { if (selectedCase.category === 'container') { playContainerAnim(currentWins[0]); } else { playRouletteAnim(selectedOpenCount, currentWins); } }
+    else { if (normalizeCaseCategoryValue(selectedCase.category) === 'container') { playContainerAnim(currentWins[0]); } else { playRouletteAnim(selectedOpenCount, currentWins); } }
 }
 
 function getWinItem(c) { 
@@ -1011,27 +1605,6 @@ const style = document.createElement('style');
 style.textContent = '@keyframes fadeOut { 0% { opacity: 1; } 100% { opacity: 0; } }';
 if(!document.head.querySelector('style:last-child')?.textContent.includes('fadeOut')) {
     document.head.appendChild(style);
-}
-
-// === CONFETTI & PARTICLE EFFECTS ===
-function createConfetti() {
-    const container = document.getElementById('particle-container') || createParticleContainer();
-    const confettiPieces = 60;
-    for(let i = 0; i < confettiPieces; i++) {
-        const piece = document.createElement('div');
-        piece.className = 'particle';
-        const emojis = ['🎉', '⭐', '💎', '✨', '🏆', '👑', '🔥', '💫'];
-        piece.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-        piece.style.left = Math.random() * 100 + '%';
-        piece.style.top = -10 + 'px';
-        piece.style.opacity = Math.random() * 0.7 + 0.3;
-        piece.style.fontSize = (Math.random() * 30 + 15) + 'px';
-        piece.style.animationDelay = (Math.random() * 0.5) + 's';
-        piece.style.transform = `rotate(${Math.random() * 360}deg)`;
-        piece.style.filter = 'drop-shadow(0 0 5px rgba(255, 215, 0, 0.8))';
-        container.appendChild(piece);
-        setTimeout(() => piece.remove(), 2500);
-    }
 }
 
 function createParticleContainer() {
@@ -1129,13 +1702,17 @@ function playContainerAnim(winItem) {
 }
 function playRouletteAnim(count, wins) { 
     const modal = document.getElementById('modal-roulette'); const container = document.getElementById('roulette-strips-container'); 
+    const mobilePerf = isMobilePerfMode();
     container.innerHTML = ''; modal.style.display = 'flex'; setTimeout(() => modal.classList.add('active'), 10); 
+    if (mobilePerf) modal.classList.add('mobile-perf'); else modal.classList.remove('mobile-perf');
     const isMulti = count > 1; if(isMulti) container.classList.add('grid-mode'); else container.classList.remove('grid-mode'); 
-    let ITEM_WIDTH = isMulti ? 76 : 120; const WIN_INDEX = 40; const TOTAL_CARDS = 60; 
+    const WIN_INDEX = mobilePerf ? 24 : 40;
+    const TOTAL_CARDS = mobilePerf ? 36 : 60;
+    const totalDuration = mobilePerf ? 3800 : 5000;
     for(let i=0; i<count; i++) { 
         const winItem = wins[i]; const strip = document.createElement('div'); strip.className = 'modern-roulette-track'; 
         const marker = document.createElement('div'); marker.className = 'center-marker'; strip.appendChild(marker); 
-        const rail = document.createElement('div'); rail.className = 'modern-rail'; rail.style.paddingLeft = '50%'; rail.style.marginLeft = `-${ITEM_WIDTH / 2}px`; 
+        const rail = document.createElement('div'); rail.className = 'modern-rail'; rail.style.paddingLeft = '50%'; 
         let trackHTML = ''; 
         for(let j=0; j<TOTAL_CARDS; j++) { 
             let randItem = selectedCase.items[Math.floor(Math.random()*selectedCase.items.length)]; 
@@ -1144,12 +1721,29 @@ function playRouletteAnim(count, wins) {
         } 
         rail.innerHTML = trackHTML; strip.appendChild(rail); container.appendChild(strip); 
         setTimeout(() => { 
-            const randOffset = Math.floor(Math.random() * (ITEM_WIDTH * 0.4)) - (ITEM_WIDTH * 0.2); 
-            const distance = (WIN_INDEX * ITEM_WIDTH) + randOffset; const duration = isMulti ? (4 + Math.random()) : 4.5; 
+            const firstCard = rail.querySelector('.m-card');
+            let cardWidth = isMulti ? 70 : 110;
+            let cardStep = isMulti ? 76 : 120;
+            if (firstCard) {
+                const cardStyles = window.getComputedStyle(firstCard);
+                const marginLeft = parseFloat(cardStyles.marginLeft) || 0;
+                const marginRight = parseFloat(cardStyles.marginRight) || 0;
+                cardWidth = firstCard.getBoundingClientRect().width;
+                cardStep = cardWidth + marginLeft + marginRight;
+            }
+
+            rail.style.marginLeft = `-${cardWidth / 2}px`;
+
+            // Keep a tiny randomness but always inside the winning card bounds.
+            const randOffset = (Math.random() * 2 - 1) * (cardStep * 0.18);
+            const distance = (WIN_INDEX * cardStep) + randOffset;
+            const duration = mobilePerf ? (isMulti ? 2.8 + Math.random() * 0.6 : 3.1) : (isMulti ? (4 + Math.random()) : 4.5);
+            rail.style.willChange = 'transform';
             rail.style.transition = `transform ${duration}s cubic-bezier(0.15, 0.85, 0.35, 1)`; rail.style.transform = `translateX(-${distance}px)`; 
+            setTimeout(() => { rail.style.willChange = 'auto'; }, duration * 1000 + 100);
         }, 100); 
     } 
-    safeHaptic('impact'); setTimeout(() => { showWin(wins); modal.classList.remove('active'); setTimeout(() => modal.style.display='none', 400); }, 5000); 
+    safeHaptic('impact'); setTimeout(() => { showWin(wins); modal.classList.remove('active'); setTimeout(() => modal.style.display='none', 400); }, totalDuration); 
 }
 
 // --- INVENTORY ---
@@ -1362,7 +1956,15 @@ function playContractAnimation(indices, winItem, callback) {
 // ... (MISC) ...
 function closeModal(id) { document.getElementById(id).style.display = 'none'; if(id === 'modal-preview' && countdownInterval) clearInterval(countdownInterval); }
 function saveSettings() { const nick = document.getElementById('setting-nick').value; const srv = document.getElementById('setting-server').value; const bank = document.getElementById('setting-bank').value; if(nick) user.gameNick = nick; if(srv) user.gameServer = srv; if(bank) user.bankAccount = bank; saveUser(); updateUI(); showNotify("Сохранено", "success"); closeModal('modal-profile'); }
-function openProfileModal() { document.getElementById('setting-nick').value = user.gameNick; document.getElementById('setting-server').value = user.gameServer; document.getElementById('setting-bank').value = user.bankAccount; renderHistory(); renderReferralStats(); document.getElementById('modal-profile').style.display = 'flex'; }
+function openProfileModal() {
+    document.getElementById('setting-nick').value = user.gameNick;
+    document.getElementById('setting-server').value = user.gameServer;
+    document.getElementById('setting-bank').value = user.bankAccount;
+    const browserLogoutBtn = document.getElementById('btn-browser-logout');
+    if (browserLogoutBtn) browserLogoutBtn.style.display = isTelegramWebAppContext() ? 'none' : 'block';
+    renderHistory(); renderReferralStats();
+    document.getElementById('modal-profile').style.display = 'flex';
+}
 function renderReferralStats() {
     if(document.getElementById('ref-earn-display')) document.getElementById('ref-earn-display').innerText = user.referralEarnings;
     if(document.getElementById('ref-count-display')) document.getElementById('ref-count-display').innerText = user.referralsCount;
@@ -1379,6 +1981,17 @@ function renderReferralStats() {
     }
 }
 function copyRefLink() { const link = `https://t.me/blackrussiacases_bot/app?startapp=ref_${user.uid}`; if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(link).then(() => showNotify("Скопировано!", "success")).catch(() => fallbackCopyTextToClipboard(link)); } else { fallbackCopyTextToClipboard(link); } }
+function logoutBrowserAccount() {
+    if (isTelegramWebAppContext()) {
+        showNotify('В Telegram WebApp выход недоступен', 'info');
+        return;
+    }
+    if (!confirm('Выйти из браузерного аккаунта Telegram?')) return;
+    localStorage.removeItem(BROWSER_TG_AUTH_KEY);
+    clearReferralPendingWithdrawId();
+    showNotify('Вы вышли из браузерного аккаунта', 'success');
+    setTimeout(() => location.reload(), 250);
+}
 async function withdrawReferralEarnings() {
     if(user.pendingReferralAmount && user.pendingReferralAmount > 0) return showNotify("Уже есть заявка в обработке", "error");
     if(user.referralEarnings <= 0) return showNotify("Нет средств для вывода", "error");
@@ -1407,11 +2020,15 @@ async function withdrawReferralEarnings() {
             throw error;
         }
         console.log('referral withdraw insert result', data);
+        if (data && data[0] && data[0].id) {
+            setReferralPendingWithdrawId(data[0].id);
+        }
     } catch(e) {
         console.warn('Не удалось записать заявку рефералов:', e);
         // откат
         user.referralEarnings += amount;
         user.pendingReferralAmount = 0;
+        clearReferralPendingWithdrawId();
         saveUser(); updateUI(); renderReferralStats();
         showNotify('Ошибка при записи заявки рефералов: ' + (e.message||e), 'error');
         return;
@@ -1511,6 +2128,800 @@ async function openOtherUserProfile(targetUid) {
     } catch(e) { closeModal('modal-other-profile'); }
 }
 
+// --- EMBEDDED ADMIN PANEL ---
+function initAdminUiState() {
+    const navBtn = document.getElementById('nav-admin');
+    const profileAdminBtn = document.getElementById('btn-open-admin-panel');
+    if (navBtn) navBtn.style.display = 'none';
+    if (profileAdminBtn) profileAdminBtn.style.display = 'none';
+    const tabs = document.getElementById('admin-mode-tabs');
+    const locked = document.getElementById('admin-view-locked');
+    const status = document.getElementById('admin-status-label');
+    const loginBtn = document.getElementById('btn-admin-login');
+    const logoutBtn = document.getElementById('btn-admin-logout');
+    if (tabs) tabs.style.display = 'none';
+    if (locked) locked.style.display = 'block';
+    if (status) status.innerText = 'Не авторизован';
+    if (loginBtn) loginBtn.style.display = 'inline-flex';
+    if (logoutBtn) logoutBtn.style.display = 'none';
+}
+
+function syncAdminUiAccess() {
+    const canAccess = hasAdminAccess();
+    const navBtn = document.getElementById('nav-admin');
+    const profileAdminBtn = document.getElementById('btn-open-admin-panel');
+    const tabs = document.getElementById('admin-mode-tabs');
+    const locked = document.getElementById('admin-view-locked');
+    const status = document.getElementById('admin-status-label');
+    const loginBtn = document.getElementById('btn-admin-login');
+    const logoutBtn = document.getElementById('btn-admin-logout');
+
+    if (navBtn) navBtn.style.display = canAccess ? 'inline-flex' : 'none';
+    if (profileAdminBtn) profileAdminBtn.style.display = canAccess ? 'block' : 'none';
+
+    if (!canAccess) {
+        adminSessionAuthorized = false;
+        if (tabs) tabs.style.display = 'none';
+        if (locked) locked.style.display = 'block';
+        if (status) status.innerText = 'Нет доступа';
+        if (loginBtn) loginBtn.style.display = 'none';
+        if (logoutBtn) logoutBtn.style.display = 'none';
+        return;
+    }
+
+    adminSessionAuthorized = true;
+    if (tabs) tabs.style.display = 'grid';
+    if (locked) locked.style.display = 'none';
+    if (status) status.innerText = 'Доступ разрешен';
+    if (loginBtn) loginBtn.style.display = 'none';
+    if (logoutBtn) {
+        logoutBtn.style.display = 'inline-flex';
+        logoutBtn.innerText = 'Закрыть админку';
+    }
+}
+
+function openAdminLoginModal() {
+    if (hasAdminAccess()) {
+        switchTab('admin');
+        return;
+    }
+    showNotify('Недостаточно прав для админ-панели', 'error');
+}
+
+async function adminLogin() {
+    if (!hasAdminAccess()) {
+        showNotify('Недостаточно прав', 'error');
+        return;
+    }
+    const userInput = document.getElementById('admin-login-user');
+    const passInput = document.getElementById('admin-login-pass');
+    const err = document.getElementById('admin-login-error');
+    const username = (userInput?.value || '').trim();
+    const password = (passInput?.value || '').trim();
+    if (!username || !password) {
+        if (err) err.innerText = 'Введите логин и пароль';
+        return;
+    }
+
+    adminSessionAuthorized = true;
+    const navBtn = document.getElementById('nav-admin');
+    if (navBtn) navBtn.style.display = 'inline-flex';
+    const tabs = document.getElementById('admin-mode-tabs');
+    const locked = document.getElementById('admin-view-locked');
+    const status = document.getElementById('admin-status-label');
+    const loginBtn = document.getElementById('btn-admin-login');
+    const logoutBtn = document.getElementById('btn-admin-logout');
+    if (tabs) tabs.style.display = 'grid';
+    if (locked) locked.style.display = 'none';
+    if (status) status.innerText = `Авторизован: ${username}`;
+    if (loginBtn) loginBtn.style.display = 'none';
+    if (logoutBtn) logoutBtn.style.display = 'inline-flex';
+
+    closeModal('modal-admin-login');
+    showNotify('Вход администратора выполнен', 'success');
+    await adminInitData();
+    switchTab('admin');
+}
+
+function adminLogout() {
+    if (!hasAdminAccess()) return;
+    adminSessionAuthorized = true;
+    adminCases = [];
+    adminCaseItems = [];
+    adminPromos = [];
+    adminWithdraws = [];
+    adminUsers = [];
+    adminEditingCaseId = null;
+    adminLocalItems = [];
+    adminSelectedUser = null;
+    syncAdminUiAccess();
+    showNotify('Админ-панель закрыта', 'info');
+    switchTab('cases');
+}
+
+function adminRequireAuth() {
+    if (hasAdminAccess() && adminSessionAuthorized) return true;
+    showNotify('Недостаточно прав для этой функции', 'error');
+    return false;
+}
+
+async function adminInitData() {
+    if (!adminRequireAuth()) return;
+    await Promise.all([
+        adminLoadCases(),
+        adminLoadPromos(),
+        adminLoadWithdraws(),
+        adminLoadUsers(),
+        adminLoadSettings()
+    ]);
+}
+
+function adminSetMode(mode) {
+    if (!adminRequireAuth()) return;
+    adminCurrentMode = mode;
+    ['cases', 'promos', 'withdraws', 'users', 'broadcast', 'settings'].forEach((m) => {
+        const view = document.getElementById(`admin-view-${m}`);
+        const tab = document.getElementById(`admin-tab-${m}`);
+        if (view) view.style.display = (m === mode) ? 'block' : 'none';
+        if (tab) tab.classList.toggle('active', m === mode);
+    });
+    if (mode === 'withdraws') adminLoadWithdraws();
+    if (mode === 'users') adminLoadUsers();
+    if (mode === 'settings') adminLoadSettings();
+}
+
+async function adminLoadCases() {
+    if (!adminRequireAuth()) return;
+    const { data: cData } = await sb.from('cases').select('*').order('id', { ascending: true });
+    const { data: iData } = await sb.from('case_items').select('*');
+    adminCases = cData || [];
+    adminCaseItems = iData || [];
+    renderAdminCaseCategories();
+    adminRenderCasesList();
+    if (!adminEditingCaseId && adminCases.length) adminSelectCase(adminCases[0].id);
+}
+
+function adminRenderCasesList() {
+    const list = document.getElementById('admin-cases-list');
+    if (!list) return;
+    list.innerHTML = '';
+    adminCases.forEach((c) => {
+        const btn = document.createElement('button');
+        btn.className = `admin-case-item ${c.id === adminEditingCaseId ? 'active' : ''}`;
+        btn.innerHTML = `<div>${c.name}</div><small>${c.price} ₽ | ${getCaseCategoryLabel(c.category)} | ID ${c.id}</small>`;
+        btn.onclick = () => adminSelectCase(c.id);
+        list.appendChild(btn);
+    });
+}
+
+function adminCreateCase() {
+    adminEditingCaseId = null;
+    adminLocalItems = [];
+    document.getElementById('admin-case-name').value = 'Новый кейс';
+    document.getElementById('admin-case-price').value = 100;
+    document.getElementById('admin-case-category').value = 'default';
+    document.getElementById('admin-case-img').value = PLACEHOLDER_IMG;
+    ['consumer','common','rare','epic','legendary','mythical'].forEach((r) => {
+        document.getElementById(`admin-ch-${r}`).value = 0;
+    });
+    renderAdminCaseCategories();
+    adminRenderCaseItems();
+    adminRenderCasesList();
+}
+
+function adminSelectCase(id) {
+    adminEditingCaseId = id;
+    const c = adminCases.find((x) => Number(x.id) === Number(id));
+    if (!c) return;
+    adminLocalItems = adminCaseItems.filter((i) => Number(i.case_id) === Number(id)).map((i) => ({ ...i }));
+    document.getElementById('admin-case-name').value = c.name || '';
+    document.getElementById('admin-case-price').value = c.price || 0;
+    document.getElementById('admin-case-category').value = normalizeCaseCategoryValue(c.category || 'default');
+    document.getElementById('admin-case-img').value = c.img || '';
+    const ch = c.chances || {};
+    ['consumer','common','rare','epic','legendary','mythical'].forEach((r) => {
+        document.getElementById(`admin-ch-${r}`).value = ch[r] || 0;
+    });
+    renderAdminCaseCategories();
+    adminRenderCaseItems();
+    adminRenderCasesList();
+}
+
+function adminRenderCaseItems() {
+    const box = document.getElementById('admin-items-container');
+    if (!box) return;
+    if (!adminLocalItems.length) {
+        box.innerHTML = '<div class="admin-entity-empty">В этом кейсе пока нет предметов.</div>';
+        return;
+    }
+    box.innerHTML = '';
+    adminLocalItems.forEach((item, idx) => {
+        const row = document.createElement('div');
+        row.className = 'admin-item-row';
+        row.innerHTML = `
+            <div class="admin-entity-preview">
+                <img src="${adminEscapeHtml(item.img || PLACEHOLDER_IMG)}" alt="${adminEscapeHtml(item.name || 'Предмет')}" onerror="this.src='${PLACEHOLDER_IMG}'">
+            </div>
+            <input type="text" value="${adminEscapeHtml(item.name || '')}" placeholder="Название" onchange="adminLocalItems[${idx}].name=this.value">
+            <input type="number" value="${item.price || 0}" placeholder="Цена" onchange="adminLocalItems[${idx}].price=Number(this.value||0)">
+            <select onchange="adminLocalItems[${idx}].rarity=this.value; adminRenderCaseItems()">
+                ${['consumer','common','rare','epic','legendary','mythical'].map((rarity) => `<option value="${rarity}" ${(item.rarity || 'common').toLowerCase() === rarity ? 'selected' : ''}>${rarity}</option>`).join('')}
+            </select>
+            <input type="text" value="${adminEscapeHtml(item.img || '')}" placeholder="URL картинки" onchange="adminLocalItems[${idx}].img=this.value || '${PLACEHOLDER_IMG}'; adminRenderCaseItems()">
+            <button class="btn-danger-small" type="button" onclick="adminRemoveItem(${idx})">Удалить</button>
+        `;
+        box.appendChild(row);
+    });
+}
+
+function adminAddItem() {
+    adminLocalItems.push({ name: 'Предмет', price: 100, rarity: 'common', img: PLACEHOLDER_IMG });
+    adminRenderCaseItems();
+}
+
+function adminRemoveItem(idx) {
+    adminLocalItems.splice(idx, 1);
+    adminRenderCaseItems();
+}
+
+async function adminSaveCase() {
+    if (!adminRequireAuth()) return;
+    const caseObj = {
+        name: document.getElementById('admin-case-name').value.trim(),
+        price: Number(document.getElementById('admin-case-price').value || 0),
+        category: normalizeCaseCategoryValue(document.getElementById('admin-case-category').value),
+        img: document.getElementById('admin-case-img').value.trim(),
+        chances: {
+            consumer: Number(document.getElementById('admin-ch-consumer').value || 0),
+            common: Number(document.getElementById('admin-ch-common').value || 0),
+            rare: Number(document.getElementById('admin-ch-rare').value || 0),
+            epic: Number(document.getElementById('admin-ch-epic').value || 0),
+            legendary: Number(document.getElementById('admin-ch-legendary').value || 0),
+            mythical: Number(document.getElementById('admin-ch-mythical').value || 0)
+        }
+    };
+    if (!caseObj.name) return showNotify('Введите название кейса', 'error');
+    if (!caseObj.category) return showNotify('Введите категорию кейса', 'error');
+    adminAddCaseCategory(true);
+
+    let targetId = adminEditingCaseId;
+    if (targetId) {
+        const { error } = await sb.from('cases').update(caseObj).eq('id', targetId);
+        if (error) return showNotify('Ошибка обновления кейса', 'error');
+    } else {
+        const { data, error } = await sb.from('cases').insert([caseObj]).select();
+        if (error || !data?.[0]) return showNotify('Ошибка создания кейса', 'error');
+        targetId = data[0].id;
+        adminEditingCaseId = targetId;
+    }
+
+    await sb.from('case_items').delete().eq('case_id', targetId);
+    if (adminLocalItems.length) {
+        const payload = adminLocalItems.map((i) => ({
+            case_id: targetId,
+            name: i.name,
+            price: Number(i.price || 0),
+            rarity: (i.rarity || 'common').toLowerCase(),
+            img: i.img || PLACEHOLDER_IMG
+        }));
+        await sb.from('case_items').insert(payload);
+    }
+
+    await adminLoadCases();
+    await loadCasesFromDB();
+    showNotify('Кейс сохранен', 'success');
+}
+
+async function adminDeleteCase() {
+    if (!adminRequireAuth() || !adminEditingCaseId) return;
+    if (!confirm('Удалить кейс?')) return;
+    const { error } = await sb.from('cases').delete().eq('id', adminEditingCaseId);
+    if (error) return showNotify(`Ошибка удаления: ${error.message}`, 'error');
+    adminEditingCaseId = null;
+    adminLocalItems = [];
+    await adminLoadCases();
+    await loadCasesFromDB();
+    adminCreateCase();
+    showNotify('Кейс удален', 'success');
+}
+
+async function adminLoadPromos() {
+    if (!adminRequireAuth()) return;
+    const { data } = await sb.from('admin_promos').select('*').order('id', { ascending: true });
+    adminPromos = data || [];
+    const box = document.getElementById('admin-promos-container');
+    if (!box) return;
+    box.innerHTML = '';
+    adminPromos.forEach((p, idx) => {
+        const row = document.createElement('div');
+        row.className = 'admin-promo-row';
+        row.innerHTML = `
+            <input type="text" value="${p.code || ''}" onchange="adminUpdatePromo(${idx}, 'code', this.value.toUpperCase())">
+            <input type="number" value="${p.reward || 0}" onchange="adminUpdatePromo(${idx}, 'reward', this.value)">
+            <select onchange="adminUpdatePromo(${idx}, 'is_active', this.value === 'true')">
+                <option value="true" ${p.is_active ? 'selected' : ''}>Вкл</option>
+                <option value="false" ${!p.is_active ? 'selected' : ''}>Выкл</option>
+            </select>
+            <button class="btn-danger-small" onclick="adminDeletePromo(${idx})">X</button>
+        `;
+        box.appendChild(row);
+    });
+}
+
+async function adminAddPromo() {
+    if (!adminRequireAuth()) return;
+    const { error } = await sb.from('admin_promos').insert([{ code: 'NEW_CODE', reward: 100, is_active: true }]);
+    if (error) return showNotify(`Ошибка: ${error.message}`, 'error');
+    adminLoadPromos();
+}
+
+async function adminUpdatePromo(idx, field, val) {
+    const p = adminPromos[idx];
+    if (!p) return;
+    const patch = { [field]: field === 'reward' ? Number(val || 0) : val };
+    const { error } = await sb.from('admin_promos').update(patch).eq('id', p.id);
+    if (error) return showNotify('Ошибка обновления промокода', 'error');
+    adminLoadPromos();
+}
+
+async function adminDeletePromo(idx) {
+    const p = adminPromos[idx];
+    if (!p || !confirm('Удалить промокод?')) return;
+    const { error } = await sb.from('admin_promos').delete().eq('id', p.id);
+    if (error) return showNotify('Ошибка удаления промокода', 'error');
+    adminLoadPromos();
+}
+
+async function adminLoadWithdraws() {
+    if (!adminRequireAuth()) return;
+    const { data, error } = await sb.from('withdraws').select('*').order('created_at', { ascending: false });
+    if (error) return showNotify('Нет доступа к заявкам', 'error');
+    adminWithdraws = data || [];
+    const box = document.getElementById('admin-withdraws-container');
+    if (!box) return;
+    box.innerHTML = '';
+    adminWithdraws.forEach((w, idx) => {
+        const row = document.createElement('div');
+        row.className = 'admin-withdraw-row';
+        const what = w.type === 'item' ? `${w.item_name} (${w.amount} ₽)` : `Рефералы (${w.amount} ₽)`;
+        row.innerHTML = `
+            <div>${w.user_name || 'Игрок'} (${w.user_id})</div>
+            <div>${what}</div>
+            <div>${w.bank_account || '-'}</div>
+            <div>${w.status || '-'}</div>
+            <div>
+                ${w.status === 'pending' ? `<button class="btn-secondary" onclick="adminConfirmWithdraw(${idx}, true)">OK</button><button class="btn-danger-small" onclick="adminConfirmWithdraw(${idx}, false)">NO</button>` : '<span>-</span>'}
+            </div>
+        `;
+        box.appendChild(row);
+    });
+}
+
+async function adminConfirmWithdraw(idx, ok) {
+    const w = adminWithdraws[idx];
+    if (!w || w.status !== 'pending') return;
+    const nextStatus = ok ? 'confirmed' : 'rejected';
+    const { error } = await sb.from('withdraws').update({ status: nextStatus }).eq('id', w.id);
+    if (error) return showNotify(`Ошибка: ${error.message}`, 'error');
+    adminLoadWithdraws();
+    showNotify(ok ? 'Заявка подтверждена' : 'Заявка отклонена', ok ? 'success' : 'info');
+}
+
+async function adminLoadUsers() {
+    if (!adminRequireAuth()) return;
+    const { data, error } = await sb.from('users')
+        .select('telegram_id, first_name, username, balance, total_spent, game_nick, game_server, bank_account, referral_earnings, pending_referral_amount, is_verified, is_banned, ban_reason, admin, inventory, withdrawn_items, history')
+        .order('telegram_id', { ascending: false })
+        .limit(500);
+    if (error) return showNotify('Ошибка загрузки игроков', 'error');
+    adminUsers = data || [];
+    adminRenderUsersList();
+}
+
+function adminRenderUsersList() {
+    const list = document.getElementById('admin-users-list');
+    if (!list) return;
+    const q = (document.getElementById('admin-user-search')?.value || '').trim().toLowerCase();
+    list.innerHTML = '';
+    adminUsers
+        .filter((u) => {
+            if (!q) return true;
+            return String(u.telegram_id).includes(q) || (u.first_name || '').toLowerCase().includes(q) || (u.username || '').toLowerCase().includes(q);
+        })
+        .forEach((u) => {
+            const btn = document.createElement('button');
+            const active = adminSelectedUser && Number(adminSelectedUser.telegram_id) === Number(u.telegram_id);
+            btn.className = `admin-user-item ${active ? 'active' : ''}`;
+            btn.innerHTML = `<div>${u.first_name || 'User'} ${u.is_banned ? ' [BAN]' : ''}</div><small>ID: ${u.telegram_id} | Баланс: ${Math.floor(Number(u.balance || 0))} ₽</small>`;
+            btn.onclick = () => adminSelectUser(u.telegram_id);
+            list.appendChild(btn);
+        });
+}
+
+function adminSelectUser(uid) {
+    adminSelectedUser = adminUsers.find((u) => Number(u.telegram_id) === Number(uid)) || null;
+    if (!adminSelectedUser) return;
+    const ed = document.getElementById('admin-user-editor');
+    if (ed) ed.style.display = 'block';
+    document.getElementById('admin-user-id').value = adminSelectedUser.telegram_id;
+    document.getElementById('admin-user-balance').value = Number(adminSelectedUser.balance || 0);
+    document.getElementById('admin-user-total-spent').value = Number(adminSelectedUser.total_spent || 0);
+    document.getElementById('admin-user-name').value = adminSelectedUser.first_name || '';
+    document.getElementById('admin-user-username').value = adminSelectedUser.username || '';
+    document.getElementById('admin-user-game-nick').value = adminSelectedUser.game_nick || '';
+    document.getElementById('admin-user-game-server').value = adminSelectedUser.game_server || '';
+    document.getElementById('admin-user-bank').value = adminSelectedUser.bank_account || '';
+    document.getElementById('admin-user-ref').value = Number(adminSelectedUser.referral_earnings || 0);
+    document.getElementById('admin-user-verified').checked = !!adminSelectedUser.is_verified;
+    document.getElementById('admin-user-banned').checked = !!adminSelectedUser.is_banned;
+    document.getElementById('admin-user-admin').checked = !!adminSelectedUser.admin;
+    document.getElementById('admin-user-ban-reason').value = adminSelectedUser.ban_reason || '';
+    adminUserInventoryDraft = Array.isArray(adminSelectedUser.inventory) ? adminSelectedUser.inventory.map((item) => ({ ...item })) : [];
+    adminUserWithdrawnDraft = Array.isArray(adminSelectedUser.withdrawn_items) ? adminSelectedUser.withdrawn_items.map((item) => ({ ...item })) : [];
+    adminUserHistoryDraft = Array.isArray(adminSelectedUser.history) ? adminSelectedUser.history.map((entry) => ({ ...entry })) : [];
+    adminRenderUserCollections();
+    adminResetGrantForm();
+    adminRenderUsersList();
+}
+
+function adminGetHistoryColor(val = '') {
+    return String(val).includes('+') ? '#4CAF50' : '#ff4d4d';
+}
+
+function adminEscapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function adminRenderUserCollections() {
+    adminRenderInventoryDraft();
+    adminRenderWithdrawnDraft();
+    adminRenderHistoryDraft();
+}
+
+function adminRenderInventoryDraft() {
+    const box = document.getElementById('admin-user-inventory-list');
+    if (!box) return;
+    if (!adminUserInventoryDraft.length) {
+        box.innerHTML = '<div class="admin-entity-empty">Инвентарь пуст.</div>';
+        return;
+    }
+    box.innerHTML = adminUserInventoryDraft.map((item, idx) => `
+        <div class="admin-entity-card rarity-${adminEscapeHtml((item.rarity || 'common').toLowerCase())}">
+            <div class="admin-entity-preview">
+                <img src="${adminEscapeHtml(item.img || PLACEHOLDER_IMG)}" alt="${adminEscapeHtml(item.name || 'Предмет')}" onerror="this.src='${PLACEHOLDER_IMG}'">
+            </div>
+            <div class="admin-entity-fields admin-entity-fields-4">
+                <input type="text" value="${adminEscapeHtml(item.name || '')}" placeholder="Название" oninput="adminUpdateInventoryItem(${idx}, 'name', this.value)">
+                <input type="number" value="${Number(item.price || 0)}" placeholder="Цена" oninput="adminUpdateInventoryItem(${idx}, 'price', this.value)">
+                <select onchange="adminUpdateInventoryItem(${idx}, 'rarity', this.value)">
+                    ${['consumer','common','rare','epic','legendary','mythical'].map((rarity) => `<option value="${rarity}" ${(item.rarity || 'common').toLowerCase() === rarity ? 'selected' : ''}>${rarity}</option>`).join('')}
+                </select>
+                <input type="text" value="${adminEscapeHtml(item.img || '')}" placeholder="img/..." oninput="adminUpdateInventoryItem(${idx}, 'img', this.value)">
+            </div>
+            <div class="admin-entity-actions">
+                <label class="admin-check compact"><input type="checkbox" ${item.pendingWithdraw ? 'checked' : ''} onchange="adminToggleInventoryPending(${idx}, this.checked)"> На выводе</label>
+                <button class="btn-secondary" type="button" onclick="adminMoveInventoryToWithdrawn(${idx})">В выведенные</button>
+                <button class="btn-danger-small" type="button" onclick="adminRemoveInventoryItem(${idx})">Удалить</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function adminRenderWithdrawnDraft() {
+    const box = document.getElementById('admin-user-withdrawn-list');
+    if (!box) return;
+    if (!adminUserWithdrawnDraft.length) {
+        box.innerHTML = '<div class="admin-entity-empty">Нет выведенных предметов.</div>';
+        return;
+    }
+    box.innerHTML = adminUserWithdrawnDraft.map((item, idx) => `
+        <div class="admin-entity-card rarity-${adminEscapeHtml((item.rarity || 'common').toLowerCase())}">
+            <div class="admin-entity-preview">
+                <img src="${adminEscapeHtml(item.img || PLACEHOLDER_IMG)}" alt="${adminEscapeHtml(item.name || 'Предмет')}" onerror="this.src='${PLACEHOLDER_IMG}'">
+            </div>
+            <div class="admin-entity-fields admin-entity-fields-4">
+                <input type="text" value="${adminEscapeHtml(item.name || '')}" placeholder="Название" oninput="adminUpdateWithdrawnItem(${idx}, 'name', this.value)">
+                <input type="number" value="${Number(item.price || 0)}" placeholder="Цена" oninput="adminUpdateWithdrawnItem(${idx}, 'price', this.value)">
+                <select onchange="adminUpdateWithdrawnItem(${idx}, 'rarity', this.value)">
+                    ${['consumer','common','rare','epic','legendary','mythical'].map((rarity) => `<option value="${rarity}" ${(item.rarity || 'common').toLowerCase() === rarity ? 'selected' : ''}>${rarity}</option>`).join('')}
+                </select>
+                <input type="text" value="${adminEscapeHtml(item.img || '')}" placeholder="img/..." oninput="adminUpdateWithdrawnItem(${idx}, 'img', this.value)">
+            </div>
+            <div class="admin-entity-actions">
+                <button class="btn-secondary" type="button" onclick="adminRestoreWithdrawnItem(${idx})">Вернуть в инвентарь</button>
+                <button class="btn-danger-small" type="button" onclick="adminRemoveWithdrawnItem(${idx})">Удалить</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function adminRenderHistoryDraft() {
+    const box = document.getElementById('admin-user-history-list');
+    if (!box) return;
+    if (!adminUserHistoryDraft.length) {
+        box.innerHTML = '<div class="admin-entity-empty">История пока пустая.</div>';
+        return;
+    }
+    box.innerHTML = adminUserHistoryDraft.map((entry, idx) => `
+        <div class="admin-entity-card admin-entity-card-history">
+            <div class="admin-entity-fields admin-entity-fields-2">
+                <input type="text" value="${adminEscapeHtml(entry.text || '')}" placeholder="Текст действия" onchange="adminUpdateHistoryEntry(${idx}, 'text', this.value)">
+                <input type="text" value="${adminEscapeHtml(entry.val || '')}" placeholder="Значение" onchange="adminUpdateHistoryEntry(${idx}, 'val', this.value)">
+            </div>
+            <div class="admin-history-preview">
+                <span>${adminEscapeHtml(entry.text || 'Без названия')}</span>
+                <strong style="color:${adminEscapeHtml(entry.color || adminGetHistoryColor(entry.val || ''))}">${adminEscapeHtml(entry.val || '-')}</strong>
+            </div>
+            <div class="admin-entity-actions">
+                <button class="btn-danger-small" type="button" onclick="adminRemoveHistoryEntry(${idx})">Удалить</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function adminNormalizeItemPatch(field, value) {
+    if (field === 'price') return Number(value || 0);
+    if (field === 'pendingWithdraw') return !!value;
+    if (field === 'rarity') return String(value || 'common').trim().toLowerCase();
+    if (field === 'img') return value || PLACEHOLDER_IMG;
+    return value;
+}
+
+function adminUpdateInventoryItem(idx, field, value) {
+    if (!adminUserInventoryDraft[idx]) return;
+    adminUserInventoryDraft[idx][field] = adminNormalizeItemPatch(field, value);
+    if (field === 'img' || field === 'rarity') adminRenderInventoryDraft();
+}
+
+function adminUpdateWithdrawnItem(idx, field, value) {
+    if (!adminUserWithdrawnDraft[idx]) return;
+    adminUserWithdrawnDraft[idx][field] = adminNormalizeItemPatch(field, value);
+    if (field === 'img' || field === 'rarity') adminRenderWithdrawnDraft();
+}
+
+function adminUpdateHistoryEntry(idx, field, value) {
+    if (!adminUserHistoryDraft[idx]) return;
+    adminUserHistoryDraft[idx][field] = value;
+    adminUserHistoryDraft[idx].color = adminGetHistoryColor(adminUserHistoryDraft[idx].val || '');
+    adminRenderHistoryDraft();
+}
+
+function adminToggleInventoryPending(idx, checked) {
+    if (!adminUserInventoryDraft[idx]) return;
+    adminUserInventoryDraft[idx].pendingWithdraw = !!checked;
+}
+
+function adminRemoveInventoryItem(idx) {
+    adminUserInventoryDraft.splice(idx, 1);
+    adminRenderInventoryDraft();
+}
+
+function adminRemoveWithdrawnItem(idx) {
+    adminUserWithdrawnDraft.splice(idx, 1);
+    adminRenderWithdrawnDraft();
+}
+
+function adminRemoveHistoryEntry(idx) {
+    adminUserHistoryDraft.splice(idx, 1);
+    adminRenderHistoryDraft();
+}
+
+function adminMoveInventoryToWithdrawn(idx) {
+    const item = adminUserInventoryDraft[idx];
+    if (!item) return;
+    const moved = { ...item };
+    delete moved.pendingWithdraw;
+    adminUserWithdrawnDraft.unshift(moved);
+    adminUserInventoryDraft.splice(idx, 1);
+    adminRenderUserCollections();
+}
+
+function adminRestoreWithdrawnItem(idx) {
+    const item = adminUserWithdrawnDraft[idx];
+    if (!item) return;
+    adminUserInventoryDraft.unshift({ ...item, pendingWithdraw: false });
+    adminUserWithdrawnDraft.splice(idx, 1);
+    adminRenderUserCollections();
+}
+
+function adminAddWithdrawnItem() {
+    adminUserWithdrawnDraft.unshift({ name: 'Выведенный предмет', price: 100, rarity: 'common', img: PLACEHOLDER_IMG });
+    adminRenderWithdrawnDraft();
+}
+
+function adminAddHistoryEntry() {
+    adminUserHistoryDraft.unshift({ text: 'Ручная запись', val: '+0', color: '#4CAF50' });
+    adminRenderHistoryDraft();
+}
+
+function adminOpenGrantBox() {
+    const box = document.getElementById('admin-grant-box');
+    if (box) box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    const nameInput = document.getElementById('admin-grant-name');
+    if (nameInput) nameInput.focus();
+}
+
+function adminResetGrantForm() {
+    const name = document.getElementById('admin-grant-name');
+    const price = document.getElementById('admin-grant-price');
+    const rarity = document.getElementById('admin-grant-rarity');
+    const img = document.getElementById('admin-grant-img');
+    if (name) name.value = '';
+    if (price) price.value = '';
+    if (rarity) rarity.value = 'common';
+    if (img) img.value = '';
+}
+
+async function adminSaveUser() {
+    if (!adminSelectedUser) return showNotify('Выбери игрока', 'error');
+    const inv = adminUserInventoryDraft.map((item) => ({
+        name: (item.name || '').trim(),
+        price: Number(item.price || 0),
+        rarity: (item.rarity || 'common').trim().toLowerCase(),
+        img: (item.img || PLACEHOLDER_IMG).trim() || PLACEHOLDER_IMG,
+        ...(item.pendingWithdraw ? { pendingWithdraw: true } : {})
+    })).filter((item) => item.name);
+    const withdrawn = adminUserWithdrawnDraft.map((item) => ({
+        name: (item.name || '').trim(),
+        price: Number(item.price || 0),
+        rarity: (item.rarity || 'common').trim().toLowerCase(),
+        img: (item.img || PLACEHOLDER_IMG).trim() || PLACEHOLDER_IMG
+    })).filter((item) => item.name);
+    const history = adminUserHistoryDraft.map((entry) => {
+        const val = (entry.val || '').trim();
+        return {
+            text: (entry.text || '').trim(),
+            val,
+            color: entry.color || adminGetHistoryColor(val)
+        };
+    }).filter((entry) => entry.text || entry.val);
+
+    const patch = {
+        balance: Number(document.getElementById('admin-user-balance').value || 0),
+        total_spent: Number(document.getElementById('admin-user-total-spent').value || 0),
+        first_name: document.getElementById('admin-user-name').value.trim(),
+        username: document.getElementById('admin-user-username').value.trim(),
+        game_nick: document.getElementById('admin-user-game-nick').value.trim(),
+        game_server: document.getElementById('admin-user-game-server').value.trim(),
+        bank_account: document.getElementById('admin-user-bank').value.trim(),
+        referral_earnings: Number(document.getElementById('admin-user-ref').value || 0),
+        is_verified: document.getElementById('admin-user-verified').checked,
+        is_banned: document.getElementById('admin-user-banned').checked,
+        admin: document.getElementById('admin-user-admin').checked,
+        ban_reason: document.getElementById('admin-user-ban-reason').value.trim(),
+        inventory: inv,
+        withdrawn_items: withdrawn,
+        history
+    };
+
+    const { error } = await sb.from('users').update(patch).eq('telegram_id', adminSelectedUser.telegram_id);
+    if (error) return showNotify(`Ошибка сохранения игрока: ${error.message}`, 'error');
+
+    if (Number(adminSelectedUser.telegram_id) === Number(user.uid)) {
+        user.balance = patch.balance;
+        user.inventory = patch.inventory;
+        user.withdrawnItems = patch.withdrawn_items;
+        user.history = patch.history;
+        user.isVerified = patch.is_verified;
+        user.isAdmin = patch.admin;
+        syncAdminUiAccess();
+        updateUI();
+        renderHistory();
+    }
+
+    showNotify('Игрок сохранен', 'success');
+    adminLoadUsers();
+}
+
+function adminQuickBan(flag) {
+    if (!adminSelectedUser) return showNotify('Выбери игрока', 'error');
+    document.getElementById('admin-user-banned').checked = !!flag;
+    if (!flag) document.getElementById('admin-user-ban-reason').value = '';
+    adminSaveUser();
+}
+
+function adminGrantItem() {
+    if (!adminSelectedUser) return showNotify('Выбери игрока', 'error');
+    const name = document.getElementById('admin-grant-name').value.trim();
+    const price = Number(document.getElementById('admin-grant-price').value || 0);
+    const rarity = (document.getElementById('admin-grant-rarity').value || 'common').trim().toLowerCase();
+    const img = document.getElementById('admin-grant-img').value.trim() || PLACEHOLDER_IMG;
+    if (!name) return showNotify('Укажи название предмета', 'error');
+    adminUserInventoryDraft.unshift({ name, price, rarity, img, pendingWithdraw: false });
+    adminRenderInventoryDraft();
+    adminResetGrantForm();
+    showNotify('Предмет добавлен в инвентарь. Нажми "Сохранить игрока"', 'info');
+}
+
+async function adminStartBroadcast() {
+    if (!adminRequireAuth()) return;
+    const text = (document.getElementById('admin-broadcast-text')?.value || '').trim();
+    if (!text) return showNotify('Введите текст рассылки', 'error');
+    if (!confirm('Отправить рассылку всем пользователям?')) return;
+
+    const btn = document.getElementById('admin-broadcast-btn');
+    const status = document.getElementById('admin-broadcast-status');
+    const sent = document.getElementById('admin-bc-sent');
+    const total = document.getElementById('admin-bc-total');
+    if (btn) btn.disabled = true;
+    if (status) status.style.display = 'block';
+
+    const { data: usersData, error } = await sb.from('users').select('telegram_id');
+    if (error || !usersData) {
+        if (btn) btn.disabled = false;
+        return showNotify('Ошибка получения пользователей', 'error');
+    }
+
+    if (total) total.innerText = String(usersData.length);
+    let sentCount = 0;
+    for (let i = 0; i < usersData.length; i++) {
+        try {
+            await fetch(API_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'broadcast_fast', userId: usersData[i].telegram_id, text })
+            });
+            sentCount += 1;
+            if (sent) sent.innerText = String(sentCount);
+        } catch (e) {}
+        await new Promise((r) => setTimeout(r, 100));
+    }
+
+    if (btn) btn.disabled = false;
+    showNotify('Рассылка завершена', 'success');
+}
+
+async function adminLoadSettings() {
+    if (!adminRequireAuth()) return;
+    const { data } = await sb.from('game_settings').select('x2_drop_active').eq('id', 1).maybeSingle();
+    const active = !!(data && data.x2_drop_active);
+    const el = document.getElementById('admin-x2-status');
+    if (el) el.innerText = active ? 'АКТИВЕН' : 'ОТКЛЮЧЕН';
+}
+
+async function adminToggleX2() {
+    if (!adminRequireAuth()) return;
+    const { data } = await sb.from('game_settings').select('x2_drop_active').eq('id', 1).maybeSingle();
+    const next = !(data && data.x2_drop_active);
+    const { error } = await sb.from('game_settings').upsert({ id: 1, x2_drop_active: next });
+    if (error) return showNotify('Ошибка переключения X2', 'error');
+    isX2DropActive = next;
+    updateX2Indicator();
+    adminLoadSettings();
+    showNotify(next ? 'X2 дроп включен' : 'X2 дроп выключен', 'success');
+}
+
+async function adminResetAllSpent() {
+    if (!adminRequireAuth()) return;
+    if (!confirm('Сбросить траты у всех игроков? Это обнулит топ по затратам.')) return;
+    if (!confirm('Подтверди ещё раз: total_spent будет сброшен у всех пользователей.')) return;
+
+    const { error } = await sb.from('users').update({ total_spent: 0 }).not('telegram_id', 'is', null);
+    if (error) return showNotify(`Ошибка сброса трат: ${error.message}`, 'error');
+
+    adminUsers = adminUsers.map((player) => ({ ...player, total_spent: 0 }));
+    if (adminSelectedUser) {
+        adminSelectedUser = { ...adminSelectedUser, total_spent: 0 };
+        const totalSpentInput = document.getElementById('admin-user-total-spent');
+        if (totalSpentInput) totalSpentInput.value = 0;
+    }
+    if (Number(user.uid)) {
+        user.totalSpent = 0;
+        updateUI();
+    }
+
+    adminRenderUsersList();
+    loadLeaderboard();
+    sendAdminLog('GENERAL', '📉 Сброс топа по затратам', 'Администратор обнулил total_spent у всех игроков');
+    showNotify('Траты всех игроков сброшены', 'success');
+}
+
 // === DYNAMIC EFFECTS SYSTEM ===
 function createRipple(event) {
     const btn = event.target.closest('button');
@@ -1532,6 +2943,10 @@ function createRipple(event) {
 }
 
 function createConfetti(count = 40) {
+    if (isMobilePerfMode()) {
+        count = Math.min(count, 16);
+    }
+
     const container = document.getElementById('particle-container');
     if (!container) {
         const newContainer = document.createElement('div');
@@ -1542,6 +2957,7 @@ function createConfetti(count = 40) {
     
     const emojis = ['🎉', '⭐', '💎', '🏆', '🎁', '❤️', '✨', '🔥'];
     const cont = document.getElementById('particle-container');
+    const fragment = document.createDocumentFragment();
     
     for (let i = 0; i < count; i++) {
         const particle = document.createElement('div');
@@ -1556,9 +2972,11 @@ function createConfetti(count = 40) {
             animation: confettiFall ${2 + Math.random() * 1.5}s ease-out forwards;
             transform: rotate(${Math.random() * 360}deg);
         `;
-        cont.appendChild(particle);
+        fragment.appendChild(particle);
         setTimeout(() => particle.remove(), 3500);
     }
+
+    cont.appendChild(fragment);
 }
 
 function shakeElement(element, intensity = 3, duration = 400) {

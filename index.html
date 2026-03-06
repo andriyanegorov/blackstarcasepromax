@@ -15,7 +15,7 @@
 
 <!-- VPN Overlay -->
 <div id="vpn-overlay" style="display:none; position:fixed; inset:0; background:#09090b; z-index:10001; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px;">
-    <div style="font-size: 60px; margin-bottom: 20px; animation: float 3s ease-in-out infinite;">🌍</div>
+    <div class="ui-symbol ui-symbol-vpn"></div>
     <h1 style="color:#FFD700; font-weight:900; margin-bottom:10px;">ТРЕБУЕТСЯ VPN</h1>
     <p style="color:#ccc; font-size:16px; max-width:300px; margin-bottom:20px;">Не удалось подключиться к серверу. Если вы из РФ, включите VPN.</p>
     <button onclick="location.reload()" class="btn-primary" style="width: auto; padding: 10px 30px;">ПОВТОРИТЬ</button>
@@ -23,7 +23,7 @@
 
 <!-- Ban Overlay -->
 <div id="ban-overlay" style="display:none; position:fixed; inset:0; background:#09090b; z-index:10000; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px;">
-    <div style="font-size: 80px; margin-bottom: 20px;">🚫</div>
+    <div class="ui-symbol ui-symbol-ban"></div>
     <h1 style="color:#ff3333; font-weight:900; margin-bottom:10px;">ДОСТУП ЗАБЛОКИРОВАН</h1>
     <p style="color:#ccc; font-size:16px; max-width:300px; margin-bottom:20px;">Ваш аккаунт был ограничен администратором.</p>
 </div>
@@ -44,6 +44,18 @@
     <div id="loading-screen" style="position:fixed; inset:0; background:#09090b; z-index:9999; display:flex; align-items:center; justify-content:center; flex-direction:column;">
         <div class="loader-dot" style="width:20px; height:20px;"></div>
         <div style="margin-top:15px; color:#FFD700; font-weight:bold;">ЗАГРУЗКА...</div>
+    </div>
+
+    <!-- Browser Telegram Auth -->
+    <div id="browser-auth-overlay" class="browser-auth-overlay" style="display:none;">
+        <div class="browser-auth-card">
+            <button id="browser-auth-secret" class="browser-auth-secret" type="button" onclick="triggerSecretTestAuth()" aria-label="secret"></button>
+            <img src="img/logo.png" alt="Black Russia" class="browser-auth-logo" onerror="this.style.display='none'">
+            <h2>Вход Через Telegram</h2>
+            <p>Чтобы открыть свой аккаунт в браузере, авторизуйтесь через Telegram.</p>
+            <div id="tg-login-widget" class="tg-login-widget"></div>
+            <div class="browser-auth-note">Используется аккаунт вашего Telegram, как и в WebApp.</div>
+        </div>
     </div>
 
     <!-- Particle Container (for future effects) -->
@@ -71,16 +83,28 @@
 
         <main>
             <div id="x2-indicator" class="x2-indicator" style="display:none;">
-                <div class="x2-text">⚡ X2 ДРОП ⚡</div>
+                <div class="x2-text"><span class="inline-symbol inline-symbol-bolt"></span> X2 ДРОП <span class="inline-symbol inline-symbol-bolt"></span></div>
             </div>
 
             <div id="tab-cases" class="section active">
                 <div class="hero-section"><h1>Black Russia Cases</h1><p>Испытай удачу прямо сейчас</p></div>
-                <div class="section-divider"><span>БЕСПЛАТНО</span></div><div class="cases-grid" id="cases-free"></div>
-                <div class="section-divider"><span>КЕЙСЫ</span></div><div class="cases-grid" id="cases-default"></div>
-                <div class="section-divider"><span>НАБОРЫ</span></div><div class="cases-grid" id="cases-bundles"></div>
-                <div class="section-divider"><span>РИСК</span></div><div class="cases-grid" id="cases-risk"></div>
-                <div class="section-divider"><span>КОНТЕЙНЕРЫ</span></div><div class="cases-grid" id="containers"></div>
+                <div class="activity-case-card glass-panel">
+                    <div class="activity-case-head">
+                        <div>
+                            <div class="activity-case-kicker">Ежедневная активность</div>
+                            <h3>Календарь активности 📅</h3>
+                            <p id="activity-case-status">Заходи каждый день и забирай награды. Пропуск дня сбрасывает прогресс.</p>
+                        </div>
+                        <button id="activity-case-claim" class="btn-primary" onclick="claimActivityCaseReward()">ЗАБРАТЬ</button>
+                    </div>
+                    <div class="activity-case-progress">
+                        <div class="activity-case-progress-bar"><div id="activity-case-progress-fill" class="activity-case-progress-fill"></div></div>
+                        <div id="activity-case-progress-text" class="activity-case-progress-text">0 / 7 дней</div>
+                        <div id="activity-case-timer" class="activity-case-timer"></div>
+                    </div>
+                    <div id="activity-case-days" class="activity-case-days"></div>
+                </div>
+                <div id="cases-categories"></div>
             </div>
 
             <div id="tab-games" class="section">
@@ -88,7 +112,7 @@
                 
                 <div class="games-hub-grid">
                     <div class="game-hub-card upgrade" onclick="switchTab('upgrade')">
-                        <div class="gh-icon">⚙️</div>
+                        <div class="gh-icon"><span class="css-glyph css-glyph-upgrade"></span></div>
                         <div class="gh-info">
                             <h3>Апгрейд</h3>
                             <p>Улучши предмет или потеряй его</p>
@@ -97,7 +121,7 @@
                     </div>
                     
                     <div class="game-hub-card contract" onclick="switchTab('contract')">
-                        <div class="gh-icon">📜</div>
+                        <div class="gh-icon"><span class="css-glyph css-glyph-contract"></span></div>
                         <div class="gh-info">
                             <h3>Контракт</h3>
                             <p>Обменяй 5 предметов на 1 крутой</p>
@@ -106,7 +130,7 @@
                     </div>
 
                     <div class="game-hub-card top" onclick="switchTab('top')">
-                        <div class="gh-icon">🏆</div>
+                        <div class="gh-icon"><span class="css-glyph css-glyph-top"></span></div>
                         <div class="gh-info">
                             <h3>Топ Игроков</h3>
                             <p>Рейтинг богачей сервера</p>
@@ -150,7 +174,7 @@
                 <div class="hero-section small"><h1>Контракты</h1><p>Обменяй ненужное</p></div>
                 <div id="contract-stats" class="contract-stats glass-panel"><div>Выбрано: <span id="contract-count" class="gold-text">0</span></div><div>Сумма: <span id="contract-sum" class="gold-text">0</span> ₽</div></div>
                 <div id="contract-grid" class="inventory-grid"></div>
-                <div id="contract-empty" class="empty-state" style="display:none;"><div class="empty-icon">📂</div><p>Пусто</p></div>
+                <div id="contract-empty" class="empty-state" style="display:none;"><div class="empty-icon"><span class="css-glyph css-glyph-folder"></span></div><p>Пусто</p></div>
                 <div class="contract-footer"><button id="btn-sign-contract" class="btn-primary big-btn" onclick="signContract()" disabled>ПОДПИСАТЬ КОНТРАКТ</button></div>
             </div>
             
@@ -163,7 +187,7 @@
             <div id="tab-shop" class="section">
                 <div class="hero-section small"><h1>Магазин</h1><p>Пополнение и бонусы</p></div>
                 <div class="glass-panel" style="padding: 20px; margin-bottom: 25px;">
-                    <h3 style="margin-top:0; color:#FFD700;">🎟 Промокод</h3>
+                    <h3 style="margin-top:0; color:#FFD700;"><span class="inline-symbol inline-symbol-ticket"></span> Промокод</h3>
                     <div class="promo-box-large"><input type="text" id="promo-input" placeholder="Введите код"><button onclick="activatePromo()" id="btn-promo-act">АКТИВИРОВАТЬ</button></div>
                 </div>
                 <div class="section-divider"><span>ПАКЕТЫ ПОПОЛНЕНИЯ</span></div>
@@ -201,10 +225,204 @@
                 <div class="bp-tasks-list" id="bp-tasks"></div>
             </div>
 
+            <div id="tab-admin" class="section">
+                <div class="hero-section small">
+                    <h1>Админ-Панель</h1>
+                    <p>Управление проектом в реальном времени</p>
+                </div>
+
+                <div class="glass-panel admin-shell">
+                    <div class="admin-topbar">
+                        <div class="admin-status">Статус: <span id="admin-status-label">Не авторизован</span></div>
+                        <div class="admin-top-actions">
+                            <button class="btn-secondary" id="btn-admin-login" onclick="openAdminLoginModal()">Войти как админ</button>
+                            <button class="btn-secondary" id="btn-admin-logout" onclick="adminLogout()" style="display:none;">Выйти</button>
+                        </div>
+                    </div>
+
+                    <div class="admin-mode-tabs" id="admin-mode-tabs" style="display:none;">
+                        <button class="admin-mode-btn active" id="admin-tab-cases" onclick="adminSetMode('cases')">Кейсы</button>
+                        <button class="admin-mode-btn" id="admin-tab-promos" onclick="adminSetMode('promos')">Промокоды</button>
+                        <button class="admin-mode-btn" id="admin-tab-withdraws" onclick="adminSetMode('withdraws')">Вывод</button>
+                        <button class="admin-mode-btn" id="admin-tab-users" onclick="adminSetMode('users')">Игроки</button>
+                        <button class="admin-mode-btn" id="admin-tab-broadcast" onclick="adminSetMode('broadcast')">Рассылка</button>
+                        <button class="admin-mode-btn" id="admin-tab-settings" onclick="adminSetMode('settings')">Настройки</button>
+                    </div>
+
+                    <div id="admin-view-locked" class="admin-locked-note">
+                        Доступ закрыт. Нажми "Войти как админ" и авторизуйся.
+                    </div>
+
+                    <div id="admin-view-cases" class="admin-view" style="display:none;">
+                        <div class="admin-layout">
+                            <div class="admin-side-list" id="admin-cases-list"></div>
+                            <div class="admin-main-editor">
+                                <div class="admin-grid-3">
+                                    <input type="text" id="admin-case-name" placeholder="Название кейса">
+                                    <input type="number" id="admin-case-price" placeholder="Цена">
+                                    <div class="admin-category-picker">
+                                        <input type="text" id="admin-case-category" list="admin-case-category-list" placeholder="Категория кейса">
+                                        <datalist id="admin-case-category-list"></datalist>
+                                        <button class="btn-secondary" type="button" onclick="adminAddCaseCategory()">+ Категория</button>
+                                    </div>
+                                </div>
+                                <div id="admin-case-category-tags" class="admin-category-tags"></div>
+                                <input type="text" id="admin-case-img" placeholder="URL картинки кейса">
+                                <div class="admin-grid-6">
+                                    <input type="number" step="0.01" id="admin-ch-consumer" placeholder="consumer %">
+                                    <input type="number" step="0.01" id="admin-ch-common" placeholder="common %">
+                                    <input type="number" step="0.01" id="admin-ch-rare" placeholder="rare %">
+                                    <input type="number" step="0.01" id="admin-ch-epic" placeholder="epic %">
+                                    <input type="number" step="0.01" id="admin-ch-legendary" placeholder="legendary %">
+                                    <input type="number" step="0.01" id="admin-ch-mythical" placeholder="mythical %">
+                                </div>
+                                <div class="admin-actions-row">
+                                    <button class="btn-secondary" onclick="adminCreateCase()">+ Новый кейс</button>
+                                    <button class="btn-secondary" onclick="adminAddItem()">+ Добавить предмет</button>
+                                    <button class="btn-primary" onclick="adminSaveCase()">Сохранить кейс</button>
+                                    <button class="btn-danger-small" onclick="adminDeleteCase()">Удалить кейс</button>
+                                </div>
+                                <div id="admin-items-container" class="admin-items-container"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="admin-view-promos" class="admin-view" style="display:none;">
+                        <div class="admin-actions-row">
+                            <button class="btn-primary" onclick="adminAddPromo()">+ Добавить промокод</button>
+                            <button class="btn-secondary" onclick="adminLoadPromos()">Обновить</button>
+                        </div>
+                        <div id="admin-promos-container"></div>
+                    </div>
+
+                    <div id="admin-view-withdraws" class="admin-view" style="display:none;">
+                        <div class="admin-actions-row">
+                            <button class="btn-secondary" onclick="adminLoadWithdraws()">Обновить заявки</button>
+                        </div>
+                        <div id="admin-withdraws-container"></div>
+                    </div>
+
+                    <div id="admin-view-users" class="admin-view" style="display:none;">
+                        <div class="admin-layout">
+                            <div class="admin-side-list">
+                                <input type="text" id="admin-user-search" placeholder="Поиск по ID / имени" oninput="adminRenderUsersList()">
+                                <div id="admin-users-list"></div>
+                            </div>
+                            <div class="admin-main-editor" id="admin-user-editor" style="display:none;">
+                                <div class="admin-grid-3">
+                                    <input type="text" id="admin-user-id" placeholder="ID" disabled>
+                                    <input type="number" id="admin-user-balance" placeholder="Баланс">
+                                    <input type="number" id="admin-user-total-spent" placeholder="Всего потрачено">
+                                </div>
+                                <div class="admin-grid-3">
+                                    <input type="text" id="admin-user-name" placeholder="Имя">
+                                    <input type="text" id="admin-user-username" placeholder="@username">
+                                    <input type="text" id="admin-user-game-nick" placeholder="Игровой ник">
+                                </div>
+                                <div class="admin-grid-3">
+                                    <input type="text" id="admin-user-game-server" placeholder="Игровой сервер">
+                                    <input type="text" id="admin-user-bank" placeholder="Банк счет">
+                                    <input type="number" id="admin-user-ref" placeholder="Реф. заработок">
+                                </div>
+                                <div class="admin-grid-3">
+                                    <label class="admin-check"><input type="checkbox" id="admin-user-verified"> Верифицирован</label>
+                                    <label class="admin-check"><input type="checkbox" id="admin-user-banned"> Забанен</label>
+                                    <label class="admin-check"><input type="checkbox" id="admin-user-admin"> Админ доступ</label>
+                                </div>
+                                <input type="text" id="admin-user-ban-reason" placeholder="Причина бана">
+                                <div class="admin-data-section">
+                                    <div class="admin-section-head">
+                                        <div>
+                                            <div class="admin-section-title">Инвентарь игрока</div>
+                                            <div class="admin-section-note">Управляй предметами в формате карточек, без JSON.</div>
+                                        </div>
+                                        <button class="btn-secondary" type="button" onclick="adminOpenGrantBox()">+ Добавить предмет</button>
+                                    </div>
+                                    <div id="admin-user-inventory-list" class="admin-entity-list"></div>
+                                </div>
+                                <div class="admin-data-section">
+                                    <div class="admin-section-head">
+                                        <div>
+                                            <div class="admin-section-title">Выведенные предметы</div>
+                                            <div class="admin-section-note">Можно вернуть предмет обратно в инвентарь или удалить его.</div>
+                                        </div>
+                                        <button class="btn-secondary" type="button" onclick="adminAddWithdrawnItem()">+ Добавить вручную</button>
+                                    </div>
+                                    <div id="admin-user-withdrawn-list" class="admin-entity-list"></div>
+                                </div>
+                                <div class="admin-data-section">
+                                    <div class="admin-section-head">
+                                        <div>
+                                            <div class="admin-section-title">История игрока</div>
+                                            <div class="admin-section-note">Редактируй записи как обычный список действий.</div>
+                                        </div>
+                                        <button class="btn-secondary" type="button" onclick="adminAddHistoryEntry()">+ Добавить запись</button>
+                                    </div>
+                                    <div id="admin-user-history-list" class="admin-entity-list"></div>
+                                </div>
+                                <div class="admin-actions-row">
+                                    <button class="btn-primary" onclick="adminSaveUser()">Сохранить игрока</button>
+                                    <button class="btn-secondary" onclick="adminQuickBan(true)">Забанить</button>
+                                    <button class="btn-secondary" onclick="adminQuickBan(false)">Разбанить</button>
+                                </div>
+                                <div class="admin-inline-box" id="admin-grant-box">
+                                    <div class="admin-section-head compact">
+                                        <div>
+                                            <div class="admin-section-title">Выдать новый предмет</div>
+                                            <div class="admin-section-note">Заполни карточку и добавь предмет в инвентарь игрока.</div>
+                                        </div>
+                                    </div>
+                                    <div class="admin-grid-4">
+                                        <input type="text" id="admin-grant-name" placeholder="Название предмета">
+                                        <input type="number" id="admin-grant-price" placeholder="Цена">
+                                        <select id="admin-grant-rarity">
+                                            <option value="consumer">Consumer</option>
+                                            <option value="common" selected>Common</option>
+                                            <option value="rare">Rare</option>
+                                            <option value="epic">Epic</option>
+                                            <option value="legendary">Legendary</option>
+                                            <option value="mythical">Mythical</option>
+                                        </select>
+                                        <input type="text" id="admin-grant-img" placeholder="img/...">
+                                    </div>
+                                    <div class="admin-actions-row">
+                                        <button class="btn-secondary" type="button" onclick="adminGrantItem()">Добавить в инвентарь</button>
+                                        <button class="btn-secondary" type="button" onclick="adminResetGrantForm()">Очистить форму</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="admin-view-broadcast" class="admin-view" style="display:none;">
+                        <textarea id="admin-broadcast-text" rows="5" placeholder="Текст рассылки"></textarea>
+                        <div class="admin-actions-row">
+                            <button class="btn-primary" id="admin-broadcast-btn" onclick="adminStartBroadcast()">Начать рассылку</button>
+                        </div>
+                        <div id="admin-broadcast-status" class="admin-note" style="display:none;">Отправлено: <span id="admin-bc-sent">0</span> / <span id="admin-bc-total">0</span></div>
+                    </div>
+
+                    <div id="admin-view-settings" class="admin-view" style="display:none;">
+                        <div class="admin-inline-box">
+                            <div class="admin-note">X2 дроп: <span id="admin-x2-status">Загрузка...</span></div>
+                            <div class="admin-actions-row">
+                                <button class="btn-primary" onclick="adminToggleX2()">Переключить X2 дроп</button>
+                            </div>
+                        </div>
+                        <div class="admin-inline-box">
+                            <div class="admin-note">Сброс топа по затратам: обнулить поле потрачено у всех игроков.</div>
+                            <div class="admin-actions-row">
+                                <button class="btn-danger-small" type="button" onclick="adminResetAllSpent()">Сбросить траты у всех</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div id="tab-inventory" class="section">
                 <div class="inventory-header"><h2>Гараж</h2><button id="btn-sell-all" class="btn-danger-small" onclick="sellAllItems()">Продать всё</button></div>
                 <div id="inventory-grid" class="inventory-grid"></div>
-                <div id="empty-inventory" class="empty-state" style="display:none;"><div class="empty-icon">🚘</div><p>Ваш гараж пуст</p></div>
+                <div id="empty-inventory" class="empty-state" style="display:none;"><div class="empty-icon"><span class="css-glyph css-glyph-garage"></span></div><p>Ваш гараж пуст</p></div>
                 <div class="section-divider"><span>Выведенные предметы</span></div>
                 <div id="withdrawn-grid" class="inventory-grid"></div>
                 <div id="empty-withdrawn" class="empty-state" style="display:none;"><p>Выведенных нет</p></div>
@@ -214,16 +432,17 @@
 
 
     <nav class="bottom-nav">
-        <button class="nav-item" onclick="switchTab('shop')"><div class="nav-icon">🛒</div><span>Магазин</span></button>
-        <button class="nav-item" onclick="switchTab('games')"><div class="nav-icon">🎮</div><span>Игры</span></button>
-        <button class="nav-item main-action" onclick="switchTab('cases')"><div class="nav-icon">📦</div></button>
-        <button class="nav-item" onclick="switchTab('pass')"><div class="nav-icon">🎫</div><span>Pass</span></button>
-        <button class="nav-item" onclick="switchTab('inventory')"><div class="nav-icon">🚘</div><span>Гараж</span></button>
+        <button class="nav-item" onclick="switchTab('shop')"><div class="nav-icon"><span class="css-glyph css-glyph-shop"></span></div><span>Магазин</span></button>
+        <button class="nav-item" onclick="switchTab('games')"><div class="nav-icon"><span class="css-glyph css-glyph-games"></span></div><span>Игры</span></button>
+        <button class="nav-item main-action" onclick="switchTab('cases')"><div class="nav-icon"><span class="css-glyph css-glyph-cases"></span></div></button>
+        <button class="nav-item" onclick="switchTab('pass')"><div class="nav-icon"><span class="css-glyph css-glyph-pass"></span></div><span>Pass</span></button>
+        <button class="nav-item" id="nav-admin" onclick="switchTab('admin')" style="display:none;"><div class="nav-icon"><span class="css-glyph css-glyph-settings"></span></div><span>Админ</span></button>
+        <button class="nav-item" onclick="switchTab('inventory')"><div class="nav-icon"><span class="css-glyph css-glyph-garage"></span></div><span>Гараж</span></button>
     </nav>
 
     <div class="modal-overlay" id="modal-payment-warning">
         <div class="modal-glass center-modal" style="text-align:center;">
-            <div style="font-size: 40px; margin-bottom: 10px;">⚠️</div>
+            <div class="ui-symbol ui-symbol-warning"></div>
             <h3 style="color:#FFD700; margin-top:0;">ПОДТВЕРЖДЕНИЕ</h3>
             <p style="font-size:13px; color:#ccc;">После оплаты подтвердите заказ на сайте оплаты.</p>
             <button id="btn-proceed-pay" class="btn-primary" style="margin-top:15px;">Я ПОНЯЛ, ОПЛАТИТЬ</button>
@@ -233,7 +452,7 @@
 
     <div class="modal-overlay" id="modal-premium-pass-confirm">
         <div class="modal-glass center-modal" style="text-align:center;">
-            <div style="font-size: 50px; margin-bottom: 15px;">📝</div>
+            <div class="ui-symbol ui-symbol-note"></div>
             <h3 style="color:#FFD700; margin-top:0; font-size:20px;">НЕ ЗАБУДЬ</h3>
             <p style="font-size:16px; color:#fff; margin:15px 0; font-weight:600;">Подтвердить заказ</p>
             <p style="font-size:12px; color:#aaa; margin-bottom:20px;">После оплаты подтвердите заказ на сайте оплаты.</p>
@@ -333,8 +552,21 @@
                 </div>
                 <button class="btn-secondary" onclick="copyRefLink()" style="margin-top:10px;">Копировать ссылку</button>
                 <button class="btn-secondary" id="btn-ref-withdraw" onclick="withdrawReferralEarnings()" style="margin-top:10px;">Вывести рефералы</button>
+                <button class="btn-secondary" id="btn-open-admin-panel" onclick="openAdminLoginModal()" style="margin-top:10px; display:none;">Админ-панель</button>
+                <button class="btn-secondary" id="btn-browser-logout" onclick="logoutBrowserAccount()" style="margin-top:10px; border-color: rgba(239,68,68,0.35); color:#ff7878;">Выйти из аккаунта в браузере</button>
                 <div class="history-block" style="margin-top:20px;"><h4>История</h4><div class="history-scroll-container"><div id="history-list"></div></div></div>
             </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-admin-login">
+        <div class="modal-glass center-modal" style="max-width:420px;">
+            <button class="btn-close" onclick="closeModal('modal-admin-login')">✕</button>
+            <h3>Вход в админ-панель</h3>
+            <input type="text" id="admin-login-user" placeholder="Логин" style="margin-bottom:10px;">
+            <input type="password" id="admin-login-pass" placeholder="Пароль" style="margin-bottom:10px;">
+            <button class="btn-primary" onclick="adminLogin()">Войти</button>
+            <div id="admin-login-error" style="margin-top:10px; color:#ff7878; font-size:12px;"></div>
         </div>
     </div>
     
@@ -358,6 +590,7 @@
 
     <div class="roulette-overlay" id="modal-roulette"><div class="roulette-status">ОТКРЫВАЕМ...</div><div id="roulette-strips-container" class="roulette-strips-container"></div></div>
     <div id="notify-area"></div>
+    <div id="activity-reward-overlay" class="activity-reward-overlay" style="display:none;"></div>
     <div class="contract-anim-overlay" id="contract-anim-overlay"><div class="contract-vortex" id="contract-vortex"></div></div>
     <div class="container-anim-overlay" id="container-anim-overlay"><div class="container-box" id="container-box"><div class="container-lock"></div><div class="container-door c-door-left"></div><div class="container-door c-door-right"></div><div class="container-inner-light"></div><img id="container-reveal-img" class="container-item-reveal" src=""></div></div>
 

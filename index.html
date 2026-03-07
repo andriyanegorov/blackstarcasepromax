@@ -105,6 +105,7 @@
 
             <div id="tab-cases" class="section active">
                 <div class="hero-section"><h1>Black Russia Cases</h1><p>Испытай удачу прямо сейчас</p></div>
+                <div class="news-featured" id="news-featured"></div>
                 <div class="activity-case-card glass-panel">
                     <div class="activity-case-head">
                         <div>
@@ -259,6 +260,7 @@
 
                     <div class="admin-mode-tabs" id="admin-mode-tabs" style="display:none;">
                         <button class="admin-mode-btn active" id="admin-tab-cases" onclick="adminSetMode('cases')">Кейсы</button>
+                        <button class="admin-mode-btn" id="admin-tab-news" onclick="adminSetMode('news')">Новости</button>
                         <button class="admin-mode-btn" id="admin-tab-promos" onclick="adminSetMode('promos')">Промокоды</button>
                         <button class="admin-mode-btn" id="admin-tab-withdraws" onclick="adminSetMode('withdraws')">Вывод</button>
                         <button class="admin-mode-btn" id="admin-tab-users" onclick="adminSetMode('users')">Игроки</button>
@@ -310,6 +312,23 @@
                             <button class="btn-secondary" onclick="adminLoadPromos()">Обновить</button>
                         </div>
                         <div id="admin-promos-container"></div>
+                    </div>
+
+                    <div id="admin-view-news" class="admin-view" style="display:none;">
+                        <div class="admin-layout">
+                            <div class="admin-side-list" id="admin-news-list"></div>
+                            <div class="admin-main-editor">
+                                <div class="admin-note" style="margin-bottom:12px;">Добавляй новости для верхнего блока: заголовок, текст и фото. Изменения применяются сразу.</div>
+                                <input type="text" id="admin-news-title" placeholder="Заголовок новости">
+                                <textarea id="admin-news-text" rows="5" placeholder="Текст новости"></textarea>
+                                <input type="text" id="admin-news-image" placeholder="URL картинки (https://... или img/...)">
+                                <div class="admin-actions-row">
+                                    <button class="btn-primary" onclick="adminSaveNewsItem()">Сохранить новость</button>
+                                    <button class="btn-secondary" onclick="adminClearNewsEditor()">Новая</button>
+                                    <button class="btn-danger-small" onclick="adminDeleteNewsItem()">Удалить</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div id="admin-view-withdraws" class="admin-view" style="display:none;">

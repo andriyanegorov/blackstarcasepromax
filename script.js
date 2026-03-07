@@ -163,6 +163,12 @@ let adminUserInventoryDraft = [];
 let adminUserWithdrawnDraft = [];
 let adminUserHistoryDraft = [];
 let adminCaseCategories = [];
+let newsPosts = [];
+let newsRawCache = '';
+let newsSyncInterval = null;
+let newsSlideInterval = null;
+let newsCurrentIndex = 0;
+let adminEditingNewsId = null;
 const ADMIN_BAN_REASON_CUSTOM = '__custom__';
 const ADMIN_BAN_REASON_OPTIONS = [
     {
@@ -221,6 +227,10 @@ const CASE_CATEGORY_META = {
     container: { label: 'КОНТЕЙНЕРЫ', order: 5 }
 };
 const ADMIN_EXTRA_CASE_CATEGORIES_KEY = 'admin_extra_case_categories_v1';
+const NEWS_STORAGE_KEY = 'br_live_news_v1';
+const NEWS_DEFAULT_IMAGE = 'https://placehold.co/640x360/13151f/e5ecff?text=NEWS';
+const NEWS_MAX_ITEMS = 10;
+const NEWS_SLIDE_INTERVAL_MS = 30000;
 
 function isMobilePerfMode() {
     return window.matchMedia('(max-width: 768px)').matches;
@@ -647,6 +657,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     initAdminUiState();
+    initNewsModule();
     // Set default active tab to 'cases'
     switchTab('cases');
     loadCasesFromDB().then(() => {
@@ -766,6 +777,286 @@ function getCookie(name) {
         }
     }
     return null;
+}
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function formatNewsDate(value) {
+    if (!value) return '';
+    const dt = new Date(value);
+    if (Number.isNaN(dt.getTime())) return '';
+    return dt.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function normalizeNewsItem(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    const id = String(raw.id || '').trim();
+    const title = String(raw.title || '').trim();
+    const text = String(raw.text || '').trim();
+    const image = String(raw.image || raw.imageUrl || '').trim() || NEWS_DEFAULT_IMAGE;
+    const createdAt = raw.createdAt ? String(raw.createdAt) : new Date().toISOString();
+    if (!id || !title || !text) return null;
+    return { id, title, text, image, createdAt };
+}
+
+function getDefaultNewsItems() {
+    return [{
+        id: `news_${Date.now()}`,
+        title: 'Добро пожаловать в новости проекта',
+        text: 'Здесь публикуются обновления, акции и важные объявления. Администратор может менять этот блок в реальном времени.',
+        image: NEWS_DEFAULT_IMAGE,
+        createdAt: new Date().toISOString()
+    }];
+}
+
+function parseNewsRaw(raw) {
+    if (!raw) return [];
+    try {
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed.map(normalizeNewsItem).filter(Boolean).slice(0, NEWS_MAX_ITEMS);
+    } catch (e) {
+        return [];
+    }
+}
+
+function normalizeNewsIndex() {
+    const len = Array.isArray(newsPosts) ? newsPosts.length : 0;
+    if (!len) {
+        newsCurrentIndex = 0;
+        return 0;
+    }
+    newsCurrentIndex = ((newsCurrentIndex % len) + len) % len;
+    return newsCurrentIndex;
+}
+
+function setNewsSlide(index, restartAutoplay = true) {
+    if (!Array.isArray(newsPosts) || !newsPosts.length) return;
+    newsCurrentIndex = index;
+    normalizeNewsIndex();
+    renderNewsFeature();
+    if (restartAutoplay) startNewsAutoplay();
+}
+
+function showNextNews(restartAutoplay = true) {
+    if (!Array.isArray(newsPosts) || newsPosts.length < 2) return;
+    setNewsSlide(newsCurrentIndex + 1, restartAutoplay);
+}
+
+function showPrevNews(restartAutoplay = true) {
+    if (!Array.isArray(newsPosts) || newsPosts.length < 2) return;
+    setNewsSlide(newsCurrentIndex - 1, restartAutoplay);
+}
+
+function startNewsAutoplay() {
+    if (newsSlideInterval) {
+        clearInterval(newsSlideInterval);
+        newsSlideInterval = null;
+    }
+    if (!Array.isArray(newsPosts) || newsPosts.length < 2) return;
+    newsSlideInterval = setInterval(() => {
+        showNextNews(false);
+    }, NEWS_SLIDE_INTERVAL_MS);
+}
+
+function renderNewsFeature() {
+    const box = document.getElementById('news-featured');
+    if (!box) return;
+
+    const list = Array.isArray(newsPosts) ? newsPosts : [];
+    normalizeNewsIndex();
+    if (!list.length) {
+        box.innerHTML = `
+            <div class="news-featured-main">
+                <div class="news-featured-content">
+                    <div class="news-kicker">Лента новостей</div>
+                    <h3 class="news-featured-title">Новостей пока нет</h3>
+                    <p class="news-featured-text">Администратор может добавить первую новость во вкладке "Новости" в админ-панели.</p>
+                </div>
+            </div>
+        `;
+        if (newsSlideInterval) {
+            clearInterval(newsSlideInterval);
+            newsSlideInterval = null;
+        }
+        return;
+    }
+
+    const featured = list[newsCurrentIndex];
+    const hasMultiple = list.length > 1;
+    const miniHtml = list.slice(0, 4).map((item, idx) => {
+        const isActive = idx === newsCurrentIndex;
+        return `
+        <button class="news-mini-item ${isActive ? 'active' : ''}" onclick="setNewsSlide(${idx})">
+            <h4 class="news-mini-item-title">${escapeHtml(item.title)}</h4>
+            <div class="news-mini-item-date">${escapeHtml(formatNewsDate(item.createdAt))}</div>
+        </button>
+    `;
+    }).join('');
+
+    const safeImage = escapeHtml(featured.image || NEWS_DEFAULT_IMAGE);
+
+    box.innerHTML = `
+        <div class="news-featured-main" style="background-image:url('${safeImage}')">
+            <div class="news-featured-content">
+                <div class="news-kicker">Лента новостей</div>
+                <h3 class="news-featured-title">${escapeHtml(featured.title)}</h3>
+                <p class="news-featured-text">${escapeHtml(featured.text)}</p>
+                <div class="news-featured-meta">
+                    <div class="news-featured-date">${escapeHtml(formatNewsDate(featured.createdAt))}</div>
+                    ${hasMultiple ? `<div class="news-featured-counter">${newsCurrentIndex + 1} / ${list.length}</div>` : ''}
+                </div>
+            </div>
+            ${hasMultiple ? `
+                <div class="news-nav">
+                    <button class="news-nav-btn" onclick="showPrevNews()" aria-label="Предыдущая новость">&#10094;</button>
+                    <button class="news-nav-btn" onclick="showNextNews()" aria-label="Следующая новость">&#10095;</button>
+                </div>
+            ` : ''}
+        </div>
+        ${miniHtml ? `<div class="news-mini-list">${miniHtml}</div>` : ''}
+    `;
+
+    startNewsAutoplay();
+}
+
+function syncNewsFromStorage(force = false) {
+    const raw = localStorage.getItem(NEWS_STORAGE_KEY) || '';
+    if (!force && raw === newsRawCache) return;
+    newsRawCache = raw;
+    newsPosts = parseNewsRaw(raw);
+    renderNewsFeature();
+    if (adminCurrentMode === 'news') adminRenderNewsList();
+}
+
+function persistNews(items) {
+    const normalized = (items || []).map(normalizeNewsItem).filter(Boolean).slice(0, NEWS_MAX_ITEMS);
+    const raw = JSON.stringify(normalized);
+    localStorage.setItem(NEWS_STORAGE_KEY, raw);
+    newsRawCache = raw;
+    newsPosts = normalized;
+    renderNewsFeature();
+    if (adminCurrentMode === 'news') adminRenderNewsList();
+}
+
+function initNewsModule() {
+    const existing = localStorage.getItem(NEWS_STORAGE_KEY);
+    if (!existing) {
+        persistNews(getDefaultNewsItems());
+    } else {
+        syncNewsFromStorage(true);
+    }
+
+    window.addEventListener('storage', (event) => {
+        if (event.key === NEWS_STORAGE_KEY) syncNewsFromStorage(true);
+    });
+
+    if (newsSyncInterval) clearInterval(newsSyncInterval);
+    newsSyncInterval = setInterval(() => syncNewsFromStorage(), 1200);
+}
+
+function adminRenderNewsList() {
+    const list = document.getElementById('admin-news-list');
+    if (!list) return;
+    const items = Array.isArray(newsPosts) ? newsPosts : [];
+    if (!items.length) {
+        list.innerHTML = '<div class="admin-entity-empty">Новостей пока нет.</div>';
+        return;
+    }
+
+    list.innerHTML = '';
+    items.forEach((item) => {
+        const btn = document.createElement('button');
+        const isActive = item.id === adminEditingNewsId;
+        btn.className = `admin-news-item ${isActive ? 'active' : ''}`;
+        btn.innerHTML = `<div>${escapeHtml(item.title)}</div><small>${escapeHtml(formatNewsDate(item.createdAt))}</small>`;
+        btn.onclick = () => adminSelectNewsItem(item.id);
+        list.appendChild(btn);
+    });
+}
+
+function adminSelectNewsItem(id) {
+    const item = newsPosts.find((entry) => entry.id === id);
+    if (!item) return;
+    adminEditingNewsId = item.id;
+    const titleEl = document.getElementById('admin-news-title');
+    const textEl = document.getElementById('admin-news-text');
+    const imageEl = document.getElementById('admin-news-image');
+    if (titleEl) titleEl.value = item.title || '';
+    if (textEl) textEl.value = item.text || '';
+    if (imageEl) imageEl.value = item.image || '';
+    adminRenderNewsList();
+}
+
+function adminClearNewsEditor() {
+    adminEditingNewsId = null;
+    const titleEl = document.getElementById('admin-news-title');
+    const textEl = document.getElementById('admin-news-text');
+    const imageEl = document.getElementById('admin-news-image');
+    if (titleEl) titleEl.value = '';
+    if (textEl) textEl.value = '';
+    if (imageEl) imageEl.value = '';
+    adminRenderNewsList();
+}
+
+function adminSaveNewsItem() {
+    if (!adminRequireAuth()) return;
+    const title = (document.getElementById('admin-news-title')?.value || '').trim();
+    const text = (document.getElementById('admin-news-text')?.value || '').trim();
+    const image = (document.getElementById('admin-news-image')?.value || '').trim() || NEWS_DEFAULT_IMAGE;
+    if (!title || !text) {
+        showNotify('Заполни заголовок и текст новости', 'error');
+        return;
+    }
+
+    const next = [...newsPosts];
+    if (adminEditingNewsId) {
+        const idx = next.findIndex((item) => item.id === adminEditingNewsId);
+        if (idx !== -1) {
+            next[idx] = {
+                ...next[idx],
+                title,
+                text,
+                image
+            };
+        }
+    } else {
+        next.unshift({
+            id: `news_${Date.now()}`,
+            title,
+            text,
+            image,
+            createdAt: new Date().toISOString()
+        });
+    }
+
+    persistNews(next.slice(0, NEWS_MAX_ITEMS));
+    adminClearNewsEditor();
+    showNotify('Новость сохранена', 'success');
+}
+
+function adminDeleteNewsItem() {
+    if (!adminRequireAuth()) return;
+    if (!adminEditingNewsId) {
+        showNotify('Сначала выбери новость из списка', 'error');
+        return;
+    }
+    const next = newsPosts.filter((item) => item.id !== adminEditingNewsId);
+    persistNews(next);
+    adminClearNewsEditor();
+    showNotify('Новость удалена', 'info');
+}
+
+function adminLoadNews() {
+    syncNewsFromStorage(true);
+    adminClearNewsEditor();
 }
 
 // --- SUPABASE & USER ---
@@ -2365,6 +2656,7 @@ function adminLogout() {
     adminWithdraws = [];
     adminUsers = [];
     adminEditingCaseId = null;
+    adminEditingNewsId = null;
     adminLocalItems = [];
     adminSelectedUser = null;
     syncAdminUiAccess();
@@ -2381,6 +2673,7 @@ function adminRequireAuth() {
 async function adminInitData() {
     if (!adminRequireAuth()) return;
     adminInitBanReasonControls();
+    adminLoadNews();
     await Promise.all([
         adminLoadCases(),
         adminLoadPromos(),
@@ -2393,13 +2686,14 @@ async function adminInitData() {
 function adminSetMode(mode) {
     if (!adminRequireAuth()) return;
     adminCurrentMode = mode;
-    ['cases', 'promos', 'withdraws', 'users', 'broadcast', 'settings'].forEach((m) => {
+    ['cases', 'news', 'promos', 'withdraws', 'users', 'broadcast', 'settings'].forEach((m) => {
         const view = document.getElementById(`admin-view-${m}`);
         const tab = document.getElementById(`admin-tab-${m}`);
         if (view) view.style.display = (m === mode) ? 'block' : 'none';
         if (tab) tab.classList.toggle('active', m === mode);
     });
     if (mode === 'cases') adminLoadCases();
+    if (mode === 'news') adminLoadNews();
     if (mode === 'withdraws') adminLoadWithdraws();
     if (mode === 'users') {
         adminInitBanReasonControls();

@@ -18,9 +18,10 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwCTnYYNY3u9ceNdIxlBd0s
 const SUB_CHANNEL_URL = "https://t.me/blackrussiacases_news"; 
 const PLACEHOLDER_IMG = "https://placehold.co/150x150/1a1a1a/ffffff?text=No+Image";
 const PAYMENT_BASE_URL = "https://funpay.com/lots/offer?id=64078084"; 
-const TG_BOT_USERNAME = "blackrussiacases_bot";
-const BROWSER_TG_AUTH_KEY = "br_tg_browser_auth_v1";
-const ALLOW_BROWSER_AUTH_WITHOUT_SERVER_VERIFY = true;
+const BROWSER_AUTH_KEY = "br_browser_auth_v2";
+const BROWSER_AUTH_LOGIN = "browser";
+const BROWSER_AUTH_PASSWORD = "browser";
+const VISUAL_MODE_KEY = "br_visual_mode_v1";
 
 const RARITY_VALS = { 'consumer': 1, 'common': 2, 'rare': 3, 'epic': 4, 'legendary': 5, 'mythical': 6 };
 const RARITY_COLORS = { 'consumer': '#B0B0B0', 'common': '#4CAF50', 'rare': '#3b82f6', 'epic': '#a855f7', 'legendary': '#eab308', 'mythical': '#ff3333' };
@@ -143,8 +144,7 @@ let selectedInventoryIndex = null, upgradeState = { sourceIdx: null, targetItem:
 let ALL_ITEMS_POOL = [], contractSelection = [];
 let serverTimeOffset = 0; 
 let browserAuthResolve = null;
-let secretAuthTapCount = 0;
-let secretAuthTapTimer = null;
+let visualMode = 'quality';
 let activityCaseState = { ...DEFAULT_ACTIVITY_CASE_STATE };
 let activityCaseTimerInterval = null;
 let adminSessionAuthorized = false;
@@ -157,6 +157,7 @@ let adminEditingCaseId = null;
 let adminLocalItems = [];
 let adminSelectedUser = null;
 let adminCurrentMode = 'cases';
+let adminWithdrawFilter = 'active';
 let adminUserInventoryDraft = [];
 let adminUserWithdrawnDraft = [];
 let adminUserHistoryDraft = [];
@@ -176,8 +177,56 @@ function isMobilePerfMode() {
     return window.matchMedia('(max-width: 768px)').matches;
 }
 
+function getStoredVisualMode() {
+    try {
+        const raw = localStorage.getItem(VISUAL_MODE_KEY);
+        return raw === 'performance' ? 'performance' : 'quality';
+    } catch (e) {
+        return 'quality';
+    }
+}
+
+function saveVisualMode(mode) {
+    try {
+        localStorage.setItem(VISUAL_MODE_KEY, mode);
+    } catch (e) {}
+}
+
+function isPerformanceMode() {
+    return visualMode === 'performance';
+}
+
+function applyVisualMode(mode, syncToggle = true) {
+    visualMode = (mode === 'performance') ? 'performance' : 'quality';
+    const isPerf = isPerformanceMode();
+    document.body.classList.toggle('visual-performance-mode', isPerf);
+    document.body.classList.toggle('visual-quality-mode', !isPerf);
+    saveVisualMode(visualMode);
+
+    const modeState = document.getElementById('visual-mode-state');
+    if (modeState) modeState.innerText = isPerf ? 'PF' : 'HQ';
+
+    if (syncToggle) {
+        const toggle = document.getElementById('visual-mode-toggle');
+        if (toggle) toggle.checked = !isPerf;
+    }
+}
+
+function onVisualModeToggle(isQualityMode) {
+    applyVisualMode(isQualityMode ? 'quality' : 'performance', false);
+}
+
 function isTelegramWebAppContext() {
     return !!(window.Telegram && window.Telegram.WebApp && tg.initData && tg.initDataUnsafe && tg.initDataUnsafe.user);
+}
+
+function showBanOverlay(reasonText = '') {
+    const loading = document.getElementById('loading-screen');
+    const overlay = document.getElementById('ban-overlay');
+    const reasonEl = document.getElementById('ban-overlay-reason');
+    if (loading) loading.style.display = 'none';
+    if (reasonEl) reasonEl.innerText = reasonText && String(reasonText).trim() ? String(reasonText).trim() : 'Не указана';
+    if (overlay) overlay.style.display = 'flex';
 }
 
 function getTodayStamp() {
@@ -442,7 +491,7 @@ function hasAdminAccess() {
 
 function getBrowserAuthProfile() {
     try {
-        const raw = localStorage.getItem(BROWSER_TG_AUTH_KEY);
+        const raw = localStorage.getItem(BROWSER_AUTH_KEY);
         if (!raw) return null;
         const profile = JSON.parse(raw);
         return (profile && profile.id) ? profile : null;
@@ -452,7 +501,7 @@ function getBrowserAuthProfile() {
 }
 
 function setBrowserAuthProfile(profile) {
-    localStorage.setItem(BROWSER_TG_AUTH_KEY, JSON.stringify(profile));
+    localStorage.setItem(BROWSER_AUTH_KEY, JSON.stringify(profile));
 }
 
 function showBrowserAuthOverlay(visible) {
@@ -461,38 +510,14 @@ function showBrowserAuthOverlay(visible) {
     overlay.style.display = visible ? 'flex' : 'none';
 }
 
-function mountTelegramLoginWidget() {
-    const mount = document.getElementById('tg-login-widget');
-    if (!mount) return;
-    mount.innerHTML = '';
-
-    const script = document.createElement('script');
-    script.async = true;
-    script.src = 'https://telegram.org/js/telegram-widget.js?22';
-    script.setAttribute('data-telegram-login', TG_BOT_USERNAME);
-    script.setAttribute('data-size', 'large');
-    script.setAttribute('data-userpic', 'false');
-    script.setAttribute('data-request-access', 'write');
-    script.setAttribute('data-onauth', 'onTelegramAuth(user)');
-    script.setAttribute('data-lang', 'ru');
-    mount.appendChild(script);
+function clearBrowserAuthInputs() {
+    const loginEl = document.getElementById('browser-login');
+    const passEl = document.getElementById('browser-password');
+    if (loginEl) loginEl.value = '';
+    if (passEl) passEl.value = '';
 }
 
-async function verifyTelegramWidgetAuth(authData) {
-    try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'verify_telegram_login', authData })
-        });
-        const data = await response.json();
-        return !!(data && (data.valid === true || data.status === 'ok' || data.status === true));
-    } catch(e) {
-        return false;
-    }
-}
-
-async function ensureBrowserTelegramAuth() {
+async function ensureBrowserAuth() {
     const stored = getBrowserAuthProfile();
     if (stored && stored.id) return stored;
 
@@ -500,39 +525,40 @@ async function ensureBrowserTelegramAuth() {
     if (loading) loading.style.display = 'none';
 
     showBrowserAuthOverlay(true);
-    mountTelegramLoginWidget();
+    clearBrowserAuthInputs();
 
     return new Promise((resolve) => {
         browserAuthResolve = resolve;
     });
 }
 
-function triggerSecretTestAuth() {
+function submitBrowserAuth() {
     if (isTelegramWebAppContext()) return;
+    const loginEl = document.getElementById('browser-login');
+    const passEl = document.getElementById('browser-password');
+    if (!loginEl || !passEl) return;
 
-    if (secretAuthTapTimer) clearTimeout(secretAuthTapTimer);
-    secretAuthTapCount += 1;
+    const login = (loginEl.value || '').trim();
+    const password = (passEl.value || '').trim();
+    if (login !== BROWSER_AUTH_LOGIN || password !== BROWSER_AUTH_PASSWORD) {
+        showNotify('Неверный логин или пароль', 'error');
+        passEl.value = '';
+        passEl.focus();
+        return;
+    }
 
-    secretAuthTapTimer = setTimeout(() => {
-        secretAuthTapCount = 0;
-    }, 1700);
-
-    // Require fast 5 taps to prevent accidental activation.
-    if (secretAuthTapCount < 5) return;
-    secretAuthTapCount = 0;
-
+    // Shared browser account profile by requirement.
     const profile = {
-        id: 999000111,
-        first_name: 'BrowserTester',
-        username: '@browsertester',
+        id: 900000001,
+        first_name: 'Browser',
+        username: '@browser',
         photo_url: '',
-        auth_date: Math.floor(Date.now() / 1000),
-        hash: 'secret_test_bypass'
+        auth_date: Math.floor(Date.now() / 1000)
     };
 
     setBrowserAuthProfile(profile);
     showBrowserAuthOverlay(false);
-    showNotify('Тестовый вход: BrowserTester', 'info');
+    showNotify('Вход выполнен', 'success');
 
     const loading = document.getElementById('loading-screen');
     if (loading) loading.style.display = 'flex';
@@ -544,43 +570,20 @@ function triggerSecretTestAuth() {
     }
 }
 
-window.onTelegramAuth = async function onTelegramAuth(tgUser) {
-    if (!tgUser || !tgUser.id) return;
-
-    const verified = await verifyTelegramWidgetAuth(tgUser);
-    if (!verified && !ALLOW_BROWSER_AUTH_WITHOUT_SERVER_VERIFY) {
-        showNotify('Не удалось подтвердить вход через Telegram', 'error');
-        return;
-    }
-    if (!verified && ALLOW_BROWSER_AUTH_WITHOUT_SERVER_VERIFY) {
-        showNotify('Вход выполнен без серверной проверки подписи', 'info');
-    }
-
-    const profile = {
-        id: tgUser.id,
-        first_name: tgUser.first_name || 'User',
-        username: tgUser.username ? `@${tgUser.username}` : '',
-        photo_url: tgUser.photo_url || '',
-        auth_date: tgUser.auth_date || null,
-        hash: tgUser.hash || null
-    };
-
-    setBrowserAuthProfile(profile);
-    showBrowserAuthOverlay(false);
-
-    const loading = document.getElementById('loading-screen');
-    if (loading) loading.style.display = 'flex';
-
-    if (browserAuthResolve) {
-        const resolve = browserAuthResolve;
-        browserAuthResolve = null;
-        resolve(profile);
-    }
-};
-
 document.addEventListener('DOMContentLoaded', () => {
     try { if(tg) tg.expand(); } catch(e) {}
+    applyVisualMode(getStoredVisualMode());
     if (isMobilePerfMode()) document.body.classList.add('mobile-perf-mode');
+
+    const browserPass = document.getElementById('browser-password');
+    const browserLogin = document.getElementById('browser-login');
+    if (browserPass) browserPass.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') submitBrowserAuth();
+    });
+    if (browserLogin) browserLogin.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') submitBrowserAuth();
+    });
+
     initAdminUiState();
     // Set default active tab to 'cases'
     switchTab('cases');
@@ -767,6 +770,37 @@ async function toggleX2Drop() {
     }
 }
 
+function applyRemoteUserUpdate(row) {
+    if (!row || Number(row.telegram_id) !== Number(user.uid)) return;
+
+    user.balance = Number(row.balance || 0);
+    user.inventory = Array.isArray(row.inventory) ? row.inventory : [];
+    user.withdrawnItems = Array.isArray(row.withdrawn_items) ? row.withdrawn_items : [];
+    user.history = Array.isArray(row.history) ? row.history : [];
+    user.gameNick = row.game_nick || '';
+    user.gameServer = row.game_server || 'Red';
+    user.bankAccount = row.bank_account || '';
+    user.activatedPromos = Array.isArray(row.activated_promos) ? row.activated_promos : [];
+    user.isSubscribed = !!row.is_subscribed;
+    user.lastSubCaseTime = Number(row.last_sub_case_time || 0);
+    user.totalSpent = Number(row.total_spent || 0);
+    user.referralEarnings = Number(row.referral_earnings || 0);
+    user.referralsCount = Number(row.referrals_count || 0);
+    user.pendingReferralAmount = Number(row.pending_referral_amount || 0);
+    user.bp = row.bp || user.bp || DEFAULT_USER.bp;
+    user.isVerified = !!row.is_verified;
+    user.isAdmin = !!row.admin;
+
+    syncAdminUiAccess();
+    updateUI();
+    renderInventory();
+    renderWithdrawn();
+    renderHistory();
+    renderReferralStats();
+    renderBP();
+    showNotify('Данные обновлены администратором', 'info');
+}
+
 function initRealtime() {
     // Уникальный channel name чтобы не пересекался
     const channel = sb.channel('public:live_drops');
@@ -783,6 +817,11 @@ function initRealtime() {
         handleWithdrawRow(payload.new);
     }).on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'withdraws' }, (payload) => {
         handleWithdrawRow(payload.new);
+    }).subscribe();
+
+    const uchan = sb.channel('public:users');
+    uchan.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users' }, (payload) => {
+        applyRemoteUserUpdate(payload.new);
     }).subscribe();
 }
 
@@ -855,7 +894,9 @@ function addLiveFeedItem(item) {
         <div class="live-info"><span class="u-name">${item.user_name || 'Игрок'}${verifyBadge}</span><span class="i-name" style="color: ${color}">${item.item_name}</span></div>
         <img src="${item.item_img}" class="live-item-img" onerror="this.src='${PLACEHOLDER_IMG}'">
     `;
-    el.style.animation = 'slideInUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+    if (!isPerformanceMode()) {
+        el.style.animation = 'slideInUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+    }
     track.prepend(el);
     
     // Add subtle shake effect to live feed header
@@ -884,7 +925,7 @@ async function initUserSessionSupabase() {
         username = tg.initDataUnsafe.user.username ? `@${tg.initDataUnsafe.user.username}` : "";
         photo_url = tg.initDataUnsafe.user.photo_url || "";
     } else {
-        const browserAuth = await ensureBrowserTelegramAuth();
+        const browserAuth = await ensureBrowserAuth();
         if (!browserAuth || !browserAuth.id) return;
         uid = browserAuth.id;
         first_name = browserAuth.first_name || "User";
@@ -897,12 +938,25 @@ async function initUserSessionSupabase() {
     try {
         const { data, error } = await sb.from('users').select('*').eq('telegram_id', uid).maybeSingle();
 
+        // Device-level ban: if any account with this device is banned, block current session too.
+        try {
+            const { data: deviceBanData } = await sb.from('users')
+                .select('telegram_id, ban_reason')
+                .contains('device_ids', [currentDeviceId])
+                .eq('is_banned', true)
+                .limit(1)
+                .maybeSingle();
+            if (deviceBanData) {
+                const reason = deviceBanData.ban_reason || `Устройство в бане (Device ID: ${currentDeviceId})`;
+                showBanOverlay(reason);
+                return;
+            }
+        } catch (deviceBanErr) {}
+
         if (data) {
             // Проверка бана
             if(data.is_banned) {
-                document.getElementById('loading-screen').style.display = 'none';
-                document.getElementById('ban-overlay').style.display = 'flex';
-                if (data.ban_reason) document.getElementById('ban-overlay').querySelector('p').innerText = `Причина: ${data.ban_reason}`;
+                showBanOverlay(data.ban_reason || 'Аккаунт заблокирован администратором.');
                 return; 
             }
 
@@ -1644,6 +1698,7 @@ function playWinSound(rarity = 'common') {
 }
 
 function createClickParticle(x, y) {
+    if (isPerformanceMode()) return;
     const container = createParticleContainer();
     for(let i = 0; i < 12; i++) {
         const particle = document.createElement('div');
@@ -1986,8 +2041,8 @@ function logoutBrowserAccount() {
         showNotify('В Telegram WebApp выход недоступен', 'info');
         return;
     }
-    if (!confirm('Выйти из браузерного аккаунта Telegram?')) return;
-    localStorage.removeItem(BROWSER_TG_AUTH_KEY);
+    if (!confirm('Выйти из браузерного аккаунта?')) return;
+    localStorage.removeItem(BROWSER_AUTH_KEY);
     clearReferralPendingWithdrawId();
     showNotify('Вы вышли из браузерного аккаунта', 'success');
     setTimeout(() => location.reload(), 250);
@@ -2265,6 +2320,7 @@ function adminSetMode(mode) {
         if (view) view.style.display = (m === mode) ? 'block' : 'none';
         if (tab) tab.classList.toggle('active', m === mode);
     });
+    if (mode === 'cases') adminLoadCases();
     if (mode === 'withdraws') adminLoadWithdraws();
     if (mode === 'users') adminLoadUsers();
     if (mode === 'settings') adminLoadSettings();
@@ -2285,6 +2341,10 @@ function adminRenderCasesList() {
     const list = document.getElementById('admin-cases-list');
     if (!list) return;
     list.innerHTML = '';
+    if (!adminCases.length) {
+        list.innerHTML = '<div class="admin-entity-empty">Кейсы не найдены в базе данных.</div>';
+        return;
+    }
     adminCases.forEach((c) => {
         const btn = document.createElement('button');
         btn.className = `admin-case-item ${c.id === adminEditingCaseId ? 'active' : ''}`;
@@ -2472,25 +2532,121 @@ async function adminDeletePromo(idx) {
     adminLoadPromos();
 }
 
+function adminBuildWithdrawMultiAccMeta(withdraws, users) {
+    const userById = new Map();
+    const deviceToUsers = new Map();
+
+    (users || []).forEach((u) => {
+        const uid = Number(u.telegram_id);
+        if (!uid) return;
+        userById.set(uid, u);
+        const deviceIds = Array.isArray(u.device_ids) ? u.device_ids.filter(Boolean) : [];
+        deviceIds.forEach((deviceId) => {
+            if (!deviceToUsers.has(deviceId)) deviceToUsers.set(deviceId, new Set());
+            deviceToUsers.get(deviceId).add(uid);
+        });
+    });
+
+    return (withdraws || []).map((w) => {
+        const uid = Number(w.user_id);
+        const owner = userById.get(uid);
+        const ownerDevices = owner && Array.isArray(owner.device_ids) ? owner.device_ids.filter(Boolean) : [];
+        const relatedIdsSet = new Set();
+
+        ownerDevices.forEach((deviceId) => {
+            const links = deviceToUsers.get(deviceId);
+            if (!links) return;
+            links.forEach((linkedUid) => {
+                if (linkedUid !== uid) relatedIdsSet.add(linkedUid);
+            });
+        });
+
+        const relatedAccounts = Array.from(relatedIdsSet).map((linkedUid) => {
+            const linkedUser = userById.get(linkedUid) || {};
+            return {
+                id: linkedUid,
+                name: linkedUser.first_name || 'User',
+                username: linkedUser.username || ''
+            };
+        });
+
+        return {
+            ...w,
+            multiAcc: {
+                hasMulti: relatedAccounts.length > 0,
+                relatedAccounts,
+                ownerDevicesCount: ownerDevices.length
+            }
+        };
+    });
+}
+
 async function adminLoadWithdraws() {
     if (!adminRequireAuth()) return;
-    const { data, error } = await sb.from('withdraws').select('*').order('created_at', { ascending: false });
-    if (error) return showNotify('Нет доступа к заявкам', 'error');
-    adminWithdraws = data || [];
+    const [{ data: withdrawData, error: withdrawError }, { data: usersData, error: usersError }] = await Promise.all([
+        sb.from('withdraws').select('*').order('created_at', { ascending: false }),
+        sb.from('users').select('telegram_id, first_name, username, device_ids').limit(5000)
+    ]);
+
+    if (withdrawError) return showNotify('Нет доступа к заявкам', 'error');
+    if (usersError) {
+        adminWithdraws = withdrawData || [];
+    } else {
+        adminWithdraws = adminBuildWithdrawMultiAccMeta(withdrawData || [], usersData || []);
+    }
+
+    adminRenderWithdraws();
+}
+
+function adminSetWithdrawFilter(filterKey) {
+    adminWithdrawFilter = filterKey;
+    const filterButtons = document.querySelectorAll('.admin-withdraw-filter-btn');
+    filterButtons.forEach((btn) => {
+        const isActive = btn.dataset.filter === filterKey;
+        btn.classList.toggle('active', isActive);
+    });
+    adminRenderWithdraws();
+}
+
+function adminRenderWithdraws() {
     const box = document.getElementById('admin-withdraws-container');
     if (!box) return;
+
+    const filtered = adminWithdraws.filter((w) => {
+        if (adminWithdrawFilter === 'done') return w.status === 'confirmed';
+        if (adminWithdrawFilter === 'rejected') return w.status === 'rejected';
+        return w.status === 'pending';
+    });
+
     box.innerHTML = '';
-    adminWithdraws.forEach((w, idx) => {
+    if (!filtered.length) {
+        box.innerHTML = '<div class="admin-entity-empty">В этой категории пока пусто.</div>';
+        return;
+    }
+
+    filtered.forEach((w) => {
         const row = document.createElement('div');
         row.className = 'admin-withdraw-row';
         const what = w.type === 'item' ? `${w.item_name} (${w.amount} ₽)` : `Рефералы (${w.amount} ₽)`;
+        const related = (w.multiAcc && Array.isArray(w.multiAcc.relatedAccounts)) ? w.multiAcc.relatedAccounts : [];
+        const multiLabel = related.length
+            ? `Есть (${related.length})`
+            : 'Нет';
+        const multiData = related.length
+            ? related.map((acc) => `ID ${acc.id} • ${adminEscapeHtml(acc.name)}${acc.username ? ` (${adminEscapeHtml(acc.username)})` : ''}`).join('<br>')
+            : 'Совпадений по Device ID не найдено';
+        const realIdx = adminWithdraws.findIndex((item) => Number(item.id) === Number(w.id));
         row.innerHTML = `
-            <div>${w.user_name || 'Игрок'} (${w.user_id})</div>
+            <div>
+                <div>${w.user_name || 'Игрок'} (${w.user_id})</div>
+                <div style="margin-top:6px; font-size:11px; color:${related.length ? '#ffb86b' : '#8fd3a8'};">Мультиакки: ${multiLabel}</div>
+                <div style="margin-top:4px; font-size:11px; color:#9fb0ca; line-height:1.35;">${multiData}</div>
+            </div>
             <div>${what}</div>
             <div>${w.bank_account || '-'}</div>
             <div>${w.status || '-'}</div>
             <div>
-                ${w.status === 'pending' ? `<button class="btn-secondary" onclick="adminConfirmWithdraw(${idx}, true)">OK</button><button class="btn-danger-small" onclick="adminConfirmWithdraw(${idx}, false)">NO</button>` : '<span>-</span>'}
+                ${w.status === 'pending' ? `<button class="btn-secondary" onclick="adminConfirmWithdraw(${realIdx}, true)">OK</button><button class="btn-danger-small" onclick="adminConfirmWithdraw(${realIdx}, false)">NO</button>` : '<span>-</span>'}
             </div>
         `;
         box.appendChild(row);
@@ -2510,7 +2666,7 @@ async function adminConfirmWithdraw(idx, ok) {
 async function adminLoadUsers() {
     if (!adminRequireAuth()) return;
     const { data, error } = await sb.from('users')
-        .select('telegram_id, first_name, username, balance, total_spent, game_nick, game_server, bank_account, referral_earnings, pending_referral_amount, is_verified, is_banned, ban_reason, admin, inventory, withdrawn_items, history')
+        .select('telegram_id, first_name, username, balance, total_spent, game_nick, game_server, bank_account, referral_earnings, pending_referral_amount, is_verified, is_banned, ban_reason, admin, inventory, withdrawn_items, history, device_ids')
         .order('telegram_id', { ascending: false })
         .limit(500);
     if (error) return showNotify('Ошибка загрузки игроков', 'error');
@@ -2818,6 +2974,19 @@ async function adminSaveUser() {
     adminLoadUsers();
 }
 
+async function adminForceReloadUser() {
+    if (!adminSelectedUser) return showNotify('Выбери игрока', 'error');
+    if (!confirm('Принудительно обновить данные у этого игрока?')) return;
+
+    const targetId = Number(adminSelectedUser.telegram_id);
+    const currentName = (adminSelectedUser.first_name || '').trim() || 'User';
+    // No-op update triggers realtime UPDATE event for the selected player.
+    const { error } = await sb.from('users').update({ first_name: currentName }).eq('telegram_id', targetId);
+    if (error) return showNotify(`Ошибка обновления: ${error.message}`, 'error');
+
+    showNotify('Команда обновления отправлена игроку', 'success');
+}
+
 function adminQuickBan(flag) {
     if (!adminSelectedUser) return showNotify('Выбери игрока', 'error');
     document.getElementById('admin-user-banned').checked = !!flag;
@@ -2918,12 +3087,48 @@ async function adminResetAllSpent() {
 
     adminRenderUsersList();
     loadLeaderboard();
-    sendAdminLog('GENERAL', '📉 Сброс топа по затратам', 'Администратор обнулил total_spent у всех игроков');
     showNotify('Траты всех игроков сброшены', 'success');
+}
+
+async function adminBanByDeviceId() {
+    if (!adminRequireAuth()) return;
+    const deviceId = (document.getElementById('admin-device-ban-id')?.value || '').trim();
+    const reason = (document.getElementById('admin-device-ban-reason')?.value || '').trim();
+    if (!deviceId) return showNotify('Укажи Device ID', 'error');
+
+    const { data, error } = await sb.from('users').select('telegram_id').contains('device_ids', [deviceId]);
+    if (error) return showNotify('Ошибка поиска Device ID', 'error');
+    if (!data || !data.length) return showNotify('Игроки с таким Device ID не найдены', 'error');
+
+    const ids = data.map((item) => item.telegram_id);
+    const banReason = reason || `Блокировка по Device ID: ${deviceId}`;
+    const { error: updErr } = await sb.from('users').update({ is_banned: true, ban_reason: banReason }).in('telegram_id', ids);
+    if (updErr) return showNotify(`Ошибка бана: ${updErr.message}`, 'error');
+
+    showNotify(`Забанено аккаунтов: ${ids.length}`, 'success');
+    adminLoadUsers();
+}
+
+async function adminUnbanByDeviceId() {
+    if (!adminRequireAuth()) return;
+    const deviceId = (document.getElementById('admin-device-ban-id')?.value || '').trim();
+    if (!deviceId) return showNotify('Укажи Device ID', 'error');
+
+    const { data, error } = await sb.from('users').select('telegram_id').contains('device_ids', [deviceId]);
+    if (error) return showNotify('Ошибка поиска Device ID', 'error');
+    if (!data || !data.length) return showNotify('Игроки с таким Device ID не найдены', 'error');
+
+    const ids = data.map((item) => item.telegram_id);
+    const { error: updErr } = await sb.from('users').update({ is_banned: false, ban_reason: '' }).in('telegram_id', ids);
+    if (updErr) return showNotify(`Ошибка разбана: ${updErr.message}`, 'error');
+
+    showNotify(`Разбанено аккаунтов: ${ids.length}`, 'success');
+    adminLoadUsers();
 }
 
 // === DYNAMIC EFFECTS SYSTEM ===
 function createRipple(event) {
+    if (isPerformanceMode()) return;
     const btn = event.target.closest('button');
     if (!btn) return;
     
@@ -2943,6 +3148,11 @@ function createRipple(event) {
 }
 
 function createConfetti(count = 40) {
+    if (isPerformanceMode()) {
+        count = 0;
+    }
+    if (count <= 0) return;
+
     if (isMobilePerfMode()) {
         count = Math.min(count, 16);
     }
@@ -2980,6 +3190,7 @@ function createConfetti(count = 40) {
 }
 
 function shakeElement(element, intensity = 3, duration = 400) {
+    if (isPerformanceMode()) return;
     const startTime = Date.now();
     const originalTransform = element.style.transform || '';
     
@@ -3002,7 +3213,7 @@ function addButtonClickEffect(event) {
     if (!btn) return;
     
     btn.classList.add('btn-click-anim');
-    createRipple(event);
+    if (!isPerformanceMode()) createRipple(event);
     safeHaptic('selection');
     
     setTimeout(() => btn.classList.remove('btn-click-anim'), 400);
@@ -3010,26 +3221,35 @@ function addButtonClickEffect(event) {
 
 function animateTabSwitch(tabElement) {
     if (!tabElement) return;
+    if (isPerformanceMode()) return;
     tabElement.classList.add('tab-switch-in');
     setTimeout(() => tabElement.classList.remove('tab-switch-in'), 300);
 }
 
 function addSlideInAnimation(element) {
+    if (isPerformanceMode()) return;
     element.classList.add('slide-in');
 }
 
 function addFadeInAnimation(element) {
+    if (isPerformanceMode()) return;
     element.classList.add('fade-in-scale');
 }
 
 // Add global click listener for ripple effects on shop buttons
 document.addEventListener('click', (e) => {
+    if (isPerformanceMode()) return;
     if (e.target.closest('.shop-btn') || e.target.closest('.btn-primary') || e.target.closest('button[onclick*="buyPack"]')) {
         addButtonClickEffect(e);
     }
 }, true);
 
 function initDynamicEffects() {
+    if (isPerformanceMode()) {
+        document.documentElement.style.scrollBehavior = 'auto';
+        return;
+    }
+
     // Add glow effect to shop buttons
     const shopBtns = document.querySelectorAll('.shop-btn');
     shopBtns.forEach((btn, idx) => {

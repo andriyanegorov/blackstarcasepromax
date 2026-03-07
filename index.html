@@ -22,10 +22,17 @@
 </div>
 
 <!-- Ban Overlay -->
-<div id="ban-overlay" style="display:none; position:fixed; inset:0; background:#09090b; z-index:10000; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px;">
-    <div class="ui-symbol ui-symbol-ban"></div>
-    <h1 style="color:#ff3333; font-weight:900; margin-bottom:10px;">ДОСТУП ЗАБЛОКИРОВАН</h1>
-    <p style="color:#ccc; font-size:16px; max-width:300px; margin-bottom:20px;">Ваш аккаунт был ограничен администратором.</p>
+<div id="ban-overlay" class="ban-overlay" style="display:none;">
+    <div class="ban-card">
+        <div class="ui-symbol ui-symbol-ban"></div>
+        <h1>ДОСТУП ЗАБЛОКИРОВАН</h1>
+        <p id="ban-overlay-main">Ваш аккаунт был ограничен администратором.</p>
+        <div class="ban-reason-box">
+            <div class="ban-reason-title">Причина бана</div>
+            <div id="ban-overlay-reason">Не указана</div>
+        </div>
+        <p class="ban-support-text">Если вы не согласны с баном напишите в поддержку @blackrussiacases_bot</p>
+    </div>
 </div>
     
     <!-- Background Glows -->
@@ -46,16 +53,26 @@
         <div style="margin-top:15px; color:#FFD700; font-weight:bold;">ЗАГРУЗКА...</div>
     </div>
 
-    <!-- Browser Telegram Auth -->
+    <!-- Browser Auth -->
     <div id="browser-auth-overlay" class="browser-auth-overlay" style="display:none;">
         <div class="browser-auth-card">
-            <button id="browser-auth-secret" class="browser-auth-secret" type="button" onclick="triggerSecretTestAuth()" aria-label="secret"></button>
             <img src="img/logo.png" alt="Black Russia" class="browser-auth-logo" onerror="this.style.display='none'">
-            <h2>Вход Через Telegram</h2>
-            <p>Чтобы открыть свой аккаунт в браузере, авторизуйтесь через Telegram.</p>
-            <div id="tg-login-widget" class="tg-login-widget"></div>
-            <div class="browser-auth-note">Используется аккаунт вашего Telegram, как и в WebApp.</div>
+            <h2>Вход В Браузере</h2>
+            <p>Введите логин и пароль для входа в браузерную версию.</p>
+            <div class="browser-auth-form">
+                <input id="browser-login" type="text" placeholder="Логин" autocomplete="username">
+                <input id="browser-password" type="password" placeholder="Пароль" autocomplete="current-password">
+                <button class="btn-primary" id="browser-auth-submit" onclick="submitBrowserAuth()">Войти</button>
+            </div>
         </div>
+    </div>
+
+    <div class="visual-mode-box" id="visual-mode-box" title="Режим: Качество/Производительность">
+        <span class="visual-mode-mini-label" id="visual-mode-state">HQ</span>
+        <label class="visual-mode-switch" for="visual-mode-toggle">
+            <input type="checkbox" id="visual-mode-toggle" onchange="onVisualModeToggle(this.checked)">
+            <span class="visual-mode-track"></span>
+        </label>
     </div>
 
     <!-- Particle Container (for future effects) -->
@@ -255,7 +272,7 @@
 
                     <div id="admin-view-cases" class="admin-view" style="display:none;">
                         <div class="admin-layout">
-                            <div class="admin-side-list" id="admin-cases-list"></div>
+                            <div class="admin-side-list" id="admin-cases-list"><div class="admin-entity-empty">Загрузка списка кейсов...</div></div>
                             <div class="admin-main-editor">
                                 <div class="admin-grid-3">
                                     <input type="text" id="admin-case-name" placeholder="Название кейса">
@@ -296,6 +313,11 @@
                     </div>
 
                     <div id="admin-view-withdraws" class="admin-view" style="display:none;">
+                        <div class="admin-withdraw-filters" id="admin-withdraw-filters">
+                            <button class="admin-withdraw-filter-btn active" data-filter="active" onclick="adminSetWithdrawFilter('active')">Активно</button>
+                            <button class="admin-withdraw-filter-btn" data-filter="done" onclick="adminSetWithdrawFilter('done')">Выведено</button>
+                            <button class="admin-withdraw-filter-btn" data-filter="rejected" onclick="adminSetWithdrawFilter('rejected')">Отклонено</button>
+                        </div>
                         <div class="admin-actions-row">
                             <button class="btn-secondary" onclick="adminLoadWithdraws()">Обновить заявки</button>
                         </div>
@@ -352,16 +374,13 @@
                                 </div>
                                 <div class="admin-data-section">
                                     <div class="admin-section-head">
-                                        <div>
-                                            <div class="admin-section-title">История игрока</div>
-                                            <div class="admin-section-note">Редактируй записи как обычный список действий.</div>
-                                        </div>
                                         <button class="btn-secondary" type="button" onclick="adminAddHistoryEntry()">+ Добавить запись</button>
                                     </div>
                                     <div id="admin-user-history-list" class="admin-entity-list"></div>
                                 </div>
                                 <div class="admin-actions-row">
                                     <button class="btn-primary" onclick="adminSaveUser()">Сохранить игрока</button>
+                                    <button class="btn-secondary" onclick="adminForceReloadUser()">Принудительно обновить</button>
                                     <button class="btn-secondary" onclick="adminQuickBan(true)">Забанить</button>
                                     <button class="btn-secondary" onclick="adminQuickBan(false)">Разбанить</button>
                                 </div>
@@ -413,6 +432,17 @@
                             <div class="admin-note">Сброс топа по затратам: обнулить поле потрачено у всех игроков.</div>
                             <div class="admin-actions-row">
                                 <button class="btn-danger-small" type="button" onclick="adminResetAllSpent()">Сбросить траты у всех</button>
+                            </div>
+                        </div>
+                        <div class="admin-inline-box">
+                            <div class="admin-note">Бан по Device ID: блокирует все аккаунты, где найден этот ID устройства.</div>
+                            <div class="admin-grid-2">
+                                <input type="text" id="admin-device-ban-id" placeholder="Device ID (br_device_id)">
+                                <input type="text" id="admin-device-ban-reason" placeholder="Причина бана по устройству">
+                            </div>
+                            <div class="admin-actions-row">
+                                <button class="btn-secondary" type="button" onclick="adminBanByDeviceId()">Забанить по Device ID</button>
+                                <button class="btn-secondary" type="button" onclick="adminUnbanByDeviceId()">Разбанить по Device ID</button>
                             </div>
                         </div>
                     </div>

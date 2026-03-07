@@ -501,11 +501,14 @@
             const uid = Number(document.getElementById('force-refresh-user-id').value || 0);
             if (!uid) return alert('Укажи Telegram ID игрока');
 
-            const { data, error } = await sb.from('users').select('first_name').eq('telegram_id', uid).maybeSingle();
+            const { data, error } = await sb.from('users').select('bp').eq('telegram_id', uid).maybeSingle();
             if (error || !data) return alert('Игрок не найден');
 
-            // No-op update creates UPDATE event for realtime clients.
-            const { error: upErr } = await sb.from('users').update({ first_name: data.first_name || 'User' }).eq('telegram_id', uid);
+            const nextBp = {
+                ...(data.bp || {}),
+                force_sync_ts: Date.now()
+            };
+            const { error: upErr } = await sb.from('users').update({ bp: nextBp }).eq('telegram_id', uid);
             if (upErr) return alert('Ошибка: ' + upErr.message);
 
             alert('Сигнал обновления отправлен игроку');

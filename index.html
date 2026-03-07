@@ -351,7 +351,25 @@
                                     <label class="admin-check"><input type="checkbox" id="admin-user-banned"> Забанен</label>
                                     <label class="admin-check"><input type="checkbox" id="admin-user-admin"> Админ доступ</label>
                                 </div>
-                                <input type="text" id="admin-user-ban-reason" placeholder="Причина бана">
+                                <div class="admin-grid-3">
+                                    <select id="admin-user-ban-reason-preset" onchange="adminOnBanReasonPresetChange()">
+                                        <option value="" selected>Причина бана: выбрать</option>
+                                        <option value="Неадекватное поведение, нецензурная лексика, угрозы или оскорбления (п. 1.1 Регламента)">1.1 Нецензурная лексика / угрозы / оскорбления</option>
+                                        <option value="Ограничение доступа по решению администрации в спорной ситуации (п. 1.2 Регламента)">1.2 Решение администрации по спорной ситуации</option>
+                                        <option value="Нарушение условий проекта по формату выдачи вознаграждения (п. 2.1 Регламента)">2.1 Нарушение формата вознаграждения</option>
+                                        <option value="Попытка вывода внутреннего баланса в реальные деньги/на кошельки (п. 2.2 Регламента)">2.2 Попытка вывода в реальные деньги</option>
+                                        <option value="Ограничение в связи с нарушением правил сторонних игровых серверов (п. 3.1 Регламента)">3.1 Нарушение правил сторонних серверов</option>
+                                        <option value="Временное ограничение в связи с техническими работами или сбоями (п. 3.2 Регламента)">3.2 Технические работы / сбои</option>
+                                        <option value="Нарушение финансовой политики: требование возврата добровольного пополнения (п. 4.1 Регламента)">4.1 Требование возврата доната</option>
+                                        <option value="Временное ограничение на время проверки ошибочного платежа (п. 4.2 Регламента)">4.2 Ошибочный платеж (проверка)</option>
+                                        <option value="Не подтверждена покупка в течение 3 минут (п. 4.3 Регламента, без возможности разбана)">4.3 Не подтверждена покупка за 3 минуты</option>
+                                        <option value="Махинации, баг-абуз, мультиаккаунт или вмешательство в программный код (п. 5.1 Регламента)">5.1 Махинации / баги / мультиаккаунт / скрипты</option>
+                                        <option value="Риск безопасности: компрометация или передача доступа к Telegram-аккаунту (п. 5.2 Регламента)">5.2 Риск безопасности Telegram-аккаунта</option>
+                                        <option value="__custom__">Своя причина (админ)</option>
+                                    </select>
+                                    <input type="text" id="admin-user-ban-reason" placeholder="Своя причина бана (для админа)">
+                                    <div class="admin-note">Причина показывается игроку в окне блокировки.</div>
+                                </div>
                                 <div class="admin-data-section">
                                     <div class="admin-section-head">
                                         <div>
@@ -376,7 +394,6 @@
                                     <div class="admin-section-head">
                                         <button class="btn-secondary" type="button" onclick="adminAddHistoryEntry()">+ Добавить запись</button>
                                     </div>
-                                    <div id="admin-user-history-list" class="admin-entity-list"></div>
                                 </div>
                                 <div class="admin-actions-row">
                                     <button class="btn-primary" onclick="adminSaveUser()">Сохранить игрока</button>
@@ -384,6 +401,7 @@
                                     <button class="btn-secondary" onclick="adminQuickBan(true)">Забанить</button>
                                     <button class="btn-secondary" onclick="adminQuickBan(false)">Разбанить</button>
                                 </div>
+                                <div class="admin-note" id="admin-force-sync-time">Последнее принудительное обновление: не было</div>
                                 <div class="admin-inline-box" id="admin-grant-box">
                                     <div class="admin-section-head compact">
                                         <div>
@@ -438,8 +456,23 @@
                             <div class="admin-note">Бан по Device ID: блокирует все аккаунты, где найден этот ID устройства.</div>
                             <div class="admin-grid-2">
                                 <input type="text" id="admin-device-ban-id" placeholder="Device ID (br_device_id)">
-                                <input type="text" id="admin-device-ban-reason" placeholder="Причина бана по устройству">
+                                <select id="admin-device-ban-reason-preset" onchange="adminOnDeviceBanReasonPresetChange()">
+                                    <option value="" selected>Причина по регламенту: выбрать</option>
+                                    <option value="Неадекватное поведение, нецензурная лексика, угрозы или оскорбления (п. 1.1 Регламента)">1.1 Нецензурная лексика / угрозы / оскорбления</option>
+                                    <option value="Ограничение доступа по решению администрации в спорной ситуации (п. 1.2 Регламента)">1.2 Решение администрации по спорной ситуации</option>
+                                    <option value="Нарушение условий проекта по формату выдачи вознаграждения (п. 2.1 Регламента)">2.1 Нарушение формата вознаграждения</option>
+                                    <option value="Попытка вывода внутреннего баланса в реальные деньги/на кошельки (п. 2.2 Регламента)">2.2 Попытка вывода в реальные деньги</option>
+                                    <option value="Ограничение в связи с нарушением правил сторонних игровых серверов (п. 3.1 Регламента)">3.1 Нарушение правил сторонних серверов</option>
+                                    <option value="Временное ограничение в связи с техническими работами или сбоями (п. 3.2 Регламента)">3.2 Технические работы / сбои</option>
+                                    <option value="Нарушение финансовой политики: требование возврата добровольного пополнения (п. 4.1 Регламента)">4.1 Требование возврата доната</option>
+                                    <option value="Временное ограничение на время проверки ошибочного платежа (п. 4.2 Регламента)">4.2 Ошибочный платеж (проверка)</option>
+                                    <option value="Не подтверждена покупка в течение 3 минут (п. 4.3 Регламента, без возможности разбана)">4.3 Не подтверждена покупка за 3 минуты</option>
+                                    <option value="Махинации, баг-абуз, мультиаккаунт или вмешательство в программный код (п. 5.1 Регламента)">5.1 Махинации / баги / мультиаккаунт / скрипты</option>
+                                    <option value="Риск безопасности: компрометация или передача доступа к Telegram-аккаунту (п. 5.2 Регламента)">5.2 Риск безопасности Telegram-аккаунта</option>
+                                    <option value="__custom__">Своя причина (админ)</option>
+                                </select>
                             </div>
+                            <input type="text" id="admin-device-ban-reason" placeholder="Своя причина бана по устройству">
                             <div class="admin-actions-row">
                                 <button class="btn-secondary" type="button" onclick="adminBanByDeviceId()">Забанить по Device ID</button>
                                 <button class="btn-secondary" type="button" onclick="adminUnbanByDeviceId()">Разбанить по Device ID</button>

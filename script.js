@@ -145,6 +145,7 @@ let ALL_ITEMS_POOL = [], contractSelection = [];
 let serverTimeOffset = 0; 
 let browserAuthResolve = null;
 let visualMode = 'quality';
+let userForceSyncTs = 0;
 let activityCaseState = { ...DEFAULT_ACTIVITY_CASE_STATE };
 let activityCaseTimerInterval = null;
 let adminSessionAuthorized = false;
@@ -162,6 +163,54 @@ let adminUserInventoryDraft = [];
 let adminUserWithdrawnDraft = [];
 let adminUserHistoryDraft = [];
 let adminCaseCategories = [];
+const ADMIN_BAN_REASON_CUSTOM = '__custom__';
+const ADMIN_BAN_REASON_OPTIONS = [
+    {
+        label: '1.1 Нецензурная лексика / угрозы / оскорбления',
+        value: 'Неадекватное поведение, нецензурная лексика, угрозы или оскорбления (п. 1.1 Регламента)'
+    },
+    {
+        label: '1.2 Решение администрации по спорной ситуации',
+        value: 'Ограничение доступа по решению администрации в спорной ситуации (п. 1.2 Регламента)'
+    },
+    {
+        label: '2.1 Нарушение формата вознаграждения',
+        value: 'Нарушение условий проекта по формату выдачи вознаграждения (п. 2.1 Регламента)'
+    },
+    {
+        label: '2.2 Попытка вывода в реальные деньги',
+        value: 'Попытка вывода внутреннего баланса в реальные деньги/на кошельки (п. 2.2 Регламента)'
+    },
+    {
+        label: '3.1 Нарушение правил сторонних серверов',
+        value: 'Ограничение в связи с нарушением правил сторонних игровых серверов (п. 3.1 Регламента)'
+    },
+    {
+        label: '3.2 Технические работы / сбои (служебная причина)',
+        value: 'Временное ограничение в связи с техническими работами или сбоями (п. 3.2 Регламента)'
+    },
+    {
+        label: '4.1 Требование возврата доната',
+        value: 'Нарушение финансовой политики: требование возврата добровольного пополнения (п. 4.1 Регламента)'
+    },
+    {
+        label: '4.2 Ошибочный платеж (служебная проверка)',
+        value: 'Временное ограничение на время проверки ошибочного платежа (п. 4.2 Регламента)'
+    },
+    {
+        label: '4.3 Не подтверждена покупка за 3 минуты',
+        value: 'Не подтверждена покупка в течение 3 минут (п. 4.3 Регламента, без возможности разбана)'
+    },
+    {
+        label: '5.1 Махинации / баги / мультиаккаунт / скрипты',
+        value: 'Махинации, баг-абуз, мультиаккаунт или вмешательство в программный код (п. 5.1 Регламента)'
+    },
+    {
+        label: '5.2 Риск безопасности Telegram-аккаунта',
+        value: 'Риск безопасности: компрометация или передача доступа к Telegram-аккаунту (п. 5.2 Регламента)'
+    }
+];
+const ADMIN_BAN_REASON_PRESETS = ADMIN_BAN_REASON_OPTIONS.map((opt) => opt.value);
 
 const CASE_CATEGORY_META = {
     free: { label: 'БЕСПЛАТНО', order: 0 },
@@ -196,11 +245,19 @@ function isPerformanceMode() {
     return visualMode === 'performance';
 }
 
+function applyPerformanceScrollOptimization(enabled) {
+    document.body.classList.toggle('performance-scroll-optimized', !!enabled);
+    document.documentElement.style.scrollBehavior = enabled ? 'auto' : 'smooth';
+    document.body.style.overscrollBehaviorY = '';
+    document.body.style.webkitOverflowScrolling = '';
+}
+
 function applyVisualMode(mode, syncToggle = true) {
     visualMode = (mode === 'performance') ? 'performance' : 'quality';
     const isPerf = isPerformanceMode();
     document.body.classList.toggle('visual-performance-mode', isPerf);
     document.body.classList.toggle('visual-quality-mode', !isPerf);
+    applyPerformanceScrollOptimization(isPerf);
     saveVisualMode(visualMode);
 
     const modeState = document.getElementById('visual-mode-state');
@@ -218,6 +275,11 @@ function onVisualModeToggle(isQualityMode) {
 
 function isTelegramWebAppContext() {
     return !!(window.Telegram && window.Telegram.WebApp && tg.initData && tg.initDataUnsafe && tg.initDataUnsafe.user);
+}
+
+function getForceSyncTsFromBp(bp) {
+    const ts = Number(bp && bp.force_sync_ts ? bp.force_sync_ts : 0);
+    return Number.isFinite(ts) ? ts : 0;
 }
 
 function showBanOverlay(reasonText = '') {
@@ -772,6 +834,13 @@ async function toggleX2Drop() {
 
 function applyRemoteUserUpdate(row) {
     if (!row || Number(row.telegram_id) !== Number(user.uid)) return;
+    if (row.is_banned) {
+        showBanOverlay(row.ban_reason || 'Аккаунт заблокирован администратором.');
+        return;
+    }
+
+    const incomingForceSyncTs = getForceSyncTsFromBp(row.bp);
+    const shouldForceReload = incomingForceSyncTs > 0 && incomingForceSyncTs !== userForceSyncTs;
 
     user.balance = Number(row.balance || 0);
     user.inventory = Array.isArray(row.inventory) ? row.inventory : [];
@@ -788,8 +857,15 @@ function applyRemoteUserUpdate(row) {
     user.referralsCount = Number(row.referrals_count || 0);
     user.pendingReferralAmount = Number(row.pending_referral_amount || 0);
     user.bp = row.bp || user.bp || DEFAULT_USER.bp;
+    userForceSyncTs = incomingForceSyncTs;
     user.isVerified = !!row.is_verified;
     user.isAdmin = !!row.admin;
+
+    if (shouldForceReload) {
+        showNotify('Администратор принудительно обновил данные. Перезагрузка...', 'info');
+        setTimeout(() => location.reload(), 700);
+        return;
+    }
 
     syncAdminUiAccess();
     updateUI();
@@ -977,6 +1053,7 @@ async function initUserSessionSupabase() {
                 bp: data.bp || DEFAULT_USER.bp,
                 deviceIds: knownDevices
             };
+            userForceSyncTs = getForceSyncTsFromBp(user.bp);
             
             // Теперь проверяем, есть ли этот Device ID у ДРУГИХ юзеров
             const { data: multiData } = await sb.from('users')
@@ -1041,6 +1118,7 @@ async function initUserSessionSupabase() {
             };
             await sb.from('users').insert([newUser]);
             user = { ...DEFAULT_USER, ...newUser, uid: uid, avatar: photo_url, isAdmin: false };
+            userForceSyncTs = getForceSyncTsFromBp(user.bp);
             
             sendAdminLog('GENERAL', '🆕 Новый игрок', `Регистрация. Рефер: ${refId || 'Нет'}`);
 
@@ -2302,6 +2380,7 @@ function adminRequireAuth() {
 
 async function adminInitData() {
     if (!adminRequireAuth()) return;
+    adminInitBanReasonControls();
     await Promise.all([
         adminLoadCases(),
         adminLoadPromos(),
@@ -2322,8 +2401,14 @@ function adminSetMode(mode) {
     });
     if (mode === 'cases') adminLoadCases();
     if (mode === 'withdraws') adminLoadWithdraws();
-    if (mode === 'users') adminLoadUsers();
-    if (mode === 'settings') adminLoadSettings();
+    if (mode === 'users') {
+        adminInitBanReasonControls();
+        adminLoadUsers();
+    }
+    if (mode === 'settings') {
+        adminInitBanReasonControls();
+        adminLoadSettings();
+    }
 }
 
 async function adminLoadCases() {
@@ -2666,12 +2751,139 @@ async function adminConfirmWithdraw(idx, ok) {
 async function adminLoadUsers() {
     if (!adminRequireAuth()) return;
     const { data, error } = await sb.from('users')
-        .select('telegram_id, first_name, username, balance, total_spent, game_nick, game_server, bank_account, referral_earnings, pending_referral_amount, is_verified, is_banned, ban_reason, admin, inventory, withdrawn_items, history, device_ids')
+        .select('telegram_id, first_name, username, balance, total_spent, game_nick, game_server, bank_account, referral_earnings, pending_referral_amount, is_verified, is_banned, ban_reason, admin, inventory, withdrawn_items, history, device_ids, bp')
         .order('telegram_id', { ascending: false })
         .limit(500);
     if (error) return showNotify('Ошибка загрузки игроков', 'error');
     adminUsers = data || [];
     adminRenderUsersList();
+}
+
+function adminFormatDateTime(ts) {
+    const num = Number(ts || 0);
+    if (!num || Number.isNaN(num)) return 'не было';
+    const dt = new Date(num);
+    if (Number.isNaN(dt.getTime())) return 'не было';
+    return dt.toLocaleString('ru-RU');
+}
+
+function adminRenderForceSyncTime(ts) {
+    const el = document.getElementById('admin-force-sync-time');
+    if (!el) return;
+    el.innerText = `Последнее принудительное обновление: ${adminFormatDateTime(ts)}`;
+}
+
+function adminGetBanReasonControls() {
+    return {
+        preset: document.getElementById('admin-user-ban-reason-preset'),
+        custom: document.getElementById('admin-user-ban-reason')
+    };
+}
+
+function adminGetDeviceBanReasonControls() {
+    return {
+        preset: document.getElementById('admin-device-ban-reason-preset'),
+        custom: document.getElementById('admin-device-ban-reason')
+    };
+}
+
+function adminPopulateBanReasonSelect(selectEl, placeholderText) {
+    if (!selectEl) return;
+    const current = String(selectEl.value || '').trim();
+    let html = `<option value="">${adminEscapeHtml(placeholderText)}</option>`;
+    html += ADMIN_BAN_REASON_OPTIONS.map((opt) => `<option value="${adminEscapeHtml(opt.value)}">${adminEscapeHtml(opt.label)}</option>`).join('');
+    html += `<option value="${ADMIN_BAN_REASON_CUSTOM}">Своя причина (админ)</option>`;
+    selectEl.innerHTML = html;
+    selectEl.value = current && (ADMIN_BAN_REASON_PRESETS.includes(current) || current === ADMIN_BAN_REASON_CUSTOM) ? current : '';
+}
+
+function adminInitBanReasonControls() {
+    const userControls = adminGetBanReasonControls();
+    const deviceControls = adminGetDeviceBanReasonControls();
+    adminPopulateBanReasonSelect(userControls.preset, 'Причина бана: выбрать');
+    adminPopulateBanReasonSelect(deviceControls.preset, 'Причина по регламенту: выбрать');
+    adminOnBanReasonPresetChange();
+    adminOnDeviceBanReasonPresetChange();
+}
+
+function adminOnBanReasonPresetChange() {
+    const { preset, custom } = adminGetBanReasonControls();
+    if (!preset || !custom) return;
+    const value = (preset.value || '').trim();
+
+    if (!value) {
+        custom.disabled = false;
+        return;
+    }
+
+    if (value === ADMIN_BAN_REASON_CUSTOM) {
+        custom.disabled = false;
+        custom.focus();
+        return;
+    }
+
+    custom.value = value;
+    custom.disabled = true;
+}
+
+function adminOnDeviceBanReasonPresetChange() {
+    const { preset, custom } = adminGetDeviceBanReasonControls();
+    if (!preset || !custom) return;
+    const value = (preset.value || '').trim();
+
+    if (!value) {
+        custom.disabled = false;
+        return;
+    }
+
+    if (value === ADMIN_BAN_REASON_CUSTOM) {
+        custom.disabled = false;
+        custom.focus();
+        return;
+    }
+
+    custom.value = value;
+    custom.disabled = true;
+}
+
+function adminSetBanReasonControls(reason) {
+    const { preset, custom } = adminGetBanReasonControls();
+    if (!preset || !custom) return;
+    const normalized = String(reason || '').trim();
+
+    if (!normalized) {
+        preset.value = '';
+        custom.value = '';
+        custom.disabled = false;
+        return;
+    }
+
+    if (ADMIN_BAN_REASON_PRESETS.includes(normalized)) {
+        preset.value = normalized;
+        custom.value = normalized;
+        custom.disabled = true;
+        return;
+    }
+
+    preset.value = ADMIN_BAN_REASON_CUSTOM;
+    custom.value = normalized;
+    custom.disabled = false;
+}
+
+function adminResolveBanReason() {
+    const { preset, custom } = adminGetBanReasonControls();
+    if (!preset || !custom) return '';
+    const selected = String(preset.value || '').trim();
+    if (selected && selected !== ADMIN_BAN_REASON_CUSTOM) return selected;
+    return String(custom.value || '').trim();
+}
+
+function adminResolveDeviceBanReason() {
+    const { preset, custom } = adminGetDeviceBanReasonControls();
+    if (!preset || !custom) return '';
+    const selected = String(preset.value || '').trim();
+    if (selected && selected !== ADMIN_BAN_REASON_CUSTOM) return selected;
+    return String(custom.value || '').trim();
 }
 
 function adminRenderUsersList() {
@@ -2695,6 +2907,7 @@ function adminRenderUsersList() {
 }
 
 function adminSelectUser(uid) {
+    adminInitBanReasonControls();
     adminSelectedUser = adminUsers.find((u) => Number(u.telegram_id) === Number(uid)) || null;
     if (!adminSelectedUser) return;
     const ed = document.getElementById('admin-user-editor');
@@ -2711,7 +2924,8 @@ function adminSelectUser(uid) {
     document.getElementById('admin-user-verified').checked = !!adminSelectedUser.is_verified;
     document.getElementById('admin-user-banned').checked = !!adminSelectedUser.is_banned;
     document.getElementById('admin-user-admin').checked = !!adminSelectedUser.admin;
-    document.getElementById('admin-user-ban-reason').value = adminSelectedUser.ban_reason || '';
+    adminSetBanReasonControls(adminSelectedUser.ban_reason || '');
+    adminRenderForceSyncTime(getForceSyncTsFromBp(adminSelectedUser.bp));
     adminUserInventoryDraft = Array.isArray(adminSelectedUser.inventory) ? adminSelectedUser.inventory.map((item) => ({ ...item })) : [];
     adminUserWithdrawnDraft = Array.isArray(adminSelectedUser.withdrawn_items) ? adminSelectedUser.withdrawn_items.map((item) => ({ ...item })) : [];
     adminUserHistoryDraft = Array.isArray(adminSelectedUser.history) ? adminSelectedUser.history.map((entry) => ({ ...entry })) : [];
@@ -2937,6 +3151,10 @@ async function adminSaveUser() {
         };
     }).filter((entry) => entry.text || entry.val);
 
+    const isBanned = document.getElementById('admin-user-banned').checked;
+    const banReason = adminResolveBanReason();
+    if (isBanned && !banReason) return showNotify('Выбери причину бана или укажи свою', 'error');
+
     const patch = {
         balance: Number(document.getElementById('admin-user-balance').value || 0),
         total_spent: Number(document.getElementById('admin-user-total-spent').value || 0),
@@ -2947,9 +3165,9 @@ async function adminSaveUser() {
         bank_account: document.getElementById('admin-user-bank').value.trim(),
         referral_earnings: Number(document.getElementById('admin-user-ref').value || 0),
         is_verified: document.getElementById('admin-user-verified').checked,
-        is_banned: document.getElementById('admin-user-banned').checked,
+        is_banned: isBanned,
         admin: document.getElementById('admin-user-admin').checked,
-        ban_reason: document.getElementById('admin-user-ban-reason').value.trim(),
+        ban_reason: isBanned ? banReason : '',
         inventory: inv,
         withdrawn_items: withdrawn,
         history
@@ -2979,10 +3197,20 @@ async function adminForceReloadUser() {
     if (!confirm('Принудительно обновить данные у этого игрока?')) return;
 
     const targetId = Number(adminSelectedUser.telegram_id);
-    const currentName = (adminSelectedUser.first_name || '').trim() || 'User';
-    // No-op update triggers realtime UPDATE event for the selected player.
-    const { error } = await sb.from('users').update({ first_name: currentName }).eq('telegram_id', targetId);
+    const { data: targetUser, error: loadError } = await sb.from('users').select('bp').eq('telegram_id', targetId).maybeSingle();
+    if (loadError || !targetUser) return showNotify('Игрок не найден', 'error');
+
+    const nextBp = {
+        ...(targetUser.bp || {}),
+        force_sync_ts: Date.now()
+    };
+
+    const { error } = await sb.from('users').update({ bp: nextBp }).eq('telegram_id', targetId);
     if (error) return showNotify(`Ошибка обновления: ${error.message}`, 'error');
+
+    if (!adminSelectedUser.bp || typeof adminSelectedUser.bp !== 'object') adminSelectedUser.bp = {};
+    adminSelectedUser.bp.force_sync_ts = nextBp.force_sync_ts;
+    adminRenderForceSyncTime(nextBp.force_sync_ts);
 
     showNotify('Команда обновления отправлена игроку', 'success');
 }
@@ -2990,7 +3218,8 @@ async function adminForceReloadUser() {
 function adminQuickBan(flag) {
     if (!adminSelectedUser) return showNotify('Выбери игрока', 'error');
     document.getElementById('admin-user-banned').checked = !!flag;
-    if (!flag) document.getElementById('admin-user-ban-reason').value = '';
+    if (!flag) adminSetBanReasonControls('');
+    if (flag && !adminResolveBanReason()) return showNotify('Выбери причину бана или укажи свою', 'error');
     adminSaveUser();
 }
 
@@ -3093,7 +3322,7 @@ async function adminResetAllSpent() {
 async function adminBanByDeviceId() {
     if (!adminRequireAuth()) return;
     const deviceId = (document.getElementById('admin-device-ban-id')?.value || '').trim();
-    const reason = (document.getElementById('admin-device-ban-reason')?.value || '').trim();
+    const reason = adminResolveDeviceBanReason();
     if (!deviceId) return showNotify('Укажи Device ID', 'error');
 
     const { data, error } = await sb.from('users').select('telegram_id').contains('device_ids', [deviceId]);
